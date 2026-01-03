@@ -1,0 +1,11 @@
+{
+    "name": "univerify",
+    "private": true,
+    "workspaces": [
+        "apps/*",
+        "packages/*"
+    ],
+    "scripts": {
+        "build": "npm -w @univerify/verifier-core run build && npm -w @univerify/verifier-cli run build && npm -w web run build"
+    }
+}
