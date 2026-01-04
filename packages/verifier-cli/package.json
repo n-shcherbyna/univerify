@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@univerify/verifier-core": "file:../verifier-core",
+    "dotenv": "^17.2.3",
     "viem": "^2.0.0"
   },
   "devDependencies": {

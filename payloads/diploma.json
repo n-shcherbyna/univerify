@@ -1,0 +1,18 @@
+{
+  "student": {
+    "firstName": "Jan",
+    "lastName": "Kowalski",
+    "studentId": "s123456"
+  },
+  "degree": {
+    "name": "Bachelor of Computer Science",
+    "level": "BSc"
+  },
+  "university": {
+    "name": "UniVerify University",
+    "country": "Poland"
+  },
+  "issuedAt": "2025-06-30",
+  "diplomaNumber": "UV-2025-000123"
+}
+

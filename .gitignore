@@ -6,3 +6,4 @@ dist
 out
 broadcast
 cache
+package-lock.json
