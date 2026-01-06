@@ -6,6 +6,12 @@
         "packages/*"
     ],
     "scripts": {
-        "build": "npm -w @univerify/verifier-core run build && npm -w @univerify/verifier-cli run build && npm -w web run build"
+        "build": "npm -w @univerify/verifier-core run build && npm -w @univerify/verifier-cli run build && npm -w web run build",
+        "contracts:deploy": "cd contracts && forge script script/Deploy.s.sol:Deploy --rpc-url $RPC_URL --private-key $OWNER_PK --broadcast",
+        "sync:env:sepolia": "CHAIN_ID=11155111 node scripts/sync-env.mjs",
+        "sync:env:mainnet": "CHAIN_ID=1 node scripts/sync-env.mjs"
+    },
+    "devDependencies": {
+        "dotenv-cli": "^11.0.0"
     }
 }

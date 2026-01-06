@@ -5,12 +5,31 @@ import "forge-std/Script.sol";
 import "../src/DiplomaRegistry.sol";
 
 contract Deploy is Script {
-    function run() external {
-        // zaczyna podpisywać i wysyłać tx
+    function run() external returns (DiplomaRegistry registry) {
         vm.startBroadcast();
-
-        DiplomaRegistry registry = new DiplomaRegistry();
-
+        registry = new DiplomaRegistry();
         vm.stopBroadcast();
+
+        uint256 chainId = block.chainid;
+        address addr = address(registry);
+
+        string memory path = string.concat(
+            "deployments/",
+            vm.toString(chainId),
+            ".json"
+        );
+
+        // minimalny JSON, łatwy do parsowania
+        string memory json = string.concat(
+            "{\n",
+            '  "chainId": ', vm.toString(chainId), ",\n",
+            '  "DiplomaRegistry": "', vm.toString(addr), '"\n',
+            "}\n"
+        );
+
+        vm.writeFile(path, json);
+
+        console2.log("Deployed DiplomaRegistry:", addr);
+        console2.log("Saved deployment file:", path);
     }
 }
