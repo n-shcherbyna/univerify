@@ -1,133 +1,21 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  createPublicClient,
-  createWalletClient,
-  custom,
-  http,
-  isAddress,
-  recoverTypedDataAddress,
-  type Address,
-  type Hex,
-} from "viem";
-import { sepolia } from "viem/chains";
-import { DiplomaRegistryAbi, type StatusCode, hashPayload } from "@univerify/verifier-core";
+import { isAddress, type Address, type Hex } from "viem";
+import { hashPayload } from "@univerify/verifier-core";
 
-declare global {
-  interface Window {
-    ethereum?: any;
-  }
-}
-
-type ChainState = "unknown" | "ok" | "wrong";
-type TxState = "idle" | "signing" | "submitting" | "confirming";
-
-type OnChainRecord = {
-  issuer: Address;
-  issuedAt: string;
-  revoked: boolean;
-};
-
-/**
- * EIP-712 proof in envelope.
- * Keep it explicit so verifier can reconstruct exactly what was signed.
- */
-type Eip712Domain = {
-  name: string;
-  version: string;
-  chainId: number;
-  verifyingContract: Address;
-};
-
-type DiplomaTypes = {
-  Diploma: readonly [{ name: "docHash"; type: "bytes32" }];
-};
-
-type DiplomaEnvelope = {
-  payload: unknown;
-  proof: {
-    type: "EIP712";
-    domain: Eip712Domain;
-    types: DiplomaTypes;
-    primaryType: "Diploma";
-    signature: Hex;
-
-    // optional informational fields (not needed for cryptographic verification)
-    issuer?: Address;
-    issuedAt?: string;
-  };
-};
-
-const SEPOLIA_CHAIN_ID_DEC = 11155111;
-const SEPOLIA_CHAIN_ID_HEX = "0xaa36a7";
-
-function statusLabel(code: StatusCode) {
-  if (code === 0) return "Unknown";
-  if (code === 1) return "Valid";
-  return "Revoked";
-}
-
-function requireDefined(value: string | undefined, name: string): string {
-  if (!value) throw new Error(`Missing env var: ${name}`);
-  return value;
-}
-
-function requireAddress(value: string | undefined, name: string): Address {
-  const v = requireDefined(value, name);
-  if (!isAddress(v)) throw new Error(`Invalid address in env var ${name}: ${v}`);
-  return v as Address;
-}
-
-function getEthereum(): any | null {
-  if (typeof window === "undefined") return null;
-  return window.ethereum ?? null;
-}
-
-function parsePayload(
-  jsonText: string
-): { ok: true; payload: unknown } | { ok: false; error: string } {
-  try {
-    return { ok: true, payload: JSON.parse(jsonText) };
-  } catch {
-    return { ok: false, error: "Invalid JSON" };
-  }
-}
-
-function downloadJson(filename: string, obj: unknown) {
-  const blob = new Blob([JSON.stringify(obj, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-const DIPLOMA_TYPES: DiplomaTypes = {
-  Diploma: [{ name: "docHash", type: "bytes32" }],
-} as const;
+import { readPublicEnv } from "@/lib/univerify/env";
+import type { ChainState, OnChainRecord, TxState, DiplomaEnvelopeEip712 } from "@/lib/univerify/types";
+import { buildUniVerifyDomain, recoverIssuerFromEip712, DIPLOMA_TYPES } from "@/lib/univerify/eip712";
+import { makePublicClient, readRecord, readStatus, statusLabel } from "@/lib/univerify/registry";
+import { downloadJson, parseJson } from "@/lib/univerify/json";
+import { getEthereum, ensureChain, makeWalletClient } from "@/lib/univerify/wallet";
+import { makeStateLogger } from "@/lib/univerify/logs";
+import { writeRegistryTx } from "@/lib/univerify/registryWrite";
 
 export default function IssuerPage() {
-  const RPC_URL = useMemo(
-    () => requireDefined(process.env.NEXT_PUBLIC_RPC_URL, "NEXT_PUBLIC_RPC_URL"),
-    []
-  );
-
-  const REGISTRY = useMemo(
-    () => requireAddress(process.env.NEXT_PUBLIC_REGISTRY_ADDRESS, "NEXT_PUBLIC_REGISTRY_ADDRESS"),
-    []
-  );
-
-  const TARGET_CHAIN_ID = useMemo(
-    () => Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? String(SEPOLIA_CHAIN_ID_DEC)),
-    []
-  );
-
-  const publicClient = useMemo(
-    () => createPublicClient({ chain: sepolia, transport: http(RPC_URL) }),
-    [RPC_URL]
-  );
+  const { rpcUrl: RPC_URL, registry: REGISTRY, chainId: TARGET_CHAIN_ID } = useMemo(() => readPublicEnv(), []);
+  const publicClient = useMemo(() => makePublicClient(RPC_URL), [RPC_URL]);
 
   const [account, setAccount] = useState<Address | "">("");
   const [chainState, setChainState] = useState<ChainState>("unknown");
@@ -159,19 +47,15 @@ export default function IssuerPage() {
   const isBusy = txState !== "idle";
 
   const [logs, setLogs] = useState<string[]>([]);
-  const [verifyOK, setVerifyOk] = useState<boolean | null>(null);
+  const log = useMemo(() => makeStateLogger(setLogs), [setLogs]);
 
-  function pushLog(msg: string) {
-    setLogs((prev) => [...prev, msg]);
-    // eslint-disable-next-line no-console
-    console.log(msg);
-  }
+  const [verifyOK, setVerifyOk] = useState<boolean | null>(null);
 
   function resetMessages() {
     setError("");
     setTxHash(null);
     setVerifyOk(null);
-    setLogs([]);
+    log.clear();
   }
 
   function resetOnChainView() {
@@ -182,60 +66,6 @@ export default function IssuerPage() {
   function resetComputed() {
     setDocHash(null);
     setSignature(null);
-  }
-
-  function buildDomain(): Eip712Domain {
-    return {
-      name: "UniVerify",
-      version: "1",
-      chainId: TARGET_CHAIN_ID,
-      verifyingContract: REGISTRY,
-    };
-  }
-
-  async function ensureTargetChain(eth: any) {
-    const currentChainIdHex = (await eth.request({ method: "eth_chainId" })) as string;
-    const currentChainId = Number.parseInt(currentChainIdHex, 16);
-
-    if (currentChainId === TARGET_CHAIN_ID) {
-      setChainState("ok");
-      return;
-    }
-
-    try {
-      await eth.request({
-        method: "wallet_switchEthereumChain",
-        params: [{ chainId: `0x${TARGET_CHAIN_ID.toString(16)}` }],
-      });
-      setChainState("ok");
-      return;
-    } catch (e: any) {
-      if (e?.code === 4902 && TARGET_CHAIN_ID === SEPOLIA_CHAIN_ID_DEC) {
-        await eth.request({
-          method: "wallet_addEthereumChain",
-          params: [
-            {
-              chainId: SEPOLIA_CHAIN_ID_HEX,
-              chainName: "Sepolia",
-              nativeCurrency: { name: "SepoliaETH", symbol: "ETH", decimals: 18 },
-              rpcUrls: [RPC_URL],
-              blockExplorerUrls: ["https://sepolia.etherscan.io"],
-            },
-          ],
-        });
-
-        await eth.request({
-          method: "wallet_switchEthereumChain",
-          params: [{ chainId: SEPOLIA_CHAIN_ID_HEX }],
-        });
-
-        setChainState("ok");
-        return;
-      }
-
-      setChainState("wrong");
-      throw new Error(`Wrong network in MetaMask. Switch to chainId ${TARGET_CHAIN_ID} and try again.`);
-    }
   }
 
   async function connect() {
@@ -249,8 +79,11 @@ export default function IssuerPage() {
       const [addr] = (await eth.request({ method: "eth_requestAccounts" })) as string[];
       if (!isAddress(addr)) return setError(`Invalid address returned by wallet: ${addr}`);
       setAccount(addr as Address);
-      await ensureTargetChain(eth);
+
+      await ensureChain({ eth, targetChainId: TARGET_CHAIN_ID });
+      setChainState("ok");
     } catch (e: any) {
+      setChainState("wrong");
       setError(e?.message ?? String(e));
     }
   }
@@ -260,123 +93,27 @@ export default function IssuerPage() {
     resetOnChainView();
     setSignature(null);
 
-    const parsed = parsePayload(jsonText);
+    const parsed = parseJson(jsonText);
     if (!parsed.ok) return setError(parsed.error);
 
-    setDocHash(hashPayload(parsed.payload));
+    setDocHash(hashPayload(parsed.value));
   }
 
   async function refreshOnChain(h: Hex) {
-    const code = (await publicClient.readContract({
-      address: REGISTRY,
-      abi: DiplomaRegistryAbi,
-      functionName: "status",
-      args: [h],
-    })) as StatusCode;
-
+    const code = await readStatus({ publicClient, registry: REGISTRY, docHash: h });
     setStatus(statusLabel(code));
 
-    const [issuer, issuedAt, revoked] = (await publicClient.readContract({
-      address: REGISTRY,
-      abi: DiplomaRegistryAbi,
-      functionName: "get",
-      args: [h],
-    })) as readonly [Address, bigint, boolean];
-
-    setRecord({
-      issuer,
-      issuedAt:
-        issuer === "0x0000000000000000000000000000000000000000"
-          ? "-"
-          : new Date(Number(issuedAt) * 1000).toISOString(),
-      revoked,
-    });
+    const rec = await readRecord({ publicClient, registry: REGISTRY, docHash: h });
+    setRecord({ issuer: rec.issuer, issuedAt: rec.issuedAtIso, revoked: rec.revoked });
   }
 
   async function checkOnChainStatus() {
     resetMessages();
     if (!docHash) return setError("Compute docHash first");
-
     try {
       await refreshOnChain(docHash);
     } catch (e: any) {
       setError(e?.message ?? String(e));
-    }
-  }
-
-  async function verifySignatureAndChain() {
-    resetMessages();
-
-    if (!docHash) return setError("Compute docHash first");
-    if (!signature) return setError("Sign docHash first");
-
-    try {
-      const domain = buildDomain();
-
-      pushLog("=== UniVerify verify (EIP-712 + chain) ===");
-      pushLog(`docHash: ${docHash}`);
-      pushLog(`domain.name: ${domain.name}`);
-      pushLog(`domain.version: ${domain.version}`);
-      pushLog(`domain.chainId: ${domain.chainId}`);
-      pushLog(`domain.verifyingContract: ${domain.verifyingContract}`);
-      pushLog(`signature: ${signature}`);
-
-      const recovered = await recoverTypedDataAddress({
-        domain,
-        types: DIPLOMA_TYPES,
-        primaryType: "Diploma",
-        message: { docHash },
-        signature,
-      });
-      pushLog(`recovered signer: ${recovered}`);
-
-      const code = (await publicClient.readContract({
-        address: REGISTRY,
-        abi: DiplomaRegistryAbi,
-        functionName: "status",
-        args: [docHash],
-      })) as StatusCode;
-
-      const label = statusLabel(code);
-      pushLog(`on-chain status: ${code} (${label})`);
-
-      const [issuer, issuedAt, revoked] = (await publicClient.readContract({
-        address: REGISTRY,
-        abi: DiplomaRegistryAbi,
-        functionName: "get",
-        args: [docHash],
-      })) as readonly [Address, bigint, boolean];
-
-      const issuedAtIso =
-        issuer === "0x0000000000000000000000000000000000000000"
-          ? "-"
-          : new Date(Number(issuedAt) * 1000).toISOString();
-
-      pushLog(`on-chain issuer: ${issuer}`);
-      pushLog(`on-chain issuedAt: ${issuedAtIso}`);
-      pushLog(`on-chain revoked: ${String(revoked)}`);
-
-      setStatus(label);
-      setRecord({ issuer, issuedAt: issuedAtIso, revoked });
-
-      const statusOk = code === 1;
-      const issuerOk = recovered.toLowerCase() === issuer.toLowerCase();
-
-      pushLog(`check: status == Valid -> ${statusOk ? "OK" : "FAIL"}`);
-      pushLog(`check: recovered == onChainIssuer -> ${issuerOk ? "OK" : "FAIL"}`);
-
-      const ok = statusOk && issuerOk;
-      setVerifyOk(ok);
-
-      pushLog(`RESULT: ${ok ? "VERIFIED ✅" : "NOT VERIFIED ❌"}`);
-      if (!ok) {
-        if (!statusOk) pushLog(`reason: expected status Valid (1), got ${code} (${label})`);
-        if (!issuerOk) pushLog("reason: signature does not match on-chain issuer");
-      }
-    } catch (e: any) {
-      setVerifyOk(false);
-      setError(e?.message ?? String(e));
-      pushLog(`ERROR: ${e?.message ?? String(e)}`);
     }
   }
 
@@ -390,15 +127,11 @@ export default function IssuerPage() {
 
     setTxState("signing");
     try {
-      await ensureTargetChain(eth);
+      await ensureChain({ eth, targetChainId: TARGET_CHAIN_ID });
+      setChainState("ok");
 
-      const walletClient = createWalletClient({
-        chain: sepolia,
-        transport: custom(eth),
-        account,
-      });
-
-      const domain = buildDomain();
+      const walletClient = makeWalletClient({ eth, account });
+      const domain = buildUniVerifyDomain({ chainId: TARGET_CHAIN_ID, registry: REGISTRY });
 
       const sig = await walletClient.signTypedData({
         account,
@@ -408,15 +141,7 @@ export default function IssuerPage() {
         message: { docHash },
       });
 
-      // sanity-check
-      const recovered = await recoverTypedDataAddress({
-        domain,
-        types: DIPLOMA_TYPES,
-        primaryType: "Diploma",
-        message: { docHash },
-        signature: sig,
-      });
-
+      const recovered = await recoverIssuerFromEip712({ docHash, signature: sig, domain });
       if (recovered.toLowerCase() !== account.toLowerCase()) {
         throw new Error("EIP-712 signature sanity-check failed (recovered address mismatch).");
       }
@@ -429,18 +154,63 @@ export default function IssuerPage() {
     }
   }
 
+  async function verifySignatureAndChain() {
+    resetMessages();
+    if (!docHash) return setError("Compute docHash first");
+    if (!signature) return setError("Sign docHash first");
+
+    try {
+      const domain = buildUniVerifyDomain({ chainId: TARGET_CHAIN_ID, registry: REGISTRY });
+
+      log.push("=== UniVerify verify (EIP-712 + chain) ===");
+      log.push(`docHash: ${docHash}`);
+      log.push(`domain.chainId: ${domain.chainId}`);
+      log.push(`domain.verifyingContract: ${domain.verifyingContract}`);
+      log.push(`signature: ${signature}`);
+
+      const recovered = await recoverIssuerFromEip712({ docHash, signature, domain });
+      log.push(`recovered signer: ${recovered}`);
+
+      const code = await readStatus({ publicClient, registry: REGISTRY, docHash });
+      const label = statusLabel(code);
+      log.push(`on-chain status: ${code} (${label})`);
+
+      const rec = await readRecord({ publicClient, registry: REGISTRY, docHash });
+      log.push(`on-chain issuer: ${rec.issuer}`);
+      log.push(`on-chain issuedAt: ${rec.issuedAtIso}`);
+      log.push(`on-chain revoked: ${String(rec.revoked)}`);
+
+      setStatus(label);
+      setRecord({ issuer: rec.issuer, issuedAt: rec.issuedAtIso, revoked: rec.revoked });
+
+      const statusOk = code === 1;
+      const issuerOk = recovered.toLowerCase() === rec.issuer.toLowerCase();
+
+      log.push(`check: status == Valid -> ${statusOk ? "OK" : "FAIL"}`);
+      log.push(`check: recovered == onChainIssuer -> ${issuerOk ? "OK" : "FAIL"}`);
+
+      const ok = statusOk && issuerOk;
+      setVerifyOk(ok);
+      log.push(`RESULT: ${ok ? "VERIFIED ✅" : "NOT VERIFIED ❌"}`);
+    } catch (e: any) {
+      setVerifyOk(false);
+      setError(e?.message ?? String(e));
+      log.push(`ERROR: ${e?.message ?? String(e)}`);
+    }
+  }
+
   function exportDiplomaJson() {
     resetMessages();
 
-    const parsed = parsePayload(jsonText);
+    const parsed = parseJson(jsonText);
     if (!parsed.ok) return setError(parsed.error);
     if (!docHash) return setError("Compute docHash first");
     if (!signature) return setError("Sign docHash first");
 
-    const domain = buildDomain();
+    const domain = buildUniVerifyDomain({ chainId: TARGET_CHAIN_ID, registry: REGISTRY });
 
-    const envelope: DiplomaEnvelope = {
-      payload: parsed.payload,
+    const envelope: DiplomaEnvelopeEip712 = {
+      payload: parsed.value,
       proof: {
         type: "EIP712",
         domain,
@@ -456,74 +226,38 @@ export default function IssuerPage() {
   }
 
   async function writeTx(fn: "issue" | "revoke") {
-    resetMessages();
+  resetMessages();
+  if (!docHash) return setError("Compute docHash first");
+  if (!account) return setError("Connect MetaMask first");
 
-    if (!docHash) return setError("Compute docHash first");
-    if (!account) return setError("Connect MetaMask first");
+  const eth = getEthereum();
+  if (!eth) return setError("MetaMask not found. Install/enable MetaMask and refresh the page.");
 
-    const eth = getEthereum();
-    if (!eth) return setError("MetaMask not found. Install/enable MetaMask and refresh the page.");
+  try {
+    await ensureChain({ eth, targetChainId: TARGET_CHAIN_ID });
+    setChainState("ok");
 
-    setTxState("submitting");
-    try {
-      await ensureTargetChain(eth);
+    const walletClient = makeWalletClient({ eth, account });
 
-      const code = (await publicClient.readContract({
-        address: REGISTRY,
-        abi: DiplomaRegistryAbi,
-        functionName: "status",
-        args: [docHash],
-      })) as StatusCode;
-
-      if (fn === "issue") {
-        if (code !== 0) {
-          setError(code === 1 ? "Already issued (Valid)." : "Already issued and revoked. Re-issuing is not allowed.");
-          await refreshOnChain(docHash);
-          return;
-        }
-      } else {
-        if (code === 0) {
-          setError("Cannot revoke: diploma not issued (Unknown).");
-          await refreshOnChain(docHash);
-          return;
-        }
-        if (code === 2) {
-          setError("Already revoked.");
-          await refreshOnChain(docHash);
-          return;
-        }
-      }
-
-      const walletClient = createWalletClient({ chain: sepolia, transport: custom(eth), account });
-
-      const gas = await publicClient.estimateContractGas({
-        address: REGISTRY,
-        abi: DiplomaRegistryAbi,
-        functionName: fn,
-        args: [docHash],
-        account,
-      });
-
-      const tx = await walletClient.writeContract({
-        address: REGISTRY,
-        abi: DiplomaRegistryAbi,
-        functionName: fn,
-        args: [docHash],
-        gas: (gas * 120n) / 100n,
-      });
-
-      setTxHash(tx);
-
-      setTxState("confirming");
-      await publicClient.waitForTransactionReceipt({ hash: tx });
-
-      await refreshOnChain(docHash);
-    } catch (e: any) {
-      setError(e?.shortMessage ?? e?.message ?? String(e));
-    } finally {
-      setTxState("idle");
-    }
+    await writeRegistryTx({
+      fn,
+      docHash,
+      registry: REGISTRY,
+      account,
+      publicClient,
+      walletClient,
+      setTxState,
+      onTxHash: setTxHash,
+      onAfter: async () => {
+        await refreshOnChain(docHash);
+      },
+    });
+  } catch (e: any) {
+    setTxState("idle");
+    setError(e?.shortMessage ?? e?.message ?? String(e));
   }
+}
+
 
   return (
     <main style={{ maxWidth: 900, margin: "40px auto", padding: 16 }}>
@@ -574,7 +308,7 @@ export default function IssuerPage() {
           <button onClick={verifySignatureAndChain} disabled={isBusy || !docHash || !signature} style={{ padding: "10px 14px", fontWeight: 600 }}>
             Verify (EIP-712 + chain)
           </button>
-
+ 
           <button onClick={() => writeTx("issue")} disabled={isBusy || !docHash || !account} style={{ padding: "10px 14px", fontWeight: 600 }}>
             Issue (tx)
           </button>
@@ -584,9 +318,7 @@ export default function IssuerPage() {
           </button>
         </div>
 
-        {txState !== "idle" && (
-          <p style={{ marginTop: 10 }}><b>State:</b> {txState}</p>
-        )}
+        {txState !== "idle" && <p style={{ marginTop: 10 }}><b>State:</b> {txState}</p>}
       </div>
 
       <div style={{ marginTop: 18 }}>
@@ -606,7 +338,6 @@ export default function IssuerPage() {
         )}
 
         {txHash && <p><b>tx:</b> <code>{txHash}</code></p>}
-
         {error && <p style={{ color: "red" }}><b>Error:</b> {error}</p>}
 
         {verifyOK !== null && (
