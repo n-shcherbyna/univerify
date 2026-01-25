@@ -44,3 +44,20 @@ export async function readRecord(params: {
 
   return { issuer, issuedAtIso, revoked };
 }
+
+export async function readIsIssuer({
+  publicClient,
+  registry,
+  issuer,
+}: {
+  publicClient: any;
+  registry: Address;
+  issuer: Address;
+}): Promise<boolean> {
+  return await publicClient.readContract({
+    address: registry,
+    abi: DiplomaRegistryAbi,
+    functionName: "isIssuer",
+    args: [issuer],
+  });
+}

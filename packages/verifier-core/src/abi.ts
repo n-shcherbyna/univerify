@@ -18,6 +18,13 @@ export const DiplomaRegistryAbi = [
       { name: "revoked", type: "bool" },
     ],
   },
+  {
+    type: "function",
+    name: "isIssuer",
+    stateMutability: "view",
+    inputs: [{ name: "issuer", type: "address" }],
+    outputs: [{ name: "", type: "bool" }],
+  },
 
   // write
   {

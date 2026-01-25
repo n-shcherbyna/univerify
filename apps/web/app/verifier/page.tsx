@@ -6,7 +6,13 @@ import { hashPayload } from "@univerify/verifier-core";
 
 import { readPublicEnv } from "@/lib/univerify/env";
 import type { DiplomaEnvelopeEip712 } from "@/lib/univerify/types";
-import { makePublicClient, readRecord, readStatus, statusLabel } from "@/lib/univerify/registry";
+import {
+  makePublicClient,
+  readRecord,
+  readStatus,
+  statusLabel,
+  readIsIssuer,
+} from "@/lib/univerify/registry";
 import { parseJson, validateEip712Envelope, normalizeAddress } from "@/lib/univerify/json";
 import { readFileAsText } from "@/lib/univerify/file";
 import { recoverIssuerFromEip712 } from "@/lib/univerify/eip712";
@@ -26,6 +32,8 @@ export default function VerifyPage() {
   const [onChainIssuedAt, setOnChainIssuedAt] = useState("");
   const [onChainRevoked, setOnChainRevoked] = useState<boolean | null>(null);
 
+  const [issuerTrustedNow, setIssuerTrustedNow] = useState<boolean | null>(null);
+
   const [verifyOk, setVerifyOk] = useState<boolean | null>(null);
   const [error, setError] = useState("");
 
@@ -43,6 +51,7 @@ export default function VerifyPage() {
     setOnChainIssuer(null);
     setOnChainIssuedAt("");
     setOnChainRevoked(null);
+    setIssuerTrustedNow(null);
 
     log.clear();
   }
@@ -110,6 +119,11 @@ export default function VerifyPage() {
       log.push(`on-chain issuedAt: ${r.issuedAtIso}`);
       log.push(`on-chain revoked: ${String(r.revoked)}`);
 
+     
+      const trustedNow = await readIsIssuer({ publicClient, registry: REGISTRY, issuer: r.issuer });
+      setIssuerTrustedNow(trustedNow);
+      log.push(`issuer trusted now (isIssuer): ${trustedNow ? "YES" : "NO"}`);
+
       // 4) checks
       const statusOk = code === 1;
       const issuerOk = normalizeAddress(rec) === normalizeAddress(r.issuer);
@@ -117,13 +131,26 @@ export default function VerifyPage() {
       log.push(`check: status == Valid -> ${statusOk ? "OK" : "FAIL"}`);
       log.push(`check: recovered == onChainIssuer -> ${issuerOk ? "OK" : "FAIL"}`);
 
-      const ok = statusOk && issuerOk;
+      // Policy:
+      // - "soft" mode: do NOT fail if issuer was removed later; just warn.
+      // - "hard" mode: include trustedNow in ok.
+      const HARD_REQUIRE_TRUSTED_ISSUER_NOW = false;
+
+      const ok = HARD_REQUIRE_TRUSTED_ISSUER_NOW ? statusOk && issuerOk && trustedNow : statusOk && issuerOk;
       setVerifyOk(ok);
-      log.push(`RESULT: ${ok ? "VERIFIED ✅" : "NOT VERIFIED ❌"}`);
 
       if (!ok) {
+        log.push(`RESULT: NOT VERIFIED ❌`);
         if (!statusOk) log.push(`reason: expected status Valid (1), got ${code} (${label})`);
         if (!issuerOk) log.push("reason: signature does not match on-chain issuer");
+        if (HARD_REQUIRE_TRUSTED_ISSUER_NOW && !trustedNow) {
+          log.push("reason: issuer is not on the trusted issuer list now");
+        }
+      } else {
+        log.push(`RESULT: VERIFIED ✅`);
+        if (!trustedNow) {
+          log.push("WARNING: issuer is no longer on the trusted issuer list (historical record still valid).");
+        }
       }
     } catch (e: any) {
       setVerifyOk(false);
@@ -171,6 +198,7 @@ export default function VerifyPage() {
             <b>docHash:</b> <code>{docHash}</code>
           </p>
         )}
+
         {recovered && (
           <p>
             <b>recovered signer:</b> <code>{recovered}</code>
@@ -180,6 +208,15 @@ export default function VerifyPage() {
         {onChainStatus && (
           <p>
             <b>on-chain status:</b> {onChainStatus}
+          </p>
+        )}
+
+        {issuerTrustedNow !== null && (
+          <p>
+            <b>issuer trusted now:</b>{" "}
+            <span style={{ color: issuerTrustedNow ? "green" : "orange" }}>
+              {issuerTrustedNow ? "YES" : "NO"}
+            </span>
           </p>
         )}
 
