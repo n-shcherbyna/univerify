@@ -44,12 +44,13 @@ export default function IssuerPage() {
   const [txState, setTxState] = useState<TxState>("idle");
   const [error, setError] = useState<string>("");
 
-  const isBusy = txState !== "idle";
-
   const [logs, setLogs] = useState<string[]>([]);
   const log = useMemo(() => makeStateLogger(setLogs), [setLogs]);
 
   const [verifyOK, setVerifyOk] = useState<boolean | null>(null);
+
+  const isBusy = txState !== "idle";
+  const hasWallet = !!account;
 
   function resetMessages() {
     setError("");
@@ -104,7 +105,7 @@ export default function IssuerPage() {
     setStatus(statusLabel(code));
 
     const rec = await readRecord({ publicClient, registry: REGISTRY, docHash: h });
-    setRecord({ issuer: rec.issuer, issuedAt: rec.issuedAtIso, revoked: rec.revoked });
+    setRecord({ issuer: rec.issuer, revoked: rec.revoked });
   }
 
   async function checkOnChainStatus() {
@@ -177,11 +178,10 @@ export default function IssuerPage() {
 
       const rec = await readRecord({ publicClient, registry: REGISTRY, docHash });
       log.push(`on-chain issuer: ${rec.issuer}`);
-      log.push(`on-chain issuedAt: ${rec.issuedAtIso}`);
       log.push(`on-chain revoked: ${String(rec.revoked)}`);
 
       setStatus(label);
-      setRecord({ issuer: rec.issuer, issuedAt: rec.issuedAtIso, revoked: rec.revoked });
+      setRecord({ issuer: rec.issuer, revoked: rec.revoked });
 
       const statusOk = code === 1;
       const issuerOk = recovered.toLowerCase() === rec.issuer.toLowerCase();
@@ -218,7 +218,6 @@ export default function IssuerPage() {
         primaryType: "Diploma",
         signature,
         issuer: account || undefined,
-        issuedAt: new Date().toISOString(),
       },
     };
 
@@ -226,51 +225,55 @@ export default function IssuerPage() {
   }
 
   async function writeTx(fn: "issue" | "revoke") {
-  resetMessages();
-  if (!docHash) return setError("Compute docHash first");
-  if (!account) return setError("Connect MetaMask first");
+    resetMessages();
+    if (!docHash) return setError("Compute docHash first");
+    if (!account) return setError("Connect MetaMask first");
 
-  const eth = getEthereum();
-  if (!eth) return setError("MetaMask not found. Install/enable MetaMask and refresh the page.");
+    const eth = getEthereum();
+    if (!eth) return setError("MetaMask not found. Install/enable MetaMask and refresh the page.");
 
-  try {
-    await ensureChain({ eth, targetChainId: TARGET_CHAIN_ID });
-    setChainState("ok");
+    try {
+      await ensureChain({ eth, targetChainId: TARGET_CHAIN_ID });
+      setChainState("ok");
 
-    const walletClient = makeWalletClient({ eth, account });
+      const walletClient = makeWalletClient({ eth, account });
 
-    await writeRegistryTx({
-      fn,
-      docHash,
-      registry: REGISTRY,
-      account,
-      publicClient,
-      walletClient,
-      setTxState,
-      onTxHash: setTxHash,
-      onAfter: async () => {
-        await refreshOnChain(docHash);
-      },
-    });
-  } catch (e: any) {
-    setTxState("idle");
-    setError(e?.shortMessage ?? e?.message ?? String(e));
+      await writeRegistryTx({
+        fn,
+        docHash,
+        registry: REGISTRY,
+        account,
+        publicClient,
+        walletClient,
+        setTxState,
+        onTxHash: setTxHash,
+        onAfter: async () => {
+          await refreshOnChain(docHash);
+        },
+      });
+    } catch (e: any) {
+      setTxState("idle");
+      setError(e?.shortMessage ?? e?.message ?? String(e));
+    }
   }
-}
-
 
   return (
     <main style={{ maxWidth: 900, margin: "40px auto", padding: 16 }}>
       <h1 style={{ fontSize: 28, fontWeight: 700 }}>UniVerify — Issuer</h1>
 
       <div style={{ marginTop: 12, display: "flex", gap: 10, alignItems: "center" }}>
-        <button onClick={connect} disabled={isBusy} style={{ padding: "10px 14px", fontWeight: 600 }}>
+        <button onClick={() => void connect()} disabled={isBusy} style={{ padding: "10px 14px", fontWeight: 600 }}>
           Connect MetaMask
         </button>
         <div>
           <div><b>Account:</b> {account || "-"}</div>
           <div><b>Network:</b> {chainState === "ok" ? "OK" : chainState === "wrong" ? "Wrong network" : "-"}</div>
           <div><b>Registry:</b> <code>{REGISTRY}</code></div>
+          {!hasWallet && (
+            <div style={{ marginTop: 6, color: "orange" }}>
+              Connect MetaMask to sign and send transactions.
+            </div>
+          )}
         </div>
       </div>
 
@@ -293,32 +296,61 @@ export default function IssuerPage() {
             Compute docHash
           </button>
 
-          <button onClick={signDocHash} disabled={isBusy || !docHash || !account} style={{ padding: "10px 14px", fontWeight: 600 }}>
+          <button
+            onClick={() => void signDocHash()}
+            disabled={isBusy || !docHash || !hasWallet}
+            style={{ padding: "10px 14px", fontWeight: 600 }}
+          >
             Sign docHash (EIP-712)
           </button>
 
-          <button onClick={exportDiplomaJson} disabled={isBusy || !docHash || !signature} style={{ padding: "10px 14px", fontWeight: 600 }}>
+          <button
+            onClick={exportDiplomaJson}
+            disabled={isBusy || !docHash || !signature}
+            style={{ padding: "10px 14px", fontWeight: 600 }}
+          >
             Export diploma.json
           </button>
 
-          <button onClick={checkOnChainStatus} disabled={isBusy || !docHash} style={{ padding: "10px 14px", fontWeight: 600 }}>
+          <button
+            onClick={() => void checkOnChainStatus()}
+            disabled={isBusy || !docHash}
+            style={{ padding: "10px 14px", fontWeight: 600 }}
+          >
             Check status (chain)
           </button>
 
-          <button onClick={verifySignatureAndChain} disabled={isBusy || !docHash || !signature} style={{ padding: "10px 14px", fontWeight: 600 }}>
+          <button
+            onClick={() => void verifySignatureAndChain()}
+            disabled={isBusy || !docHash || !signature}
+            style={{ padding: "10px 14px", fontWeight: 600 }}
+          >
             Verify (EIP-712 + chain)
           </button>
- 
-          <button onClick={() => writeTx("issue")} disabled={isBusy || !docHash || !account} style={{ padding: "10px 14px", fontWeight: 600 }}>
+
+          {/* IMPORTANT: do NOT disable on !account, so user gets an explicit error on click */}
+          <button
+            onClick={() => void writeTx("issue")}
+            disabled={isBusy || !docHash}
+            style={{ padding: "10px 14px", fontWeight: 600 }}
+          >
             Issue (tx)
           </button>
 
-          <button onClick={() => writeTx("revoke")} disabled={isBusy || !docHash || !account} style={{ padding: "10px 14px", fontWeight: 600 }}>
+          <button
+            onClick={() => void writeTx("revoke")}
+            disabled={isBusy || !docHash}
+            style={{ padding: "10px 14px", fontWeight: 600 }}
+          >
             Revoke (tx)
           </button>
         </div>
 
-        {txState !== "idle" && <p style={{ marginTop: 10 }}><b>State:</b> {txState}</p>}
+        {txState !== "idle" && (
+          <p style={{ marginTop: 10 }}>
+            <b>State:</b> {txState}
+          </p>
+        )}
       </div>
 
       <div style={{ marginTop: 18 }}>
@@ -331,7 +363,6 @@ export default function IssuerPage() {
             <p><b>Record:</b></p>
             <ul>
               <li><b>issuer:</b> <code>{record.issuer}</code></li>
-              <li><b>issuedAt:</b> {record.issuedAt}</li>
               <li><b>revoked:</b> {String(record.revoked)}</li>
             </ul>
           </div>

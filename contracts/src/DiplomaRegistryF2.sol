@@ -1,13 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-contract DiplomaRegistry {
+contract DiplomaRegistryF2 {
     enum Status { Unknown, Valid, Revoked }
-
-    struct Record {
-        address issuer;
-        bool revoked;
-    }
 
     error OnlyOwner();
     error OnlyIssuer();
@@ -20,14 +15,15 @@ contract DiplomaRegistry {
     address public immutable owner;
 
     mapping(address => bool) public isIssuer;
-    mapping(bytes32 => Record) private records;
+    mapping(bytes32 => uint256) private rec; // packed
 
     event IssuerAdded(address issuer);
     event IssuerRemoved(address issuer);
-
-    // timestamps tylko w eventach
     event DiplomaIssued(bytes32 indexed docHash, address indexed issuer, uint64 issuedAt);
     event DiplomaRevoked(bytes32 indexed docHash, address indexed issuer, uint64 revokedAt);
+
+    uint256 private constant REVOKED_MASK = 1 << 160;
+    uint256 private constant ISSUER_MASK  = (uint256(1) << 160) - 1;
 
     modifier onlyOwner() {
         if (msg.sender != owner) revert OnlyOwner();
@@ -39,9 +35,7 @@ contract DiplomaRegistry {
         _;
     }
 
-    constructor() {
-        owner = msg.sender;
-    }
+    constructor() { owner = msg.sender; }
 
     function addIssuer(address issuer) external onlyOwner {
         if (issuer == address(0)) revert BadIssuer();
@@ -56,34 +50,33 @@ contract DiplomaRegistry {
 
     function issue(bytes32 docHash) external onlyIssuer {
         if (docHash == bytes32(0)) revert BadHash();
+        uint256 p = rec[docHash];
+        if ((p & ISSUER_MASK) != 0) revert AlreadyIssued();
 
-        Record storage r = records[docHash];
-        if (r.issuer != address(0)) revert AlreadyIssued();
-
-        r.issuer = msg.sender;
-        r.revoked = false;
-
+        rec[docHash] = uint256(uint160(msg.sender)); // revoked bit = 0
         emit DiplomaIssued(docHash, msg.sender, uint64(block.timestamp));
     }
 
     function revoke(bytes32 docHash) external onlyIssuer {
-        Record storage r = records[docHash];
-        if (r.issuer != msg.sender) revert NotIssuerOfRecord();
-        if (r.revoked) revert AlreadyRevoked();
+        uint256 p = rec[docHash];
+        address issuer = address(uint160(p & ISSUER_MASK));
+        if (issuer != msg.sender) revert NotIssuerOfRecord();
+        if ((p & REVOKED_MASK) != 0) revert AlreadyRevoked();
 
-        r.revoked = true;
+        rec[docHash] = p | REVOKED_MASK;
         emit DiplomaRevoked(docHash, msg.sender, uint64(block.timestamp));
     }
 
     function status(bytes32 docHash) external view returns (Status) {
-        Record storage r = records[docHash];
-        if (r.issuer == address(0)) return Status.Unknown;
-        if (r.revoked) return Status.Revoked;
+        uint256 p = rec[docHash];
+        if ((p & ISSUER_MASK) == 0) return Status.Unknown;
+        if ((p & REVOKED_MASK) != 0) return Status.Revoked;
         return Status.Valid;
     }
 
     function get(bytes32 docHash) external view returns (address issuer, bool revoked) {
-        Record storage r = records[docHash];
-        return (r.issuer, r.revoked);
+        uint256 p = rec[docHash];
+        issuer = address(uint160(p & ISSUER_MASK));
+        revoked = (p & REVOKED_MASK) != 0;
     }
 }

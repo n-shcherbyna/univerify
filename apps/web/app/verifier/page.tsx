@@ -13,7 +13,11 @@ import {
   statusLabel,
   readIsIssuer,
 } from "@/lib/univerify/registry";
-import { parseJson, validateEip712Envelope, normalizeAddress } from "@/lib/univerify/json";
+import {
+  parseJson,
+  validateEip712Envelope,
+  normalizeAddress,
+} from "@/lib/univerify/json";
 import { readFileAsText } from "@/lib/univerify/file";
 import { recoverIssuerFromEip712 } from "@/lib/univerify/eip712";
 import { makeStateLogger } from "@/lib/univerify/logs";
@@ -29,7 +33,6 @@ export default function VerifyPage() {
 
   const [onChainStatus, setOnChainStatus] = useState("");
   const [onChainIssuer, setOnChainIssuer] = useState<Address | null>(null);
-  const [onChainIssuedAt, setOnChainIssuedAt] = useState("");
   const [onChainRevoked, setOnChainRevoked] = useState<boolean | null>(null);
 
   const [issuerTrustedNow, setIssuerTrustedNow] = useState<boolean | null>(null);
@@ -49,7 +52,6 @@ export default function VerifyPage() {
 
     setOnChainStatus("");
     setOnChainIssuer(null);
-    setOnChainIssuedAt("");
     setOnChainRevoked(null);
     setIssuerTrustedNow(null);
 
@@ -95,14 +97,14 @@ export default function VerifyPage() {
       log.push(`docHash(payload): ${h}`);
 
       // 2) recover signer from typed-data signature
-      const rec = await recoverIssuerFromEip712({
+      const recSigner = await recoverIssuerFromEip712({
         docHash: h,
         signature: env.proof.signature,
         domain: env.proof.domain,
         types: env.proof.types,
       });
-      setRecovered(rec);
-      log.push(`recovered signer: ${rec}`);
+      setRecovered(recSigner);
+      log.push(`recovered signer: ${recSigner}`);
 
       // 3) on-chain record
       const code = await readStatus({ publicClient, registry: REGISTRY, docHash: h });
@@ -112,21 +114,18 @@ export default function VerifyPage() {
 
       const r = await readRecord({ publicClient, registry: REGISTRY, docHash: h });
       setOnChainIssuer(r.issuer);
-      setOnChainIssuedAt(r.issuedAtIso);
       setOnChainRevoked(r.revoked);
 
       log.push(`on-chain issuer: ${r.issuer}`);
-      log.push(`on-chain issuedAt: ${r.issuedAtIso}`);
       log.push(`on-chain revoked: ${String(r.revoked)}`);
 
-     
       const trustedNow = await readIsIssuer({ publicClient, registry: REGISTRY, issuer: r.issuer });
       setIssuerTrustedNow(trustedNow);
       log.push(`issuer trusted now (isIssuer): ${trustedNow ? "YES" : "NO"}`);
 
       // 4) checks
       const statusOk = code === 1;
-      const issuerOk = normalizeAddress(rec) === normalizeAddress(r.issuer);
+      const issuerOk = normalizeAddress(recSigner) === normalizeAddress(r.issuer);
 
       log.push(`check: status == Valid -> ${statusOk ? "OK" : "FAIL"}`);
       log.push(`check: recovered == onChainIssuer -> ${issuerOk ? "OK" : "FAIL"}`);
@@ -136,18 +135,21 @@ export default function VerifyPage() {
       // - "hard" mode: include trustedNow in ok.
       const HARD_REQUIRE_TRUSTED_ISSUER_NOW = false;
 
-      const ok = HARD_REQUIRE_TRUSTED_ISSUER_NOW ? statusOk && issuerOk && trustedNow : statusOk && issuerOk;
+      const ok = HARD_REQUIRE_TRUSTED_ISSUER_NOW
+        ? statusOk && issuerOk && trustedNow
+        : statusOk && issuerOk;
+
       setVerifyOk(ok);
 
       if (!ok) {
-        log.push(`RESULT: NOT VERIFIED ❌`);
+        log.push("RESULT: NOT VERIFIED ❌");
         if (!statusOk) log.push(`reason: expected status Valid (1), got ${code} (${label})`);
         if (!issuerOk) log.push("reason: signature does not match on-chain issuer");
         if (HARD_REQUIRE_TRUSTED_ISSUER_NOW && !trustedNow) {
           log.push("reason: issuer is not on the trusted issuer list now");
         }
       } else {
-        log.push(`RESULT: VERIFIED ✅`);
+        log.push("RESULT: VERIFIED ✅");
         if (!trustedNow) {
           log.push("WARNING: issuer is no longer on the trusted issuer list (historical record still valid).");
         }
@@ -228,9 +230,6 @@ export default function VerifyPage() {
             <ul>
               <li>
                 <b>issuer:</b> <code>{onChainIssuer}</code>
-              </li>
-              <li>
-                <b>issuedAt:</b> {onChainIssuedAt || "-"}
               </li>
               <li>
                 <b>revoked:</b> {String(onChainRevoked)}

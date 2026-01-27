@@ -1,14 +1,17 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
-contract DiplomaRegistry {
+contract DiplomaRegistryD {
     enum Status { Unknown, Valid, Revoked }
 
+    // 20 + 8 + 8 = 32 bytes => 1 slot
     struct Record {
         address issuer;
-        bool revoked;
+        uint64 issuedAt;
+        uint64 revokedAt;
     }
 
+    // ===== custom errors =====
     error OnlyOwner();
     error OnlyIssuer();
     error BadIssuer();
@@ -24,8 +27,6 @@ contract DiplomaRegistry {
 
     event IssuerAdded(address issuer);
     event IssuerRemoved(address issuer);
-
-    // timestamps tylko w eventach
     event DiplomaIssued(bytes32 indexed docHash, address indexed issuer, uint64 issuedAt);
     event DiplomaRevoked(bytes32 indexed docHash, address indexed issuer, uint64 revokedAt);
 
@@ -60,8 +61,11 @@ contract DiplomaRegistry {
         Record storage r = records[docHash];
         if (r.issuer != address(0)) revert AlreadyIssued();
 
-        r.issuer = msg.sender;
-        r.revoked = false;
+        records[docHash] = Record({
+            issuer: msg.sender,
+            issuedAt: uint64(block.timestamp),
+            revokedAt: 0
+        });
 
         emit DiplomaIssued(docHash, msg.sender, uint64(block.timestamp));
     }
@@ -69,21 +73,21 @@ contract DiplomaRegistry {
     function revoke(bytes32 docHash) external onlyIssuer {
         Record storage r = records[docHash];
         if (r.issuer != msg.sender) revert NotIssuerOfRecord();
-        if (r.revoked) revert AlreadyRevoked();
+        if (r.revokedAt != 0) revert AlreadyRevoked();
 
-        r.revoked = true;
+        r.revokedAt = uint64(block.timestamp);
         emit DiplomaRevoked(docHash, msg.sender, uint64(block.timestamp));
     }
 
     function status(bytes32 docHash) external view returns (Status) {
         Record storage r = records[docHash];
         if (r.issuer == address(0)) return Status.Unknown;
-        if (r.revoked) return Status.Revoked;
+        if (r.revokedAt != 0) return Status.Revoked;
         return Status.Valid;
     }
 
-    function get(bytes32 docHash) external view returns (address issuer, bool revoked) {
+    function get(bytes32 docHash) external view returns (address issuer, uint64 issuedAt, uint64 revokedAt) {
         Record storage r = records[docHash];
-        return (r.issuer, r.revoked);
+        return (r.issuer, r.issuedAt, r.revokedAt);
     }
 }

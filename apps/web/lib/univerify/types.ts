@@ -5,7 +5,6 @@ export type TxState = "idle" | "signing" | "submitting" | "confirming";
 
 export type OnChainRecord = {
   issuer: Address;
-  issuedAt: string; // ISO or "-"
   revoked: boolean;
 };
 
@@ -31,6 +30,5 @@ export type DiplomaEnvelopeEip712 = {
 
     // optional info only
     issuer?: Address;
-    issuedAt?: string;
   };
 };
