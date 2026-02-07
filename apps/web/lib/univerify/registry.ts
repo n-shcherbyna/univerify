@@ -66,3 +66,17 @@ export async function readIsIssuer(params: {
 
   return res as boolean;
 }
+
+export async function readOwner(params: {
+  publicClient: RegistryPublicClient;
+  registry: Address;
+}): Promise<Address> {
+  const res = await params.publicClient.readContract({
+    address: params.registry,
+    abi: DiplomaRegistryAbi,
+    functionName: "owner",
+    args: [],
+  });
+  return res as Address;
+}
+

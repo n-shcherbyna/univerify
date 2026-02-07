@@ -25,7 +25,6 @@ contract DiplomaRegistry {
     event IssuerAdded(address issuer);
     event IssuerRemoved(address issuer);
 
-    // timestamps tylko w eventach
     event DiplomaIssued(bytes32 indexed docHash, address indexed issuer, uint64 issuedAt);
     event DiplomaRevoked(bytes32 indexed docHash, address indexed issuer, uint64 revokedAt);
 
