@@ -126,8 +126,8 @@ export default function AdminPage() {
     <main style={{ maxWidth: 900, margin: "40px auto", padding: 16 }}>
       <h1 style={{ fontSize: 28, fontWeight: 700 }}>UniVerify — Admin (Issuers)</h1>
 
-      <div style={{ marginTop: 12, display: "flex", gap: 10, alignItems: "center" }}>
-        <button onClick={() => void connect()} disabled={isBusy} style={{ padding: "10px 14px", fontWeight: 600 }}>
+      <div className="uv-card" style={{ display: "flex", gap: 10, alignItems: "center" }}>
+        <button onClick={() => void connect()} disabled={isBusy} className="uv-btn uv-btn-primary">
           Connect MetaMask
         </button>
         <div>
@@ -139,7 +139,7 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <div style={{ marginTop: 18 }}>
+      <div className="uv-card">
         <label style={{ display: "block", fontWeight: 600, marginBottom: 8 }}>Issuer address</label>
         <input
           value={issuerInput}
@@ -152,16 +152,16 @@ export default function AdminPage() {
           style={{ width: "100%", fontFamily: "monospace", padding: 10 }}
         />
 
-        <div style={{ marginTop: 10, display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <button onClick={() => void checkIssuer()} disabled={isBusy} style={{ padding: "10px 14px", fontWeight: 600 }}>
+        <div className="uv-actions">
+          <button onClick={() => void checkIssuer()} disabled={isBusy} className="uv-btn">
             Check isIssuer
           </button>
 
-          <button onClick={() => void write("addIssuer")} disabled={isBusy} style={{ padding: "10px 14px", fontWeight: 600 }}>
+          <button onClick={() => void write("addIssuer")} disabled={isBusy} className="uv-btn uv-btn-primary">
             Add issuer (tx)
           </button>
 
-          <button onClick={() => void write("removeIssuer")} disabled={isBusy} style={{ padding: "10px 14px", fontWeight: 600 }}>
+          <button onClick={() => void write("removeIssuer")} disabled={isBusy} className="uv-btn uv-btn-danger">
             Remove issuer (tx)
           </button>
         </div>

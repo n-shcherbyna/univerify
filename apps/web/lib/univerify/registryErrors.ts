@@ -24,9 +24,11 @@ export function decodeRegistryRevert(err: unknown, abi: Abi): string | null {
     case "OnlyIssuer": return "Only approved issuer can do this.";
     case "BadIssuer": return "Bad issuer address.";
     case "BadHash": return "Bad doc hash.";
-    case "AlreadyIssued": return "Already issued.";
-    case "NotIssuerOfRecord": return "You are not the issuer of this record.";
+    case "BadRoot": return "Bad Merkle root.";
+    case "BatchAlreadyIssued": return "Batch ID already used.";
+    case "NotIssuerOfBatch": return "You are not the issuer of this batch.";
     case "AlreadyRevoked": return "Already revoked.";
+    case "InvalidProof": return "Invalid Merkle proof.";
     default: return `Transaction reverted: ${name}.`;
   }
 }

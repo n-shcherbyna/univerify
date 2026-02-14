@@ -30,5 +30,27 @@ export type DiplomaEnvelopeEip712 = {
 
     // optional info only
     issuer?: Address;
+    merkle?: {
+      batchId: number;
+      proof: Hex[];
+    };
   };
 };
+
+export type DiplomaEnvelopeMerkleBatch = {
+  payload: unknown;
+  proof: {
+    type: "MERKLE_BATCH";
+    batchId: number;
+    proof: Hex[];
+    issuer: Address;
+    eip712?: {
+      domain: Eip712Domain;
+      types: DiplomaTypes;
+      primaryType: "Diploma";
+      signature: Hex;
+    };
+  };
+};
+
+export type DiplomaEnvelope = DiplomaEnvelopeEip712 | DiplomaEnvelopeMerkleBatch;

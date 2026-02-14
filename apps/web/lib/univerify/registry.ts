@@ -21,35 +21,60 @@ export function statusLabel(code: StatusCode): "Unknown" | "Valid" | "Revoked" {
   return "Revoked";
 }
 
-export async function readStatus(params: {
+export async function readStatusWithProof(params: {
   publicClient: RegistryPublicClient;
   registry: Address;
   docHash: Hex;
+  issuer: Address;
+  batchId: bigint;
+  proof: readonly Hex[];
 }): Promise<StatusCode> {
   const code = await params.publicClient.readContract({
     address: params.registry,
     abi: DiplomaRegistryAbi,
-    functionName: "status",
-    args: [params.docHash],
+    functionName: "statusWithProof",
+    args: [params.docHash, params.issuer, params.batchId, params.proof],
   });
 
   return code as StatusCode;
 }
 
-export async function readRecord(params: {
+export async function readBatch(params: {
   publicClient: RegistryPublicClient;
   registry: Address;
-  docHash: Hex;
-}): Promise<{ issuer: Address; revoked: boolean }> {
+  issuer: Address;
+  batchId: bigint;
+}): Promise<{ issuer: Address; merkleRoot: Hex }> {
   const res = await params.publicClient.readContract({
     address: params.registry,
     abi: DiplomaRegistryAbi,
-    functionName: "get",
-    args: [params.docHash],
+    functionName: "getBatch",
+    args: [params.issuer, params.batchId],
   });
 
-  const [issuer, revoked] = res as readonly [Address, boolean];
-  return { issuer, revoked };
+  const merkleRoot = res as Hex;
+  return { issuer: params.issuer, merkleRoot };
+}
+
+export async function readIsRevoked(params: {
+  publicClient: RegistryPublicClient;
+  registry: Address;
+  docHash: Hex;
+  issuer: Address;
+  batchId: bigint;
+}): Promise<boolean | null> {
+  try {
+    const res = await params.publicClient.readContract({
+      address: params.registry,
+      abi: DiplomaRegistryAbi,
+      functionName: "isRevoked",
+      args: [params.docHash, params.issuer, params.batchId],
+    });
+    return res as boolean;
+  } catch {
+    // Backward compatibility: old deployments do not implement isRevoked().
+    return null;
+  }
 }
 
 export async function readIsIssuer(params: {
@@ -79,4 +104,3 @@ export async function readOwner(params: {
   });
   return res as Address;
 }
-

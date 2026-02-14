@@ -1,6 +1,5 @@
 import { recoverTypedDataAddress, type Address, type Hex } from "viem";
 import type { DiplomaTypes, Eip712Domain } from "./types";
-import { types } from "util";
 
 export const DIPLOMA_TYPES: DiplomaTypes = {
   Diploma: [{ name: "docHash", type: "bytes32" }],

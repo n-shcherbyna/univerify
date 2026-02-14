@@ -8,8 +8,8 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: Arial, Helvetica, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -23,4 +23,163 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+.uv-nav-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: 1px solid #e5e7eb;
+  background: #ffffffcc;
+  backdrop-filter: blur(6px);
+}
+
+.uv-nav {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 12px 16px;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.uv-nav-link {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 14px;
+  text-decoration: none;
+  color: #111827;
+}
+
+.uv-nav-link:hover {
+  background: #f3f4f6;
+}
+
+.uv-nav-link-active {
+  background: #111827;
+  border-color: #111827;
+  color: #ffffff;
+}
+
+.uv-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 14px;
+  margin-top: 16px;
+  background: #ffffff;
+}
+
+.uv-actions {
+  margin-top: 10px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.uv-btn {
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #ffffff;
+  color: #111827;
+}
+
+.uv-btn:hover {
+  background: #f8fafc;
+}
+
+.uv-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.uv-btn-primary {
+  background: #111827;
+  color: #ffffff;
+  border-color: #111827;
+}
+
+.uv-btn-primary:hover {
+  background: #1f2937;
+}
+
+.uv-btn-danger {
+  background: #7f1d1d;
+  border-color: #7f1d1d;
+  color: #ffffff;
+}
+
+.uv-btn-danger:hover {
+  background: #991b1b;
+}
+
+.uv-hint {
+  margin-top: 8px;
+  font-size: 13px;
+  color: #475569;
+}
+
+@media (prefers-color-scheme: dark) {
+  .uv-nav-wrap {
+    border-bottom-color: #374151;
+    background: #111827cc;
+  }
+
+  .uv-nav-link {
+    border-color: #4b5563;
+    color: #f9fafb;
+  }
+
+  .uv-nav-link:hover {
+    background: #1f2937;
+  }
+
+  .uv-nav-link-active {
+    background: #f9fafb;
+    border-color: #f9fafb;
+    color: #111827;
+  }
+
+  .uv-card {
+    border-color: #374151;
+    background: #111827;
+  }
+
+  .uv-btn {
+    border-color: #4b5563;
+    background: #1f2937;
+    color: #f9fafb;
+  }
+
+  .uv-btn:hover {
+    background: #374151;
+  }
+
+  .uv-btn-primary {
+    background: #f9fafb;
+    color: #111827;
+    border-color: #f9fafb;
+  }
+
+  .uv-btn-primary:hover {
+    background: #e5e7eb;
+  }
+
+  .uv-btn-danger {
+    background: #ef4444;
+    border-color: #ef4444;
+    color: #111827;
+  }
+
+  .uv-btn-danger:hover {
+    background: #f87171;
+  }
+
+  .uv-hint {
+    color: #cbd5e1;
+  }
 }

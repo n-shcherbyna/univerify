@@ -4,9 +4,11 @@ export const DiplomaRegistryAbi = [
   { type: "error", name: "OnlyIssuer", inputs: [] },
   { type: "error", name: "BadIssuer", inputs: [] },
   { type: "error", name: "BadHash", inputs: [] },
-  { type: "error", name: "AlreadyIssued", inputs: [] },
-  { type: "error", name: "NotIssuerOfRecord", inputs: [] },
+  { type: "error", name: "BadRoot", inputs: [] },
+  { type: "error", name: "BatchAlreadyIssued", inputs: [] },
+  { type: "error", name: "NotIssuerOfBatch", inputs: [] },
   { type: "error", name: "AlreadyRevoked", inputs: [] },
+  { type: "error", name: "InvalidProof", inputs: [] },
 
   // view
   {
@@ -18,20 +20,36 @@ export const DiplomaRegistryAbi = [
   },
   {
     type: "function",
-    name: "status",
+    name: "statusWithProof",
     stateMutability: "view",
-    inputs: [{ name: "docHash", type: "bytes32" }],
+    inputs: [
+      { name: "docHash", type: "bytes32" },
+      { name: "issuer_", type: "address" },
+      { name: "batchId", type: "uint64" },
+      { name: "proof", type: "bytes32[]" },
+    ],
     outputs: [{ name: "", type: "uint8" }],
   },
   {
     type: "function",
-    name: "get",
+    name: "isRevoked",
     stateMutability: "view",
-    inputs: [{ name: "docHash", type: "bytes32" }],
-    outputs: [
-      { name: "issuer", type: "address" },
-      { name: "revoked", type: "bool" },
+    inputs: [
+      { name: "docHash", type: "bytes32" },
+      { name: "issuer_", type: "address" },
+      { name: "batchId", type: "uint64" },
     ],
+    outputs: [{ name: "", type: "bool" }],
+  },
+  {
+    type: "function",
+    name: "getBatch",
+    stateMutability: "view",
+    inputs: [
+      { name: "issuer_", type: "address" },
+      { name: "batchId", type: "uint64" },
+    ],
+    outputs: [{ name: "merkleRoot", type: "bytes32" }],
   },
   {
     type: "function",
@@ -39,6 +57,29 @@ export const DiplomaRegistryAbi = [
     stateMutability: "view",
     inputs: [{ name: "issuer", type: "address" }],
     outputs: [{ name: "", type: "bool" }],
+  },
+  {
+    type: "function",
+    name: "verifyBatchMembership",
+    stateMutability: "view",
+    inputs: [
+      { name: "docHash", type: "bytes32" },
+      { name: "issuer_", type: "address" },
+      { name: "batchId", type: "uint64" },
+      { name: "proof", type: "bytes32[]" },
+    ],
+    outputs: [{ name: "", type: "bool" }],
+  },
+  {
+    type: "function",
+    name: "merkleLeaf",
+    stateMutability: "view",
+    inputs: [
+      { name: "docHash", type: "bytes32" },
+      { name: "batchId", type: "uint64" },
+      { name: "issuer_", type: "address" },
+    ],
+    outputs: [{ name: "", type: "bytes32" }],
   },
 
   // write
@@ -58,16 +99,23 @@ export const DiplomaRegistryAbi = [
   },
   {
     type: "function",
-    name: "issue",
+    name: "issueBatchRoot",
     stateMutability: "nonpayable",
-    inputs: [{ name: "docHash", type: "bytes32" }],
+    inputs: [
+      { name: "batchId", type: "uint64" },
+      { name: "merkleRoot", type: "bytes32" },
+    ],
     outputs: [],
   },
   {
     type: "function",
-    name: "revoke",
+    name: "revokeFromBatch",
     stateMutability: "nonpayable",
-    inputs: [{ name: "docHash", type: "bytes32" }],
+    inputs: [
+      { name: "docHash", type: "bytes32" },
+      { name: "batchId", type: "uint64" },
+      { name: "proof", type: "bytes32[]" },
+    ],
     outputs: [],
   },
 
@@ -76,21 +124,21 @@ export const DiplomaRegistryAbi = [
   { type: "event", name: "IssuerRemoved", inputs: [{ name: "issuer", type: "address", indexed: false }], anonymous: false },
   {
     type: "event",
-    name: "DiplomaIssued",
-    inputs: [
-      { name: "docHash", type: "bytes32", indexed: true },
-      { name: "issuer", type: "address", indexed: true },
-      { name: "issuedAt", type: "uint64", indexed: false },
-    ],
-    anonymous: false,
-  },
-  {
-    type: "event",
     name: "DiplomaRevoked",
     inputs: [
       { name: "docHash", type: "bytes32", indexed: true },
       { name: "issuer", type: "address", indexed: true },
       { name: "revokedAt", type: "uint64", indexed: false },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event",
+    name: "BatchIssued",
+    inputs: [
+      { name: "batchId", type: "uint64", indexed: true },
+      { name: "merkleRoot", type: "bytes32", indexed: true },
+      { name: "issuer", type: "address", indexed: true },
     ],
     anonymous: false,
   },

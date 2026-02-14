@@ -1,9 +1,18 @@
+import "dotenv/config";
 import fs from "node:fs";
 import path from "node:path";
-import { canonicalize } from "json-canonicalize";
-import { createPublicClient, http, keccak256, toBytes } from "viem";
-import { hashPayload, DiplomaRegistryAbi, StatusCode } from "@univerify/verifier-core";
+import { createPublicClient, http, isAddress, isHex, type Address, type Hex } from "viem";
+import { DiplomaRegistryAbi, hashPayload, type StatusCode } from "@univerify/verifier-core";
 
+type MerkleBatchEnvelope = {
+  payload: unknown;
+  proof: {
+    type: "MERKLE_BATCH";
+    issuer: Address;
+    batchId: number;
+    proof: Hex[];
+  };
+};
 
 function requireEnv(name: string): string {
   const v = process.env[name];
@@ -17,51 +26,76 @@ function statusLabel(code: StatusCode): "Unknown" | "Valid" | "Revoked" {
   return "Revoked";
 }
 
-function readPayloadFromFile(filePath: string): unknown {
+function readJsonFromFile(filePath: string): unknown {
   const abs = path.isAbsolute(filePath) ? filePath : path.resolve(process.cwd(), filePath);
   const raw = fs.readFileSync(abs, "utf8");
   return JSON.parse(raw);
 }
 
-function parseArgs(): { payload: unknown } {
-  // Usage:
-  //   npm run verify -- --file payload.json
-  //   npm run verify -- '<json>'
+function parseArgs(): { input: unknown } {
   const args = process.argv.slice(2);
-
   const fileIdx = args.indexOf("--file");
   if (fileIdx !== -1) {
     const file = args[fileIdx + 1];
-    if (!file) throw new Error("Missing value after --file (e.g. --file payload.json)");
-    return { payload: readPayloadFromFile(file) };
+    if (!file) throw new Error("Missing value after --file.");
+    return { input: readJsonFromFile(file) };
   }
 
-  const arg = args[0];
-  if (!arg) throw new Error('Usage: verify -- --file payload.json  OR  verify \'<payload_json>\'');
-  return { payload: JSON.parse(arg) };
+  const jsonIdx = args.indexOf("--json");
+  if (jsonIdx !== -1) {
+    const raw = args[jsonIdx + 1];
+    if (!raw) throw new Error("Missing value after --json.");
+    return { input: JSON.parse(raw) };
+  }
+
+  throw new Error("Usage: verify -- --file diploma.json  OR  verify -- --json '<envelope_json>'");
+}
+
+function assertMerkleBatchEnvelope(v: unknown): MerkleBatchEnvelope {
+  if (!v || typeof v !== "object") throw new Error("Envelope must be an object.");
+  const env = v as any;
+  if (!("payload" in env) || !("proof" in env)) throw new Error("Envelope must contain payload and proof.");
+  if (!env.proof || typeof env.proof !== "object") throw new Error("Envelope.proof must be an object.");
+  if (env.proof.type !== "MERKLE_BATCH") throw new Error("Only MERKLE_BATCH envelope is supported.");
+  if (!isAddress(env.proof.issuer)) throw new Error("proof.issuer must be a valid address.");
+  if (!Number.isInteger(env.proof.batchId) || env.proof.batchId < 0) throw new Error("proof.batchId must be uint64 integer.");
+  if (!Array.isArray(env.proof.proof)) throw new Error("proof.proof must be a bytes32[] array.");
+  for (const p of env.proof.proof) {
+    if (!isHex(p, { strict: true }) || String(p).length !== 66) {
+      throw new Error("proof.proof entries must be bytes32 hex.");
+    }
+  }
+  return env as MerkleBatchEnvelope;
 }
 
 async function main() {
   const RPC_URL = requireEnv("RPC_URL");
   const REGISTRY = requireEnv("REGISTRY_ADDRESS") as `0x${string}`;
+  const { input } = parseArgs();
+  const env = assertMerkleBatchEnvelope(input);
 
-  const { payload } = parseArgs();
-
-  const canonical = canonicalize(payload);
-  const docHash = keccak256(toBytes(canonical));
+  const docHash = hashPayload(env.payload);
+  const issuer = env.proof.issuer;
+  const batchId = BigInt(env.proof.batchId);
+  const proof = env.proof.proof;
 
   const client = createPublicClient({ transport: http(RPC_URL) });
-
   const code = (await client.readContract({
     address: REGISTRY,
     abi: DiplomaRegistryAbi,
-    functionName: "status",
-    args: [docHash],
+    functionName: "statusWithProof",
+    args: [docHash, issuer, batchId, proof],
   })) as StatusCode;
 
   console.log(
     JSON.stringify(
-      { docHash, status: statusLabel(code), statusCode: code },
+      {
+        docHash,
+        issuer,
+        batchId: batchId.toString(),
+        status: statusLabel(code),
+        statusCode: code,
+      },
       null,
       2
     )
@@ -72,3 +106,4 @@ main().catch((e) => {
   console.error(e instanceof Error ? e.message : e);
   process.exit(1);
 });
+
