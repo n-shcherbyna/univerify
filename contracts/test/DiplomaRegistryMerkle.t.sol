@@ -17,8 +17,8 @@ contract DiplomaRegistryMerkleTest is Test {
 
     function setUp() public {
         reg = new DiplomaRegistry();
-        reg.addIssuer(issuer1);
-        reg.addIssuer(issuer2);
+        reg.addIssuer(issuer1, 1001);
+        reg.addIssuer(issuer2, 1002);
     }
 
     function testIssueBatchAndVerifyWithProof() public {
@@ -87,6 +87,11 @@ contract DiplomaRegistryMerkleTest is Test {
         vm.prank(issuer1);
         vm.expectRevert(DiplomaRegistry.BadRoot.selector);
         reg.issueBatchRoot(batchId, bytes32(0));
+    }
+
+    function testAddIssuerRejectsZeroUniversityId() public {
+        vm.expectRevert(DiplomaRegistry.BadUniversityId.selector);
+        reg.addIssuer(address(0xD00D), 0);
     }
 
     function testIssueBatchRootDuplicateBatchIdSameIssuer() public {

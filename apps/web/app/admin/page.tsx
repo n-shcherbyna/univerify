@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { isAddress, type Address, type Hex } from "viem";
 
 import { readPublicEnv } from "@/lib/univerify/env";
-import { makePublicClient, readIsIssuer, readOwner } from "@/lib/univerify/registry";
+import { makePublicClient, readIsIssuer, readIssuerUniversityId, readOwner } from "@/lib/univerify/registry";
 import { getEthereum, ensureChain, makeWalletClient } from "@/lib/univerify/wallet";
 import { makeStateLogger } from "@/lib/univerify/logs";
 import type { ChainState, TxState } from "@/lib/univerify/types";
@@ -22,6 +22,8 @@ export default function AdminPage() {
 
   const [issuerInput, setIssuerInput] = useState<string>("");
   const [issuerStatus, setIssuerStatus] = useState<boolean | null>(null);
+  const [issuerUniversityIdInput, setIssuerUniversityIdInput] = useState("1001");
+  const [issuerUniversityIdOnChain, setIssuerUniversityIdOnChain] = useState<bigint | null>(null);
 
   const [txHash, setTxHash] = useState<Hex | null>(null);
   const [txState, setTxState] = useState<TxState>("idle");
@@ -77,8 +79,11 @@ export default function AdminPage() {
     if (!isAddress(issuerInput)) return setError("Enter a valid issuer address.");
     try {
       const ok = await readIsIssuer({ publicClient, registry: REGISTRY, issuer: issuerInput as Address });
+      const uid = await readIssuerUniversityId({ publicClient, registry: REGISTRY, issuer: issuerInput as Address });
       setIssuerStatus(ok);
+      setIssuerUniversityIdOnChain(uid);
       log.push(`isIssuer(${issuerInput}) = ${ok}`);
+      log.push(`issuerUniversityId(${issuerInput}) = ${uid.toString()}`);
     } catch (e: any) {
       setError(e?.message ?? String(e));
     }
@@ -91,6 +96,9 @@ export default function AdminPage() {
     if (!owner) await refreshOwnerAndAdmin();
 
     if (!isAdmin) return setError("Only contract owner can manage issuers.");
+    if (fn === "addIssuer" && (!/^\d+$/.test(issuerUniversityIdInput.trim()) || BigInt(issuerUniversityIdInput.trim()) === 0n)) {
+      return setError("University ID must be a positive integer.");
+    }
 
     const eth = getEthereum();
     if (!eth) return setError("MetaMask not found.");
@@ -104,6 +112,7 @@ export default function AdminPage() {
       await writeIssuerAdminTx({
         fn,
         issuer: issuerInput as Address,
+        universityId: fn === "addIssuer" ? BigInt(issuerUniversityIdInput.trim()) : undefined,
         registry: REGISTRY,
         account,
         publicClient,
@@ -113,7 +122,9 @@ export default function AdminPage() {
         onAfter: async () => {
           await refreshOwnerAndAdmin();
           const ok = await readIsIssuer({ publicClient, registry: REGISTRY, issuer: issuerInput as Address });
+          const uid = await readIssuerUniversityId({ publicClient, registry: REGISTRY, issuer: issuerInput as Address });
           setIssuerStatus(ok);
+          setIssuerUniversityIdOnChain(uid);
         },
       });
     } catch (e: any) {
@@ -146,9 +157,18 @@ export default function AdminPage() {
           onChange={(e) => {
             setIssuerInput(e.target.value.trim());
             setIssuerStatus(null);
+            setIssuerUniversityIdOnChain(null);
             resetMessages();
           }}
           placeholder="0x..."
+          style={{ width: "100%", fontFamily: "monospace", padding: 10 }}
+        />
+
+        <label style={{ display: "block", fontWeight: 600, marginTop: 10, marginBottom: 8 }}>University ID (uint64)</label>
+        <input
+          value={issuerUniversityIdInput}
+          onChange={(e) => setIssuerUniversityIdInput(e.target.value.trim())}
+          placeholder="1001"
           style={{ width: "100%", fontFamily: "monospace", padding: 10 }}
         />
 
@@ -172,6 +192,11 @@ export default function AdminPage() {
             <span style={{ color: issuerStatus ? "green" : "orange" }}>
               {issuerStatus ? "YES" : "NO"}
             </span>
+          </p>
+        )}
+        {issuerUniversityIdOnChain !== null && (
+          <p style={{ marginTop: 4 }}>
+            <b>issuerUniversityId:</b> {issuerUniversityIdOnChain.toString()}
           </p>
         )}
 

@@ -10,6 +10,7 @@ import {
   makePublicClient,
   readBatch,
   readIsIssuer,
+  readIssuerUniversityId,
   readIsRevoked,
   readStatusWithProof,
   statusLabel,
@@ -35,6 +36,8 @@ type VerifyState = {
   effectiveIssuer: Address | null;
   recoveredSigner: Address | null;
   issuerTrustedNow: boolean | null;
+  payloadUniversityId: bigint | null;
+  issuerUniversityId: bigint | null;
   verifyOk: boolean | null;
 };
 
@@ -54,8 +57,18 @@ function emptyState(): VerifyState {
     effectiveIssuer: null,
     recoveredSigner: null,
     issuerTrustedNow: null,
+    payloadUniversityId: null,
+    issuerUniversityId: null,
     verifyOk: null,
   };
+}
+
+function readPayloadUniversityId(payload: unknown): bigint {
+  const p = payload as any;
+  const raw = p?.universityId ?? p?.university?.id;
+  if (typeof raw === "number" && Number.isInteger(raw) && raw > 0) return BigInt(raw);
+  if (typeof raw === "string" && /^\d+$/.test(raw) && raw !== "0") return BigInt(raw);
+  throw new Error("Payload missing valid universityId (expected positive integer).");
 }
 
 export default function VerifyPage() {
@@ -96,7 +109,9 @@ export default function VerifyPage() {
       log.push(`proof.type=${env.proof.type}`);
 
       const docHash = hashPayload(env.payload);
+      const payloadUniversityId = readPayloadUniversityId(env.payload);
       log.push(`docHash(payload)=${docHash}`);
+      log.push(`payload.universityId=${payloadUniversityId.toString()}`);
 
       let batchId: bigint;
       let batchProof: Hex[];
@@ -196,6 +211,15 @@ export default function VerifyPage() {
       });
       log.push(`issuer.trustedNow=${issuerTrustedNow ? "YES" : "NO"}`);
 
+      const issuerUniversityId = await readIssuerUniversityId({
+        publicClient,
+        registry: REGISTRY,
+        issuer: effectiveIssuer,
+      });
+      const universityIdOk = issuerUniversityId === payloadUniversityId;
+      log.push(`issuer.universityId.onchain=${issuerUniversityId.toString()}`);
+      log.push(`check.universityIdMatch=${universityIdOk ? "OK" : "FAIL"}`);
+
       const revoked = await readIsRevoked({
         publicClient,
         registry: REGISTRY,
@@ -224,7 +248,7 @@ export default function VerifyPage() {
       if (recoveredSigner) log.push(`check.signatureIssuerMatch=${issuerOk ? "OK" : "FAIL"}`);
       else log.push("check.signatureIssuerMatch=SKIPPED (no signature)");
 
-      const verifyOk = statusOk && issuerOk && merkleOk && declaredIssuerOk;
+      const verifyOk = statusOk && issuerOk && merkleOk && declaredIssuerOk && universityIdOk;
       log.push(`RESULT=${verifyOk ? "VERIFIED ✅" : "NOT VERIFIED ❌"}`);
 
       setState({
@@ -242,6 +266,8 @@ export default function VerifyPage() {
         effectiveIssuer,
         recoveredSigner,
         issuerTrustedNow,
+        payloadUniversityId,
+        issuerUniversityId,
         verifyOk,
       });
     } catch (e: any) {
@@ -293,6 +319,8 @@ export default function VerifyPage() {
         {state.recoveredSigner === null && <p><b>signature check:</b> skipped (no EIP-712 in envelope)</p>}
         {state.recordRevoked !== null && <p><b>revoked flag:</b> {String(state.recordRevoked)}</p>}
         {state.issuerTrustedNow !== null && <p><b>issuer trusted now:</b> {state.issuerTrustedNow ? "YES" : "NO"}</p>}
+        {state.payloadUniversityId !== null && <p><b>payload universityId:</b> {state.payloadUniversityId.toString()}</p>}
+        {state.issuerUniversityId !== null && <p><b>issuer universityId (on-chain):</b> {state.issuerUniversityId.toString()}</p>}
 
         {state.onChainBatchRoot && <p><b>batch root (on-chain):</b> <code>{state.onChainBatchRoot}</code></p>}
         {state.merkleLeaf && <p><b>merkle leaf (local):</b> <code>{state.merkleLeaf}</code></p>}

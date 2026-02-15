@@ -8,6 +8,7 @@ import { decodeRegistryRevert } from "./registryErrors";
 export async function writeIssuerAdminTx(params: {
   fn: "addIssuer" | "removeIssuer";
   issuer: Address;
+  universityId?: bigint;
   registry: Address;
   account: Address;
   publicClient: ReturnType<typeof makePublicClient>;
@@ -18,21 +19,37 @@ export async function writeIssuerAdminTx(params: {
 }) {
   params.setTxState("submitting");
   try {
-    const gas = await params.publicClient.estimateContractGas({
-      address: params.registry,
-      abi: DiplomaRegistryAbi,
-      functionName: params.fn,
-      args: [params.issuer],
-      account: params.account,
-    });
+    const gas = params.fn === "addIssuer"
+      ? await params.publicClient.estimateContractGas({
+          address: params.registry,
+          abi: DiplomaRegistryAbi,
+          functionName: "addIssuer",
+          args: [params.issuer, params.universityId ?? 0n],
+          account: params.account,
+        })
+      : await params.publicClient.estimateContractGas({
+          address: params.registry,
+          abi: DiplomaRegistryAbi,
+          functionName: "removeIssuer",
+          args: [params.issuer],
+          account: params.account,
+        });
 
-    const tx = await params.walletClient.writeContract({
-      address: params.registry,
-      abi: DiplomaRegistryAbi,
-      functionName: params.fn,
-      args: [params.issuer],
-      gas: (gas * 120n) / 100n,
-    });
+    const tx = params.fn === "addIssuer"
+      ? await params.walletClient.writeContract({
+          address: params.registry,
+          abi: DiplomaRegistryAbi,
+          functionName: "addIssuer",
+          args: [params.issuer, params.universityId ?? 0n],
+          gas: (gas * 120n) / 100n,
+        })
+      : await params.walletClient.writeContract({
+          address: params.registry,
+          abi: DiplomaRegistryAbi,
+          functionName: "removeIssuer",
+          args: [params.issuer],
+          gas: (gas * 120n) / 100n,
+        });
 
     params.onTxHash?.(tx);
 

@@ -3,6 +3,7 @@ export const DiplomaRegistryAbi = [
   { type: "error", name: "OnlyOwner", inputs: [] },
   { type: "error", name: "OnlyIssuer", inputs: [] },
   { type: "error", name: "BadIssuer", inputs: [] },
+  { type: "error", name: "BadUniversityId", inputs: [] },
   { type: "error", name: "BadHash", inputs: [] },
   { type: "error", name: "BadRoot", inputs: [] },
   { type: "error", name: "BatchAlreadyIssued", inputs: [] },
@@ -60,6 +61,13 @@ export const DiplomaRegistryAbi = [
   },
   {
     type: "function",
+    name: "issuerUniversityId",
+    stateMutability: "view",
+    inputs: [{ name: "issuer", type: "address" }],
+    outputs: [{ name: "", type: "uint64" }],
+  },
+  {
+    type: "function",
     name: "verifyBatchMembership",
     stateMutability: "view",
     inputs: [
@@ -87,7 +95,10 @@ export const DiplomaRegistryAbi = [
     type: "function",
     name: "addIssuer",
     stateMutability: "nonpayable",
-    inputs: [{ name: "issuer", type: "address" }],
+    inputs: [
+      { name: "issuer", type: "address" },
+      { name: "universityId", type: "uint64" },
+    ],
     outputs: [],
   },
   {

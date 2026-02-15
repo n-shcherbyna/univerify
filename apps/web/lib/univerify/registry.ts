@@ -92,6 +92,20 @@ export async function readIsIssuer(params: {
   return res as boolean;
 }
 
+export async function readIssuerUniversityId(params: {
+  publicClient: RegistryPublicClient;
+  registry: Address;
+  issuer: Address;
+}): Promise<bigint> {
+  const res = await params.publicClient.readContract({
+    address: params.registry,
+    abi: DiplomaRegistryAbi,
+    functionName: "issuerUniversityId",
+    args: [params.issuer],
+  });
+  return res as bigint;
+}
+
 export async function readOwner(params: {
   publicClient: RegistryPublicClient;
   registry: Address;

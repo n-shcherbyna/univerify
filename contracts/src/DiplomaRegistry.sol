@@ -7,6 +7,7 @@ contract DiplomaRegistry {
     error OnlyOwner();
     error OnlyIssuer();
     error BadIssuer();
+    error BadUniversityId();
     error BadHash();
     error BadRoot();
     error BatchAlreadyIssued();
@@ -16,7 +17,7 @@ contract DiplomaRegistry {
 
     address public immutable owner;
 
-    mapping(address => bool) public isIssuer;
+    mapping(address => uint64) private issuerUniversityIds;
     mapping(bytes32 => bool) private revokedLeaf;
     mapping(address => mapping(uint64 => bytes32)) private batchRoots;
 
@@ -32,7 +33,7 @@ contract DiplomaRegistry {
     }
 
     modifier onlyIssuer() {
-        if (!isIssuer[msg.sender]) revert OnlyIssuer();
+        if (issuerUniversityIds[msg.sender] == 0) revert OnlyIssuer();
         _;
     }
 
@@ -40,15 +41,24 @@ contract DiplomaRegistry {
         owner = msg.sender;
     }
 
-    function addIssuer(address issuer) external onlyOwner {
+    function addIssuer(address issuer, uint64 universityId) external onlyOwner {
         if (issuer == address(0)) revert BadIssuer();
-        isIssuer[issuer] = true;
+        if (universityId == 0) revert BadUniversityId();
+        issuerUniversityIds[issuer] = universityId;
         emit IssuerAdded(issuer);
     }
 
     function removeIssuer(address issuer) external onlyOwner {
-        isIssuer[issuer] = false;
+        issuerUniversityIds[issuer] = 0;
         emit IssuerRemoved(issuer);
+    }
+
+    function isIssuer(address issuer) external view returns (bool) {
+        return issuerUniversityIds[issuer] != 0;
+    }
+
+    function issuerUniversityId(address issuer) external view returns (uint64) {
+        return issuerUniversityIds[issuer];
     }
 
     function issueBatchRoot(uint64 batchId, bytes32 merkleRoot) external onlyIssuer {

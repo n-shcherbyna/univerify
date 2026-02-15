@@ -7,7 +7,7 @@ import { hashPayload } from "@univerify/verifier-core";
 import { readPublicEnv } from "@/lib/univerify/env";
 import type { ChainState, TxState, DiplomaEnvelopeMerkleBatch } from "@/lib/univerify/types";
 import { buildUniVerifyDomain, recoverIssuerFromEip712, DIPLOMA_TYPES } from "@/lib/univerify/eip712";
-import { makePublicClient, readIsRevoked, readStatusWithProof, statusLabel } from "@/lib/univerify/registry";
+import { makePublicClient, readIsRevoked, readIssuerUniversityId, readStatusWithProof, statusLabel } from "@/lib/univerify/registry";
 import { downloadJson, parseJson } from "@/lib/univerify/json";
 import { getEthereum, ensureChain, makeWalletClient } from "@/lib/univerify/wallet";
 import { makeStateLogger } from "@/lib/univerify/logs";
@@ -31,6 +31,14 @@ type ComputedBatch = {
   items: BatchItem[];
 };
 
+function readPayloadUniversityId(payload: unknown): bigint {
+  const p = payload as any;
+  const raw = p?.universityId ?? p?.university?.id;
+  if (typeof raw === "number" && Number.isInteger(raw) && raw > 0) return BigInt(raw);
+  if (typeof raw === "string" && /^\d+$/.test(raw) && raw !== "0") return BigInt(raw);
+  throw new Error("Each payload must include universityId (positive integer).");
+}
+
 export default function IssuerPage() {
   const { rpcUrl: RPC_URL, registry: REGISTRY, chainId: TARGET_CHAIN_ID } = useMemo(() => readPublicEnv(), []);
   const publicClient = useMemo(() => makePublicClient(RPC_URL), [RPC_URL]);
@@ -39,12 +47,14 @@ export default function IssuerPage() {
   const [chainState, setChainState] = useState<ChainState>("unknown");
   const [attachEip712, setAttachEip712] = useState(false);
   const [signature, setSignature] = useState<Hex | null>(null);
+  const [accountUniversityId, setAccountUniversityId] = useState<bigint | null>(null);
 
   const [batchPayloadsText, setBatchPayloadsText] = useState(
     `[
   {
     "student": { "firstName": "Jan", "lastName": "Kowalski", "studentId": "s123456" },
     "degree": { "name": "Bachelor of Computer Science", "level": "BSc" },
+    "universityId": 1001,
     "university": { "name": "UniVerify University", "country": "Poland" },
     "issuedAt": "2025-06-30",
     "diplomaNumber": "UV-2025-000123"
@@ -52,6 +62,7 @@ export default function IssuerPage() {
   {
     "student": { "firstName": "Anna", "lastName": "Nowak", "studentId": "s123457" },
     "degree": { "name": "Bachelor of Computer Science", "level": "BSc" },
+    "universityId": 1001,
     "university": { "name": "UniVerify University", "country": "Poland" },
     "issuedAt": "2025-06-30",
     "diplomaNumber": "UV-2025-000124"
@@ -129,6 +140,9 @@ export default function IssuerPage() {
       await ensureChain({ eth, targetChainId: TARGET_CHAIN_ID });
       setChainState("ok");
       log.push(`network ok (chainId=${TARGET_CHAIN_ID})`);
+      const uid = await readIssuerUniversityId({ publicClient, registry: REGISTRY, issuer: addr as Address });
+      setAccountUniversityId(uid === 0n ? null : uid);
+      log.push(`issuer.universityId=${uid.toString()}`);
     } catch (e: any) {
       setChainState("wrong");
       setError(e?.message ?? String(e));
@@ -139,6 +153,7 @@ export default function IssuerPage() {
   function computeBatch() {
     resetMessages();
     if (!account) return setError("Connect MetaMask first.");
+    if (accountUniversityId === null) return setError("Connected wallet is not configured as issuer (missing universityId).");
 
     try {
       const parsed = parseJson<unknown[]>(batchPayloadsText);
@@ -147,7 +162,13 @@ export default function IssuerPage() {
 
       const { batchIdBigint, batchIdNumber } = parseBatchId(batchIdInput);
       const chainId = BigInt(TARGET_CHAIN_ID);
-      const docHashes = parsed.value.map((payload) => hashPayload(payload));
+      const docHashes = parsed.value.map((payload) => {
+        const payloadUniversityId = readPayloadUniversityId(payload);
+        if (payloadUniversityId !== accountUniversityId) {
+          throw new Error(`Payload universityId mismatch. Expected ${accountUniversityId.toString()}, got ${payloadUniversityId.toString()}.`);
+        }
+        return hashPayload(payload);
+      });
       const leaves = docHashes.map((docHash) =>
         computeMerkleLeaf({
           registry: REGISTRY,
@@ -307,6 +328,7 @@ export default function IssuerPage() {
         </button>
         <div>
           <div><b>Account:</b> {account || "-"}</div>
+          <div><b>Issuer universityId:</b> {accountUniversityId?.toString() ?? "-"}</div>
           <div><b>Network:</b> {chainState === "ok" ? "OK" : chainState === "wrong" ? "Wrong network" : "-"}</div>
           <div><b>Registry:</b> <code>{REGISTRY}</code></div>
         </div>
