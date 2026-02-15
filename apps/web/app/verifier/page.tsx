@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { Address, Hex } from "viem";
 import { hashPayload } from "@univerify/verifier-core";
 
@@ -12,7 +12,9 @@ import {
   readIsIssuer,
   readIssuerUniversityId,
   readIsRevoked,
+  readSnapshot,
   readStatusWithProof,
+  readUniversity,
   statusLabel,
 } from "@/lib/univerify/registry";
 import { normalizeAddress, parseJson, validateDiplomaEnvelope } from "@/lib/univerify/json";
@@ -37,7 +39,14 @@ type VerifyState = {
   recoveredSigner: Address | null;
   issuerTrustedNow: boolean | null;
   payloadUniversityId: bigint | null;
+  payloadUniversityName: string | null;
   issuerUniversityId: bigint | null;
+  catalogSnapshotHash: Hex | null;
+  catalogUniversityMetadataHash: Hex | null;
+  catalogOfficialUniversityName: string | null;
+  universityNameMatches: boolean | null;
+  onChainUniversityMetadataHash: Hex | null;
+  onChainUniversityStatus: number | null;
   verifyOk: boolean | null;
 };
 
@@ -58,7 +67,14 @@ function emptyState(): VerifyState {
     recoveredSigner: null,
     issuerTrustedNow: null,
     payloadUniversityId: null,
+    payloadUniversityName: null,
     issuerUniversityId: null,
+    catalogSnapshotHash: null,
+    catalogUniversityMetadataHash: null,
+    catalogOfficialUniversityName: null,
+    universityNameMatches: null,
+    onChainUniversityMetadataHash: null,
+    onChainUniversityStatus: null,
     verifyOk: null,
   };
 }
@@ -71,11 +87,54 @@ function readPayloadUniversityId(payload: unknown): bigint {
   throw new Error("Payload missing valid universityId (expected positive integer).");
 }
 
+function readPayloadUniversityName(payload: unknown): string {
+  const p = payload as any;
+  const raw = p?.university?.name;
+  if (typeof raw !== "string" || raw.trim() === "") {
+    throw new Error("Payload missing university.name.");
+  }
+  return raw.trim();
+}
+
+type CatalogEntry = {
+  universityId: number;
+  officialName: string;
+  metadataHash: Hex;
+};
+
+type CatalogSnapshot = {
+  universities: CatalogEntry[];
+};
+
+function parseCatalogSnapshot(text: string): CatalogSnapshot {
+  const parsed = parseJson(text);
+  if (!parsed.ok) throw new Error(`Catalog JSON invalid: ${parsed.error}`);
+  const v = parsed.value as any;
+  if (!v || typeof v !== "object") throw new Error("Catalog must be an object.");
+  if (!Array.isArray(v.universities)) throw new Error("Catalog.universities must be an array.");
+  for (const u of v.universities) {
+    if (!Number.isInteger(u?.universityId) || u.universityId <= 0) {
+      throw new Error("Each catalog university must have positive integer universityId.");
+    }
+    if (typeof u?.officialName !== "string" || u.officialName.trim() === "") {
+      throw new Error("Each catalog university must have officialName.");
+    }
+    if (typeof u?.metadataHash !== "string" || !/^0x[0-9a-fA-F]{64}$/.test(u.metadataHash)) {
+      throw new Error("Each catalog university must have metadataHash bytes32.");
+    }
+  }
+  return v as CatalogSnapshot;
+}
+
 export default function VerifyPage() {
   const { rpcUrl: RPC_URL, registry: REGISTRY, chainId: TARGET_CHAIN_ID } = useMemo(() => readPublicEnv(), []);
   const publicClient = useMemo(() => makePublicClient(RPC_URL), [RPC_URL]);
+  const DEFAULT_CATALOG_PATH = "/catalog.snapshot.json";
 
   const [envelopeText, setEnvelopeText] = useState("");
+  const [catalogFileText, setCatalogFileText] = useState("");
+  const [catalogFileName, setCatalogFileName] = useState<string | null>(null);
+  const [strictCatalog, setStrictCatalog] = useState(true);
   const [error, setError] = useState("");
   const [state, setState] = useState<VerifyState>(emptyState);
   const [logs, setLogs] = useState<string[]>([]);
@@ -92,6 +151,30 @@ export default function VerifyPage() {
     const text = await readFileAsText(file);
     setEnvelopeText(text);
   }
+
+  useEffect(() => {
+    let active = true;
+    async function loadDefaultCatalog() {
+      try {
+        const res = await fetch(DEFAULT_CATALOG_PATH, { cache: "no-store" });
+        if (!res.ok) throw new Error(`Failed to load ${DEFAULT_CATALOG_PATH} (${res.status}).`);
+        const text = await res.text();
+        parseCatalogSnapshot(text);
+        if (!active) return;
+        setCatalogFileText(text);
+        setCatalogFileName(DEFAULT_CATALOG_PATH);
+      } catch (e: any) {
+        if (!active) return;
+        setCatalogFileText("");
+        setCatalogFileName(null);
+        setError(e?.message ?? String(e));
+      }
+    }
+    void loadDefaultCatalog();
+    return () => {
+      active = false;
+    };
+  }, []);
 
   async function verify() {
     reset();
@@ -110,8 +193,10 @@ export default function VerifyPage() {
 
       const docHash = hashPayload(env.payload);
       const payloadUniversityId = readPayloadUniversityId(env.payload);
+      const payloadUniversityName = readPayloadUniversityName(env.payload);
       log.push(`docHash(payload)=${docHash}`);
       log.push(`payload.universityId=${payloadUniversityId.toString()}`);
+      log.push(`payload.university.name=${payloadUniversityName}`);
 
       let batchId: bigint;
       let batchProof: Hex[];
@@ -220,6 +305,59 @@ export default function VerifyPage() {
       log.push(`issuer.universityId.onchain=${issuerUniversityId.toString()}`);
       log.push(`check.universityIdMatch=${universityIdOk ? "OK" : "FAIL"}`);
 
+      const onChainUniversity = await readUniversity({
+        publicClient,
+        registry: REGISTRY,
+        universityId: payloadUniversityId,
+      });
+      const onChainUniversityMetadataHash = onChainUniversity.metadataHash;
+      const onChainUniversityStatus = onChainUniversity.status;
+      const onChainUniversityActive = onChainUniversityStatus === 1;
+      log.push(`university.metadataHash.onchain=${onChainUniversityMetadataHash}`);
+      log.push(`university.status.onchain=${onChainUniversityStatus} (${onChainUniversityActive ? "Active" : "NotActive"})`);
+
+      const onChainSnapshot = await readSnapshot({
+        publicClient,
+        registry: REGISTRY,
+      });
+      log.push(`snapshot.hash.onchain=${onChainSnapshot.hash}`);
+
+      let catalogSnapshotHash: Hex | null = null;
+      let catalogUniversityMetadataHash: Hex | null = null;
+      let catalogOfficialUniversityName: string | null = null;
+      let universityNameMatches: boolean | null = null;
+      let catalogOk = true;
+      if (strictCatalog) {
+        const rawCatalog = catalogFileText.trim();
+        if (!rawCatalog) throw new Error(`Strict catalog is enabled. Missing default catalog: ${DEFAULT_CATALOG_PATH}.`);
+        log.push(`catalog.source=${catalogFileName ?? DEFAULT_CATALOG_PATH}`);
+        const catalog = parseCatalogSnapshot(rawCatalog);
+
+        catalogSnapshotHash = hashPayload(catalog) as Hex;
+        log.push(`snapshot.hash.catalog=${catalogSnapshotHash}`);
+
+        const catalogSnapshotHashOk = catalogSnapshotHash.toLowerCase() === onChainSnapshot.hash.toLowerCase();
+        log.push(`check.snapshotHashMatch=${catalogSnapshotHashOk ? "OK" : "FAIL"}`);
+
+        const entry = catalog.universities.find((u) => BigInt(u.universityId) === payloadUniversityId);
+        if (!entry) throw new Error(`Catalog missing universityId=${payloadUniversityId.toString()}.`);
+        catalogUniversityMetadataHash = entry.metadataHash;
+        catalogOfficialUniversityName = entry.officialName;
+        log.push(`university.metadataHash.catalog=${catalogUniversityMetadataHash}`);
+        log.push(`university.officialName.catalog=${catalogOfficialUniversityName}`);
+
+        const metadataHashOk = catalogUniversityMetadataHash.toLowerCase() === onChainUniversityMetadataHash.toLowerCase();
+        log.push(`check.universityMetadataHashMatch=${metadataHashOk ? "OK" : "FAIL"}`);
+
+        const catalogName = entry.officialName.trim();
+        universityNameMatches = payloadUniversityName.toLowerCase() === catalogName.toLowerCase();
+        log.push(`check.universityNameMatch=${universityNameMatches ? "OK" : "FAIL"}`);
+
+        catalogOk = catalogSnapshotHashOk && metadataHashOk && universityNameMatches;
+      } else {
+        log.push("check.catalog=SKIPPED (strict catalog disabled)");
+      }
+
       const revoked = await readIsRevoked({
         publicClient,
         registry: REGISTRY,
@@ -242,13 +380,15 @@ export default function VerifyPage() {
       const statusOk = statusCode === 1;
       const issuerOk = recoveredSigner ? normalizeAddress(recoveredSigner) === normalizeAddress(effectiveIssuer) : true;
       const merkleOk = merkleRootMatches;
+      const universityActiveOk = onChainUniversityActive;
 
       log.push(`check.statusValid=${statusOk ? "OK" : "FAIL"}`);
       log.push(`check.merkleRoot=${merkleOk ? "OK" : "FAIL"}`);
+      log.push(`check.universityActive=${universityActiveOk ? "OK" : "FAIL"}`);
       if (recoveredSigner) log.push(`check.signatureIssuerMatch=${issuerOk ? "OK" : "FAIL"}`);
       else log.push("check.signatureIssuerMatch=SKIPPED (no signature)");
 
-      const verifyOk = statusOk && issuerOk && merkleOk && declaredIssuerOk && universityIdOk;
+      const verifyOk = statusOk && issuerOk && merkleOk && declaredIssuerOk && universityIdOk && universityActiveOk && catalogOk;
       log.push(`RESULT=${verifyOk ? "VERIFIED ✅" : "NOT VERIFIED ❌"}`);
 
       setState({
@@ -267,7 +407,14 @@ export default function VerifyPage() {
         recoveredSigner,
         issuerTrustedNow,
         payloadUniversityId,
+        payloadUniversityName,
         issuerUniversityId,
+        catalogSnapshotHash,
+        catalogUniversityMetadataHash,
+        catalogOfficialUniversityName,
+        universityNameMatches,
+        onChainUniversityMetadataHash,
+        onChainUniversityStatus,
         verifyOk,
       });
     } catch (e: any) {
@@ -290,6 +437,20 @@ export default function VerifyPage() {
             if (f) void loadFile(f);
           }}
         />
+      </div>
+
+      <div className="uv-card">
+        <label style={{ display: "inline-flex", alignItems: "center", gap: 8, fontWeight: 600 }}>
+          <input
+            type="checkbox"
+            checked={strictCatalog}
+            onChange={(e) => setStrictCatalog(e.target.checked)}
+          />
+          Strict catalog mode (snapshot hash + university metadata validation)
+        </label>
+        <p style={{ marginTop: 10, marginBottom: 0 }}>
+          <b>Catalog file:</b> {catalogFileName ?? DEFAULT_CATALOG_PATH}
+        </p>
       </div>
 
       <div className="uv-card">
@@ -320,7 +481,14 @@ export default function VerifyPage() {
         {state.recordRevoked !== null && <p><b>revoked flag:</b> {String(state.recordRevoked)}</p>}
         {state.issuerTrustedNow !== null && <p><b>issuer trusted now:</b> {state.issuerTrustedNow ? "YES" : "NO"}</p>}
         {state.payloadUniversityId !== null && <p><b>payload universityId:</b> {state.payloadUniversityId.toString()}</p>}
+        {state.payloadUniversityName && <p><b>payload university name:</b> {state.payloadUniversityName}</p>}
         {state.issuerUniversityId !== null && <p><b>issuer universityId (on-chain):</b> {state.issuerUniversityId.toString()}</p>}
+        {state.onChainUniversityStatus !== null && <p><b>university status (on-chain):</b> {state.onChainUniversityStatus}</p>}
+        {state.onChainUniversityMetadataHash && <p><b>university metadata hash (on-chain):</b> <code>{state.onChainUniversityMetadataHash}</code></p>}
+        {state.catalogUniversityMetadataHash && <p><b>university metadata hash (catalog):</b> <code>{state.catalogUniversityMetadataHash}</code></p>}
+        {state.catalogOfficialUniversityName && <p><b>official university name (catalog):</b> {state.catalogOfficialUniversityName}</p>}
+        {state.universityNameMatches !== null && <p><b>university name match:</b> {state.universityNameMatches ? "YES" : "NO"}</p>}
+        {state.catalogSnapshotHash && <p><b>catalog snapshot hash:</b> <code>{state.catalogSnapshotHash}</code></p>}
 
         {state.onChainBatchRoot && <p><b>batch root (on-chain):</b> <code>{state.onChainBatchRoot}</code></p>}
         {state.merkleLeaf && <p><b>merkle leaf (local):</b> <code>{state.merkleLeaf}</code></p>}

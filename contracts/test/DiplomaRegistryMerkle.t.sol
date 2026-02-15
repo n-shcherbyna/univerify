@@ -17,8 +17,8 @@ contract DiplomaRegistryMerkleTest is Test {
 
     function setUp() public {
         reg = new DiplomaRegistry();
-        reg.addIssuer(issuer1, 1001);
-        reg.addIssuer(issuer2, 1002);
+        reg.onboardIssuerAndUniversity(issuer1, 1001, keccak256("uni-1001"), keccak256("snapshot-setup-1"));
+        reg.onboardIssuerAndUniversity(issuer2, 1002, keccak256("uni-1002"), keccak256("snapshot-setup-2"));
     }
 
     function testIssueBatchAndVerifyWithProof() public {
@@ -89,9 +89,77 @@ contract DiplomaRegistryMerkleTest is Test {
         reg.issueBatchRoot(batchId, bytes32(0));
     }
 
-    function testAddIssuerRejectsZeroUniversityId() public {
+    function testOnboardRejectsZeroUniversityId() public {
         vm.expectRevert(DiplomaRegistry.BadUniversityId.selector);
-        reg.addIssuer(address(0xD00D), 0);
+        reg.onboardIssuerAndUniversity(address(0xD00D), 0, keccak256("meta"), keccak256("snap"));
+    }
+
+    function testOnboardRejectsZeroIssuer() public {
+        vm.expectRevert(DiplomaRegistry.BadIssuer.selector);
+        reg.onboardIssuerAndUniversity(address(0), 2001, keccak256("meta"), keccak256("snap"));
+    }
+
+    function testOnboardRejectsNoop() public {
+        vm.expectRevert(DiplomaRegistry.NoChange.selector);
+        reg.onboardIssuerAndUniversity(issuer1, 1001, keccak256("uni-1001"), keccak256("snapshot-setup-2"));
+    }
+
+    function testSetUniversityRejectsNoop() public {
+        vm.expectRevert(DiplomaRegistry.NoChange.selector);
+        reg.setUniversity(1001, keccak256("uni-1001"), DiplomaRegistry.UniversityStatus.Active);
+    }
+
+    function testOnboardRejectsBadSnapshot() public {
+        vm.expectRevert(DiplomaRegistry.BadSnapshot.selector);
+        reg.onboardIssuerAndUniversity(address(0xD00D), 2001, keccak256("meta"), bytes32(0));
+    }
+
+    function testOnboardRejectsBadHash() public {
+        vm.expectRevert(DiplomaRegistry.BadHash.selector);
+        reg.onboardIssuerAndUniversity(address(0xD00D), 2001, bytes32(0), keccak256("snap"));
+    }
+
+    function testRemoveIssuerRejectsNoop() public {
+        vm.prank(address(reg.owner()));
+        reg.removeIssuer(issuer1);
+
+        vm.expectRevert(DiplomaRegistry.NoChange.selector);
+        reg.removeIssuer(issuer1);
+    }
+
+    function testOnboardIssuerAndUniversityUpdatesAllInOneTx() public {
+        address newIssuer = address(0xD00D);
+        uint64 universityId = 3001;
+        bytes32 metadataHash = keccak256("uni-3001");
+        bytes32 snap = keccak256("snapshot-3001");
+
+        reg.onboardIssuerAndUniversity(newIssuer, universityId, metadataHash, snap);
+
+        (bytes32 onChainMetadataHash, DiplomaRegistry.UniversityStatus st) = reg.getUniversity(universityId);
+        assertEq(onChainMetadataHash, metadataHash);
+        assertEq(uint256(st), uint256(DiplomaRegistry.UniversityStatus.Active));
+        assertEq(reg.issuerUniversityId(newIssuer), universityId);
+        assertEq(reg.snapshotHash(), snap);
+    }
+
+    function testOnboardIssuerAndUniversityRejectsNoop() public {
+        uint64 universityId = 4001;
+        address issuer = address(0xF001);
+        bytes32 metadataHash = keccak256("uni-4001");
+        bytes32 snap = keccak256("snapshot-same");
+
+        reg.onboardIssuerAndUniversity(issuer, universityId, metadataHash, snap);
+
+        vm.expectRevert(DiplomaRegistry.NoChange.selector);
+        reg.onboardIssuerAndUniversity(issuer, universityId, metadataHash, snap);
+    }
+
+    function testIssueBatchRootBlockedWhenUniversitySuspended() public {
+        reg.setUniversity(1001, keccak256("uni-1001-v2"), DiplomaRegistry.UniversityStatus.Suspended);
+
+        vm.prank(issuer1);
+        vm.expectRevert(DiplomaRegistry.UniversityNotActive.selector);
+        reg.issueBatchRoot(batchId, keccak256("root"));
     }
 
     function testIssueBatchRootDuplicateBatchIdSameIssuer() public {

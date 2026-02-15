@@ -6,9 +6,12 @@ import type { makePublicClient } from "./registry";
 import { decodeRegistryRevert } from "./registryErrors";
 
 export async function writeIssuerAdminTx(params: {
-  fn: "addIssuer" | "removeIssuer";
+  fn: "removeIssuer" | "setUniversity" | "onboardIssuerAndUniversity";
   issuer: Address;
   universityId?: bigint;
+  universityStatus?: number;
+  universityMetadataHash?: Hex;
+  snapshotHash?: Hex;
   registry: Address;
   account: Address;
   publicClient: ReturnType<typeof makePublicClient>;
@@ -19,37 +22,77 @@ export async function writeIssuerAdminTx(params: {
 }) {
   params.setTxState("submitting");
   try {
-    const gas = params.fn === "addIssuer"
-      ? await params.publicClient.estimateContractGas({
-          address: params.registry,
-          abi: DiplomaRegistryAbi,
-          functionName: "addIssuer",
-          args: [params.issuer, params.universityId ?? 0n],
-          account: params.account,
-        })
-      : await params.publicClient.estimateContractGas({
-          address: params.registry,
-          abi: DiplomaRegistryAbi,
-          functionName: "removeIssuer",
-          args: [params.issuer],
-          account: params.account,
-        });
+    let gas: bigint;
+    if (params.fn === "removeIssuer") {
+      gas = await params.publicClient.estimateContractGas({
+        address: params.registry,
+        abi: DiplomaRegistryAbi,
+        functionName: "removeIssuer",
+        args: [params.issuer],
+        account: params.account,
+      });
+    } else if (params.fn === "setUniversity") {
+      gas = await params.publicClient.estimateContractGas({
+        address: params.registry,
+        abi: DiplomaRegistryAbi,
+        functionName: "setUniversity",
+        args: [
+          params.universityId ?? 0n,
+          params.universityMetadataHash ?? "0x0000000000000000000000000000000000000000000000000000000000000000",
+          params.universityStatus ?? 0,
+        ],
+        account: params.account,
+      });
+    } else {
+      gas = await params.publicClient.estimateContractGas({
+        address: params.registry,
+        abi: DiplomaRegistryAbi,
+        functionName: "onboardIssuerAndUniversity",
+        args: [
+          params.issuer,
+          params.universityId ?? 0n,
+          params.universityMetadataHash ?? "0x0000000000000000000000000000000000000000000000000000000000000000",
+          params.snapshotHash ?? "0x0000000000000000000000000000000000000000000000000000000000000000",
+        ],
+        account: params.account,
+      });
+    }
 
-    const tx = params.fn === "addIssuer"
-      ? await params.walletClient.writeContract({
-          address: params.registry,
-          abi: DiplomaRegistryAbi,
-          functionName: "addIssuer",
-          args: [params.issuer, params.universityId ?? 0n],
-          gas: (gas * 120n) / 100n,
-        })
-      : await params.walletClient.writeContract({
-          address: params.registry,
-          abi: DiplomaRegistryAbi,
-          functionName: "removeIssuer",
-          args: [params.issuer],
-          gas: (gas * 120n) / 100n,
-        });
+    let tx: Hex;
+    if (params.fn === "removeIssuer") {
+      tx = await params.walletClient.writeContract({
+        address: params.registry,
+        abi: DiplomaRegistryAbi,
+        functionName: "removeIssuer",
+        args: [params.issuer],
+        gas: (gas * 120n) / 100n,
+      });
+    } else if (params.fn === "setUniversity") {
+      tx = await params.walletClient.writeContract({
+        address: params.registry,
+        abi: DiplomaRegistryAbi,
+        functionName: "setUniversity",
+        args: [
+          params.universityId ?? 0n,
+          params.universityMetadataHash ?? "0x0000000000000000000000000000000000000000000000000000000000000000",
+          params.universityStatus ?? 0,
+        ],
+        gas: (gas * 120n) / 100n,
+      });
+    } else {
+      tx = await params.walletClient.writeContract({
+        address: params.registry,
+        abi: DiplomaRegistryAbi,
+        functionName: "onboardIssuerAndUniversity",
+        args: [
+          params.issuer,
+          params.universityId ?? 0n,
+          params.universityMetadataHash ?? "0x0000000000000000000000000000000000000000000000000000000000000000",
+          params.snapshotHash ?? "0x0000000000000000000000000000000000000000000000000000000000000000",
+        ],
+        gas: (gas * 120n) / 100n,
+      });
+    }
 
     params.onTxHash?.(tx);
 

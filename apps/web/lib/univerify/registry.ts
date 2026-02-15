@@ -118,3 +118,31 @@ export async function readOwner(params: {
   });
   return res as Address;
 }
+
+export async function readUniversity(params: {
+  publicClient: RegistryPublicClient;
+  registry: Address;
+  universityId: bigint;
+}): Promise<{ metadataHash: Hex; status: number }> {
+  const res = await params.publicClient.readContract({
+    address: params.registry,
+    abi: DiplomaRegistryAbi,
+    functionName: "getUniversity",
+    args: [params.universityId],
+  });
+  const [metadataHash, status] = res as readonly [Hex, number];
+  return { metadataHash, status };
+}
+
+export async function readSnapshot(params: {
+  publicClient: RegistryPublicClient;
+  registry: Address;
+}): Promise<{ hash: Hex }> {
+  const hash = await params.publicClient.readContract({
+    address: params.registry,
+    abi: DiplomaRegistryAbi,
+    functionName: "snapshotHash",
+    args: [],
+  });
+  return { hash: hash as Hex };
+}

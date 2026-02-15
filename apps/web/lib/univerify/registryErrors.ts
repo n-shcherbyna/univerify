@@ -22,8 +22,12 @@ export function decodeRegistryRevert(err: unknown, abi: Abi): string | null {
   switch (name) {
     case "OnlyOwner": return "Only owner can do this.";
     case "OnlyIssuer": return "Only approved issuer can do this.";
+    case "NoChange": return "No state change: same data already set.";
     case "BadIssuer": return "Bad issuer address.";
     case "BadUniversityId": return "Bad university ID.";
+    case "BadUniversityStatus": return "Bad university status.";
+    case "BadSnapshot": return "Bad snapshot hash.";
+    case "UniversityNotActive": return "University is not active.";
     case "BadHash": return "Bad doc hash.";
     case "BadRoot": return "Bad Merkle root.";
     case "BatchAlreadyIssued": return "Batch ID already used.";

@@ -1,0 +1,14 @@
+{
+  "universities": [
+    {
+      "universityId": 1001,
+      "officialName": "UniVerify University",
+      "metadataHash": "0x0bb51d064613aff5d2e4154a10928324f7b5e749d5cd5bdbe807a0b6897e8a51"
+    },
+    {
+      "universityId": 2001,
+      "officialName": "Warsaw Technical Institute",
+      "metadataHash": "0x7d9332d0841d98bd740404992abf895828e2c15951818020a80271210cd5ca3e"
+    }
+  ]
+}
