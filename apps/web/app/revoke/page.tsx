@@ -32,6 +32,7 @@ export default function RevokePage() {
 
   const [inputText, setInputText] = useState("");
   const [docHash, setDocHash] = useState<Hex | "">("");
+  const [overrideIssuer, setOverrideIssuer] = useState(false);
   const [issuerInput, setIssuerInput] = useState<Address | "">("");
   const [batchIdInput, setBatchIdInput] = useState("1");
   const [proofText, setProofText] = useState("[]");
@@ -56,7 +57,10 @@ export default function RevokePage() {
   }
 
   function resolveIssuer(): Address {
-    if (issuerInput && isAddress(issuerInput)) return issuerInput;
+    if (overrideIssuer) {
+      if (issuerInput && isAddress(issuerInput)) return issuerInput;
+      throw new Error("Provide a valid issuer override address.");
+    }
     if (account) return account;
     throw new Error("Provide issuer address or connect issuer wallet.");
   }
@@ -112,7 +116,10 @@ export default function RevokePage() {
         if (env.proof.type === "MERKLE_BATCH") {
           setBatchIdInput(String(env.proof.batchId));
           setProofText(JSON.stringify(env.proof.proof, null, 2));
-          if (env.proof.issuer) setIssuerInput(env.proof.issuer);
+          if (env.proof.issuer) {
+            setIssuerInput(env.proof.issuer);
+            setOverrideIssuer(true);
+          }
           log.push(`loaded from envelope: batchId=${env.proof.batchId}, proofNodes=${env.proof.proof.length}`);
           return;
         }
@@ -120,7 +127,10 @@ export default function RevokePage() {
         if (env.proof.merkle) {
           setBatchIdInput(String(env.proof.merkle.batchId));
           setProofText(JSON.stringify(env.proof.merkle.proof, null, 2));
-          if (env.proof.issuer) setIssuerInput(env.proof.issuer);
+          if (env.proof.issuer) {
+            setIssuerInput(env.proof.issuer);
+            setOverrideIssuer(true);
+          }
           log.push(`loaded from legacy envelope+merkle: batchId=${env.proof.merkle.batchId}, proofNodes=${env.proof.merkle.proof.length}`);
           return;
         }
@@ -138,7 +148,10 @@ export default function RevokePage() {
         setDocHash(raw.docHash);
         setBatchIdInput(String(raw.batchId));
         setProofText(JSON.stringify(raw.proof, null, 2));
-        if (raw.issuer) setIssuerInput(raw.issuer);
+        if (raw.issuer) {
+          setIssuerInput(raw.issuer);
+          setOverrideIssuer(true);
+        }
         log.push(`loaded from proof JSON: docHash=${raw.docHash}, batchId=${raw.batchId}, proofNodes=${raw.proof.length}`);
         return;
       }
@@ -227,8 +240,9 @@ export default function RevokePage() {
   }
 
   return (
-    <main style={{ maxWidth: 960, margin: "40px auto", padding: 16 }}>
-      <h1 style={{ fontSize: 28, fontWeight: 700 }}>UniVerify — Revoke</h1>
+    <main className="uv-page">
+      <h1 className="uv-title">UniVerify - Revoke</h1>
+      <p className="uv-subtitle">Load proof data and revoke a batch record on-chain.</p>
 
       <div className="uv-card" style={{ display: "flex", gap: 10, alignItems: "center" }}>
         <button onClick={() => void connect()} disabled={isBusy} className="uv-btn uv-btn-primary">
@@ -242,7 +256,7 @@ export default function RevokePage() {
       </div>
 
       <div className="uv-card">
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>Step 1: Load Revoke Data</h2>
+        <h2 className="uv-card-title">Step 1: Load Revoke Data</h2>
         <input
           type="file"
           accept="application/json"
@@ -265,7 +279,7 @@ export default function RevokePage() {
       </div>
 
       <div className="uv-card">
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>Step 2: Review / Edit</h2>
+        <h2 className="uv-card-title">Step 2: Review / Edit</h2>
         <label style={{ display: "block", fontWeight: 600, marginBottom: 8 }}>docHash (bytes32)</label>
         <input
           value={docHash}
@@ -274,13 +288,25 @@ export default function RevokePage() {
           style={{ width: "100%", fontFamily: "monospace", padding: 10 }}
         />
 
-        <label style={{ display: "block", fontWeight: 600, marginTop: 10, marginBottom: 8 }}>issuer</label>
-        <input
-          value={issuerInput}
-          onChange={(e) => setIssuerInput((e.target.value.trim() as Address) || "")}
-          placeholder={account || "0x..."}
-          style={{ width: "100%", fontFamily: "monospace", padding: 10 }}
-        />
+        <label style={{ display: "inline-flex", alignItems: "center", gap: 8, fontWeight: 600, marginTop: 10 }}>
+          <input
+            type="checkbox"
+            checked={overrideIssuer}
+            onChange={(e) => setOverrideIssuer(e.target.checked)}
+          />
+          Override issuer address (default: connected wallet)
+        </label>
+        {overrideIssuer && (
+          <>
+            <label style={{ display: "block", fontWeight: 600, marginTop: 10, marginBottom: 8 }}>issuer</label>
+            <input
+              value={issuerInput}
+              onChange={(e) => setIssuerInput((e.target.value.trim() as Address) || "")}
+              placeholder="0x..."
+              style={{ width: "100%", fontFamily: "monospace", padding: 10 }}
+            />
+          </>
+        )}
 
         <label style={{ display: "block", fontWeight: 600, marginTop: 10, marginBottom: 8 }}>batchId</label>
         <input
@@ -305,18 +331,24 @@ export default function RevokePage() {
             Revoke from batch (tx)
           </button>
         </div>
-        <p className="uv-hint">Czerwony przycisk wykonuje transakcję nieodwracalną.</p>
+        <p className="uv-hint">The red button sends an irreversible blockchain transaction.</p>
       </div>
 
       <div style={{ marginTop: 18 }}>
-        <p><b>Status:</b> {status}</p>
-        {recordRevoked !== null && <p><b>Record revoked:</b> {String(recordRevoked)}</p>}
-        {txHash && <p><b>tx:</b> <code>{txHash}</code></p>}
-        {error && <p style={{ color: "red" }}><b>Error:</b> {error}</p>}
-        {txState !== "idle" && <p><b>State:</b> {txState}</p>}
+        <div className="uv-status-banner uv-status-warn">
+          <p><b>Status:</b> {status}</p>
+          {recordRevoked !== null && <p><b>Record revoked:</b> {String(recordRevoked)}</p>}
+          {txHash && <p><b>tx:</b> <code>{txHash}</code></p>}
+          {txState !== "idle" && <p><b>State:</b> {txState}</p>}
+        </div>
+        {error && (
+          <div className="uv-status-banner uv-status-fail">
+            <b>Error:</b> {error}
+          </div>
+        )}
 
         {logs.length > 0 && (
-          <div style={{ marginTop: 12, padding: 12, backgroundColor: "#f0f0f0", maxHeight: 320, overflowY: "auto" }}>
+          <div className="uv-card" style={{ maxHeight: 320, overflowY: "auto" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0 }}>Logs</h3>
               <button onClick={log.clear} className="uv-btn">Clear logs</button>

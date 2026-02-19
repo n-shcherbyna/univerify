@@ -319,8 +319,9 @@ export default function IssuerPage() {
   }
 
   return (
-    <main style={{ maxWidth: 960, margin: "40px auto", padding: 16 }}>
-      <h1 style={{ fontSize: 28, fontWeight: 700 }}>UniVerify — Issuer</h1>
+    <main className="uv-page">
+      <h1 className="uv-title">UniVerify - Issuer</h1>
+      <p className="uv-subtitle">Build Merkle batches, publish roots, and export diploma proofs.</p>
 
       <div className="uv-card" style={{ display: "flex", gap: 10, alignItems: "center" }}>
         <button onClick={() => void connect()} disabled={isBusy} className="uv-btn uv-btn-primary">
@@ -335,7 +336,7 @@ export default function IssuerPage() {
       </div>
 
       <div className="uv-card">
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>Step 1: Build Batch</h2>
+        <h2 className="uv-card-title">Step 1: Build Batch</h2>
         <label style={{ display: "block", fontWeight: 600, marginBottom: 8, marginTop: 10 }}>Batch ID</label>
         <input
           value={batchIdInput}
@@ -371,7 +372,7 @@ export default function IssuerPage() {
             Publish batch root (tx)
           </button>
         </div>
-        <p className="uv-hint">Najpierw policz batch lokalnie, potem publikuj root on-chain.</p>
+        <p className="uv-hint">Compute the batch locally first, then publish the root on-chain.</p>
 
         {computedBatch && (
           <div style={{ marginTop: 12 }}>
@@ -383,7 +384,7 @@ export default function IssuerPage() {
       </div>
 
       <div className="uv-card">
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>Step 2: Select Diploma From Batch</h2>
+        <h2 className="uv-card-title">Step 2: Select Diploma From Batch</h2>
         {!computedBatch && <p style={{ color: "orange" }}>Compute batch first.</p>}
         {computedBatch && (
           <div style={{ maxHeight: 220, overflowY: "auto", border: "1px solid #eee", padding: 8 }}>
@@ -416,7 +417,7 @@ export default function IssuerPage() {
       </div>
 
       <div className="uv-card">
-        <h2 style={{ fontSize: 22, fontWeight: 700 }}>Step 3: Export Diploma Proof</h2>
+        <h2 className="uv-card-title">Step 3: Export Diploma Proof</h2>
         {!selectedItem && <p style={{ color: "orange" }}>Select batch item first.</p>}
         {selectedItem && (
           <>
@@ -459,18 +460,26 @@ export default function IssuerPage() {
             Refresh selected status (chain)
           </button>
         </div>
-        <p className="uv-hint">Główna akcja tego kroku: wygeneruj i pobierz `diploma.json`.</p>
+        <p className="uv-hint">Main action in this step: generate and download `diploma.json`.</p>
         {selectedItem && <p style={{ marginTop: 10 }}><b>Selected status:</b> {selectedChainStatus}</p>}
       </div>
 
       <div style={{ marginTop: 18 }}>
-        {txHash && <p><b>tx:</b> <code>{txHash}</code></p>}
-        {signature && <p><b>optional EIP-712 signature:</b> <code>{signature}</code></p>}
-        {error && <p style={{ color: "red" }}><b>Error:</b> {error}</p>}
-        {txState !== "idle" && <p><b>State:</b> {txState}</p>}
+        {(txHash || signature || txState !== "idle") && (
+          <div className="uv-status-banner uv-status-ok">
+            {txHash && <p><b>tx:</b> <code>{txHash}</code></p>}
+            {signature && <p><b>optional EIP-712 signature:</b> <code>{signature}</code></p>}
+            {txState !== "idle" && <p><b>State:</b> {txState}</p>}
+          </div>
+        )}
+        {error && (
+          <div className="uv-status-banner uv-status-fail">
+            <b>Error:</b> {error}
+          </div>
+        )}
 
         {logs.length > 0 && (
-          <div style={{ marginTop: 12, padding: 12, backgroundColor: "#f0f0f0", maxHeight: 320, overflowY: "auto" }}>
+          <div className="uv-card" style={{ maxHeight: 320, overflowY: "auto" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0 }}>Logs</h3>
               <button onClick={log.clear} className="uv-btn">Clear logs</button>

@@ -39,6 +39,24 @@ export async function readStatusWithProof(params: {
   return code as StatusCode;
 }
 
+export async function readStatusWithProofTrusted(params: {
+  publicClient: RegistryPublicClient;
+  registry: Address;
+  docHash: Hex;
+  issuer: Address;
+  batchId: bigint;
+  proof: readonly Hex[];
+}): Promise<StatusCode> {
+  const code = await params.publicClient.readContract({
+    address: params.registry,
+    abi: DiplomaRegistryAbi,
+    functionName: "statusWithProofTrusted",
+    args: [params.docHash, params.issuer, params.batchId, params.proof],
+  });
+
+  return code as StatusCode;
+}
+
 export async function readBatch(params: {
   publicClient: RegistryPublicClient;
   registry: Address;

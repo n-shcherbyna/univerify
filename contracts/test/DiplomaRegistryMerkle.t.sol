@@ -30,6 +30,7 @@ contract DiplomaRegistryMerkleTest is Test {
         reg.issueBatchRoot(batchId, root);
 
         assertEq(uint256(reg.statusWithProof(docA, issuer1, batchId, proofA)), uint256(DiplomaRegistry.Status.Valid));
+        assertEq(uint256(reg.statusWithProofTrusted(docA, issuer1, batchId, proofA)), uint256(DiplomaRegistry.Status.Valid));
         assertTrue(reg.verifyBatchMembership(docA, issuer1, batchId, proofA));
 
         bytes32 onChainRoot = reg.getBatch(issuer1, batchId);
@@ -109,6 +110,25 @@ contract DiplomaRegistryMerkleTest is Test {
         reg.setUniversity(1001, keccak256("uni-1001"), DiplomaRegistry.UniversityStatus.Active);
     }
 
+    function testSetUniversityAndSnapshotUpdatesBoth() public {
+        uint64 universityId = 1001;
+        bytes32 nextMeta = keccak256("uni-1001-v3");
+        bytes32 nextSnap = keccak256("snapshot-v3");
+
+        reg.setUniversityAndSnapshot(universityId, nextMeta, DiplomaRegistry.UniversityStatus.Suspended, nextSnap);
+
+        (bytes32 onChainMeta, DiplomaRegistry.UniversityStatus st) = reg.getUniversity(universityId);
+        assertEq(onChainMeta, nextMeta);
+        assertEq(uint256(st), uint256(DiplomaRegistry.UniversityStatus.Suspended));
+        assertEq(reg.snapshotHash(), nextSnap);
+    }
+
+    function testSetUniversityAndSnapshotRejectsNoop() public {
+        bytes32 snap = reg.snapshotHash();
+        vm.expectRevert(DiplomaRegistry.NoChange.selector);
+        reg.setUniversityAndSnapshot(1001, keccak256("uni-1001"), DiplomaRegistry.UniversityStatus.Active, snap);
+    }
+
     function testOnboardRejectsBadSnapshot() public {
         vm.expectRevert(DiplomaRegistry.BadSnapshot.selector);
         reg.onboardIssuerAndUniversity(address(0xD00D), 2001, keccak256("meta"), bytes32(0));
@@ -155,11 +175,35 @@ contract DiplomaRegistryMerkleTest is Test {
     }
 
     function testIssueBatchRootBlockedWhenUniversitySuspended() public {
+        (bytes32 root,, bytes32 leafB) = _buildTwoLeafTree();
+        bytes32[] memory proofA = new bytes32[](1);
+        proofA[0] = leafB;
+
+        vm.prank(issuer1);
+        reg.issueBatchRoot(batchId, root);
+
         reg.setUniversity(1001, keccak256("uni-1001-v2"), DiplomaRegistry.UniversityStatus.Suspended);
+
+        assertEq(uint256(reg.statusWithProof(docA, issuer1, batchId, proofA)), uint256(DiplomaRegistry.Status.Valid));
+        assertEq(uint256(reg.statusWithProofTrusted(docA, issuer1, batchId, proofA)), uint256(DiplomaRegistry.Status.Unknown));
 
         vm.prank(issuer1);
         vm.expectRevert(DiplomaRegistry.UniversityNotActive.selector);
         reg.issueBatchRoot(batchId, keccak256("root"));
+    }
+
+    function testStatusWithProofTrustedUnknownAfterIssuerRemoved() public {
+        (bytes32 root,, bytes32 leafB) = _buildTwoLeafTree();
+        bytes32[] memory proofA = new bytes32[](1);
+        proofA[0] = leafB;
+
+        vm.prank(issuer1);
+        reg.issueBatchRoot(batchId, root);
+
+        reg.removeIssuer(issuer1);
+
+        assertEq(uint256(reg.statusWithProof(docA, issuer1, batchId, proofA)), uint256(DiplomaRegistry.Status.Valid));
+        assertEq(uint256(reg.statusWithProofTrusted(docA, issuer1, batchId, proofA)), uint256(DiplomaRegistry.Status.Unknown));
     }
 
     function testIssueBatchRootDuplicateBatchIdSameIssuer() public {

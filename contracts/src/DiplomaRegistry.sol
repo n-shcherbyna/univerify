@@ -47,11 +47,6 @@ contract DiplomaRegistry {
         _;
     }
 
-    modifier onlyIssuer() {
-        if (issuerUniversityIds[msg.sender] == 0) revert OnlyIssuer();
-        _;
-    }
-
     constructor() {
         owner = msg.sender;
     }
@@ -64,6 +59,33 @@ contract DiplomaRegistry {
         if (current.metadataHash == metadataHash && current.status == status) revert NoChange();
         universities[universityId] = University({ metadataHash: metadataHash, status: status });
         emit UniversitySet(universityId, metadataHash, status);
+    }
+
+    function setUniversityAndSnapshot(
+        uint64 universityId,
+        bytes32 metadataHash,
+        UniversityStatus status,
+        bytes32 snapshotHash_
+    ) external onlyOwner {
+        if (universityId == 0) revert BadUniversityId();
+        if (metadataHash == bytes32(0)) revert BadHash();
+        if (status == UniversityStatus.Unknown) revert BadUniversityStatus();
+        if (snapshotHash_ == bytes32(0)) revert BadSnapshot();
+
+        University storage current = universities[universityId];
+        bool universityChanged = (current.metadataHash != metadataHash) || (current.status != status);
+        bool snapshotChanged = snapshotHash != snapshotHash_;
+        if (!universityChanged && !snapshotChanged) revert NoChange();
+
+        if (universityChanged) {
+            universities[universityId] = University({ metadataHash: metadataHash, status: status });
+            emit UniversitySet(universityId, metadataHash, status);
+        }
+
+        if (snapshotChanged) {
+            snapshotHash = snapshotHash_;
+            emit SnapshotUpdated(snapshotHash_);
+        }
     }
 
     function onboardIssuerAndUniversity(
@@ -124,8 +146,8 @@ contract DiplomaRegistry {
         return _isUniversityActive(universityId);
     }
 
-    function issueBatchRoot(uint64 batchId, bytes32 merkleRoot) external onlyIssuer {
-        if (!_isUniversityActive(issuerUniversityIds[msg.sender])) revert UniversityNotActive();
+    function issueBatchRoot(uint64 batchId, bytes32 merkleRoot) external {
+        _requireActiveIssuer();
         if (merkleRoot == bytes32(0)) revert BadRoot();
         if (batchRoots[msg.sender][batchId] != bytes32(0)) revert BatchAlreadyIssued();
         batchRoots[msg.sender][batchId] = merkleRoot;
@@ -133,8 +155,8 @@ contract DiplomaRegistry {
         emit BatchIssued(batchId, merkleRoot, msg.sender);
     }
 
-    function revokeFromBatch(bytes32 docHash, uint64 batchId, bytes32[] calldata proof) external onlyIssuer {
-        if (!_isUniversityActive(issuerUniversityIds[msg.sender])) revert UniversityNotActive();
+    function revokeFromBatch(bytes32 docHash, uint64 batchId, bytes32[] calldata proof) external {
+        _requireActiveIssuer();
         if (docHash == bytes32(0)) revert BadHash();
 
         bytes32 root = batchRoots[msg.sender][batchId];
@@ -149,6 +171,20 @@ contract DiplomaRegistry {
     }
 
     function statusWithProof(bytes32 docHash, address issuer_, uint64 batchId, bytes32[] calldata proof) external view returns (Status) {
+        return _statusWithProof(docHash, issuer_, batchId, proof);
+    }
+
+    function statusWithProofTrusted(bytes32 docHash, address issuer_, uint64 batchId, bytes32[] calldata proof) external view returns (Status) {
+        Status status = _statusWithProof(docHash, issuer_, batchId, proof);
+        if (status != Status.Valid) return status;
+
+        uint64 universityId = issuerUniversityIds[issuer_];
+        if (universityId == 0 || !_isUniversityActive(universityId)) return Status.Unknown;
+
+        return Status.Valid;
+    }
+
+    function _statusWithProof(bytes32 docHash, address issuer_, uint64 batchId, bytes32[] calldata proof) private view returns (Status) {
         bytes32 root = batchRoots[issuer_][batchId];
         if (root == bytes32(0)) return Status.Unknown;
 
@@ -193,6 +229,12 @@ contract DiplomaRegistry {
 
     function _hashPair(bytes32 a, bytes32 b) private pure returns (bytes32) {
         return a < b ? keccak256(abi.encodePacked(a, b)) : keccak256(abi.encodePacked(b, a));
+    }
+
+    function _requireActiveIssuer() private view {
+        uint64 universityId = issuerUniversityIds[msg.sender];
+        if (universityId == 0) revert OnlyIssuer();
+        if (!_isUniversityActive(universityId)) revert UniversityNotActive();
     }
 
     function _isUniversityActive(uint64 universityId) private view returns (bool) {

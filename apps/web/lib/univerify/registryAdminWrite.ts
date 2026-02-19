@@ -5,13 +5,7 @@ import type { TxState } from "./types";
 import type { makePublicClient } from "./registry";
 import { decodeRegistryRevert } from "./registryErrors";
 
-export async function writeIssuerAdminTx(params: {
-  fn: "removeIssuer" | "setUniversity" | "onboardIssuerAndUniversity";
-  issuer: Address;
-  universityId?: bigint;
-  universityStatus?: number;
-  universityMetadataHash?: Hex;
-  snapshotHash?: Hex;
+type AdminTxCommon = {
   registry: Address;
   account: Address;
   publicClient: ReturnType<typeof makePublicClient>;
@@ -19,7 +13,39 @@ export async function writeIssuerAdminTx(params: {
   setTxState: (s: TxState) => void;
   onTxHash?: (h: Hex) => void;
   onAfter?: () => Promise<void>;
-}) {
+};
+
+type RemoveIssuerTx = AdminTxCommon & {
+  fn: "removeIssuer";
+  issuer: Address;
+};
+
+type SetUniversityTx = AdminTxCommon & {
+  fn: "setUniversity";
+  universityId: bigint;
+  universityStatus: number;
+  universityMetadataHash: Hex;
+};
+
+type SetUniversityAndSnapshotTx = AdminTxCommon & {
+  fn: "setUniversityAndSnapshot";
+  universityId: bigint;
+  universityStatus: number;
+  universityMetadataHash: Hex;
+  snapshotHash: Hex;
+};
+
+type OnboardIssuerAndUniversityTx = AdminTxCommon & {
+  fn: "onboardIssuerAndUniversity";
+  issuer: Address;
+  universityId: bigint;
+  universityMetadataHash: Hex;
+  snapshotHash: Hex;
+};
+
+type AdminTxParams = RemoveIssuerTx | SetUniversityTx | SetUniversityAndSnapshotTx | OnboardIssuerAndUniversityTx;
+
+export async function writeIssuerAdminTx(params: AdminTxParams) {
   params.setTxState("submitting");
   try {
     let gas: bigint;
@@ -36,11 +62,15 @@ export async function writeIssuerAdminTx(params: {
         address: params.registry,
         abi: DiplomaRegistryAbi,
         functionName: "setUniversity",
-        args: [
-          params.universityId ?? 0n,
-          params.universityMetadataHash ?? "0x0000000000000000000000000000000000000000000000000000000000000000",
-          params.universityStatus ?? 0,
-        ],
+        args: [params.universityId, params.universityMetadataHash, params.universityStatus],
+        account: params.account,
+      });
+    } else if (params.fn === "setUniversityAndSnapshot") {
+      gas = await params.publicClient.estimateContractGas({
+        address: params.registry,
+        abi: DiplomaRegistryAbi,
+        functionName: "setUniversityAndSnapshot",
+        args: [params.universityId, params.universityMetadataHash, params.universityStatus, params.snapshotHash],
         account: params.account,
       });
     } else {
@@ -48,12 +78,7 @@ export async function writeIssuerAdminTx(params: {
         address: params.registry,
         abi: DiplomaRegistryAbi,
         functionName: "onboardIssuerAndUniversity",
-        args: [
-          params.issuer,
-          params.universityId ?? 0n,
-          params.universityMetadataHash ?? "0x0000000000000000000000000000000000000000000000000000000000000000",
-          params.snapshotHash ?? "0x0000000000000000000000000000000000000000000000000000000000000000",
-        ],
+        args: [params.issuer, params.universityId, params.universityMetadataHash, params.snapshotHash],
         account: params.account,
       });
     }
@@ -72,11 +97,15 @@ export async function writeIssuerAdminTx(params: {
         address: params.registry,
         abi: DiplomaRegistryAbi,
         functionName: "setUniversity",
-        args: [
-          params.universityId ?? 0n,
-          params.universityMetadataHash ?? "0x0000000000000000000000000000000000000000000000000000000000000000",
-          params.universityStatus ?? 0,
-        ],
+        args: [params.universityId, params.universityMetadataHash, params.universityStatus],
+        gas: (gas * 120n) / 100n,
+      });
+    } else if (params.fn === "setUniversityAndSnapshot") {
+      tx = await params.walletClient.writeContract({
+        address: params.registry,
+        abi: DiplomaRegistryAbi,
+        functionName: "setUniversityAndSnapshot",
+        args: [params.universityId, params.universityMetadataHash, params.universityStatus, params.snapshotHash],
         gas: (gas * 120n) / 100n,
       });
     } else {
@@ -84,12 +113,7 @@ export async function writeIssuerAdminTx(params: {
         address: params.registry,
         abi: DiplomaRegistryAbi,
         functionName: "onboardIssuerAndUniversity",
-        args: [
-          params.issuer,
-          params.universityId ?? 0n,
-          params.universityMetadataHash ?? "0x0000000000000000000000000000000000000000000000000000000000000000",
-          params.snapshotHash ?? "0x0000000000000000000000000000000000000000000000000000000000000000",
-        ],
+        args: [params.issuer, params.universityId, params.universityMetadataHash, params.snapshotHash],
         gas: (gas * 120n) / 100n,
       });
     }

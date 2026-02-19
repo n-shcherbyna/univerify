@@ -13,7 +13,7 @@ import {
   readIssuerUniversityId,
   readIsRevoked,
   readSnapshot,
-  readStatusWithProof,
+  readStatusWithProofTrusted,
   readUniversity,
   statusLabel,
 } from "@/lib/univerify/registry";
@@ -26,7 +26,6 @@ import { computeMerkleLeaf, computeRootFromProof } from "@/lib/univerify/merkle"
 type VerifyState = {
   docHash: Hex | null;
   proofType: string;
-  verificationMode: "batch";
   statusCode: 0 | 1 | 2;
   statusLabel: "Unknown" | "Valid" | "Revoked";
   batchId: number | null;
@@ -41,12 +40,15 @@ type VerifyState = {
   payloadUniversityId: bigint | null;
   payloadUniversityName: string | null;
   issuerUniversityId: bigint | null;
+  onChainUniversityMetadataHash: Hex | null;
+  onChainUniversityStatus: number | null;
+  onChainSnapshotHash: Hex | null;
   catalogSnapshotHash: Hex | null;
   catalogUniversityMetadataHash: Hex | null;
   catalogOfficialUniversityName: string | null;
   universityNameMatches: boolean | null;
-  onChainUniversityMetadataHash: Hex | null;
-  onChainUniversityStatus: number | null;
+  declaredIssuerMatches: boolean | null;
+  signatureIssuerMatches: boolean | null;
   verifyOk: boolean | null;
 };
 
@@ -54,7 +56,6 @@ function emptyState(): VerifyState {
   return {
     docHash: null,
     proofType: "-",
-    verificationMode: "batch",
     statusCode: 0,
     statusLabel: "Unknown",
     batchId: null,
@@ -69,12 +70,15 @@ function emptyState(): VerifyState {
     payloadUniversityId: null,
     payloadUniversityName: null,
     issuerUniversityId: null,
+    onChainUniversityMetadataHash: null,
+    onChainUniversityStatus: null,
+    onChainSnapshotHash: null,
     catalogSnapshotHash: null,
     catalogUniversityMetadataHash: null,
     catalogOfficialUniversityName: null,
     universityNameMatches: null,
-    onChainUniversityMetadataHash: null,
-    onChainUniversityStatus: null,
+    declaredIssuerMatches: null,
+    signatureIssuerMatches: null,
     verifyOk: null,
   };
 }
@@ -90,9 +94,7 @@ function readPayloadUniversityId(payload: unknown): bigint {
 function readPayloadUniversityName(payload: unknown): string {
   const p = payload as any;
   const raw = p?.university?.name;
-  if (typeof raw !== "string" || raw.trim() === "") {
-    throw new Error("Payload missing university.name.");
-  }
+  if (typeof raw !== "string" || raw.trim() === "") throw new Error("Payload missing university.name.");
   return raw.trim();
 }
 
@@ -112,6 +114,7 @@ function parseCatalogSnapshot(text: string): CatalogSnapshot {
   const v = parsed.value as any;
   if (!v || typeof v !== "object") throw new Error("Catalog must be an object.");
   if (!Array.isArray(v.universities)) throw new Error("Catalog.universities must be an array.");
+
   for (const u of v.universities) {
     if (!Number.isInteger(u?.universityId) || u.universityId <= 0) {
       throw new Error("Each catalog university must have positive integer universityId.");
@@ -123,7 +126,48 @@ function parseCatalogSnapshot(text: string): CatalogSnapshot {
       throw new Error("Each catalog university must have metadataHash bytes32.");
     }
   }
+
   return v as CatalogSnapshot;
+}
+
+function verificationFailures(state: VerifyState, strictCatalog: boolean): string[] {
+  if (state.verifyOk !== false) return [];
+  const reasons: string[] = [];
+
+  if (state.statusCode !== 1) reasons.push(`On-chain trusted status is ${state.statusLabel} (${state.statusCode}).`);
+  if (state.declaredIssuerMatches === false) reasons.push("Declared issuer in proof does not match effective issuer.");
+  if (state.signatureIssuerMatches === false) reasons.push("Recovered signature signer does not match issuer.");
+  if (state.merkleRootMatches === false) reasons.push("Merkle proof does not match on-chain batch root.");
+  if (state.issuerTrustedNow === false) reasons.push("Issuer is not trusted on-chain.");
+  if (state.issuerUniversityId !== null && state.payloadUniversityId !== null && state.issuerUniversityId !== state.payloadUniversityId) {
+    reasons.push("Issuer universityId differs from diploma payload universityId.");
+  }
+  if (state.onChainUniversityStatus !== null && state.onChainUniversityStatus !== 1) {
+    reasons.push("University is not active on-chain.");
+  }
+  if (strictCatalog) {
+    if (state.catalogSnapshotHash && state.onChainSnapshotHash && state.catalogSnapshotHash.toLowerCase() !== state.onChainSnapshotHash.toLowerCase()) {
+      reasons.push("Catalog snapshot hash does not match on-chain snapshot hash.");
+    }
+    if (
+      state.catalogUniversityMetadataHash &&
+      state.onChainUniversityMetadataHash &&
+      state.catalogUniversityMetadataHash.toLowerCase() !== state.onChainUniversityMetadataHash.toLowerCase()
+    ) {
+      reasons.push("Catalog university metadata hash does not match on-chain metadata hash.");
+    }
+    if (state.universityNameMatches === false) reasons.push("Payload university name does not match catalog official name.");
+  }
+
+  if (reasons.length === 0) reasons.push("Validation failed due to an internal consistency check.");
+  return reasons;
+}
+
+function universityStatusLabel(status: number | null): string {
+  if (status === 1) return "Active";
+  if (status === 2) return "Suspended";
+  if (status === 3) return "Revoked";
+  return "Unknown";
 }
 
 export default function VerifyPage() {
@@ -196,7 +240,6 @@ export default function VerifyPage() {
       const payloadUniversityName = readPayloadUniversityName(env.payload);
       log.push(`docHash(payload)=${docHash}`);
       log.push(`payload.universityId=${payloadUniversityId.toString()}`);
-      log.push(`payload.university.name=${payloadUniversityName}`);
 
       let batchId: bigint;
       let batchProof: Hex[];
@@ -208,11 +251,8 @@ export default function VerifyPage() {
         batchId = BigInt(env.proof.batchId);
         batchProof = env.proof.proof;
         declaredIssuer = env.proof.issuer ?? null;
-        log.push(`merkle.batchId=${env.proof.batchId}`);
-        log.push(`merkle.proofNodes=${env.proof.proof.length}`);
 
         if (env.proof.eip712) {
-          log.push("signature.mode=optional-eip712");
           if (normalizeAddress(env.proof.eip712.domain.verifyingContract) !== normalizeAddress(REGISTRY)) {
             throw new Error("Envelope eip712.verifyingContract does not match configured REGISTRY.");
           }
@@ -223,8 +263,6 @@ export default function VerifyPage() {
             types: env.proof.eip712.types,
           });
           log.push(`signature.recovered=${recoveredSigner}`);
-        } else {
-          log.push("signature.mode=none");
         }
       } else {
         if (!env.proof.merkle) {
@@ -233,7 +271,6 @@ export default function VerifyPage() {
 
         proofType = "EIP712+MERKLE";
         declaredIssuer = env.proof.issuer ?? null;
-        log.push("signature.mode=legacy-eip712");
         if (normalizeAddress(env.proof.domain.verifyingContract) !== normalizeAddress(REGISTRY)) {
           throw new Error("Envelope verifyingContract does not match configured REGISTRY.");
         }
@@ -243,23 +280,21 @@ export default function VerifyPage() {
           domain: env.proof.domain,
           types: env.proof.types,
         });
-        log.push(`signature.recovered=${recoveredSigner}`);
 
         batchId = BigInt(env.proof.merkle.batchId);
         batchProof = env.proof.merkle.proof;
-        log.push(`merkle.batchId=${env.proof.merkle.batchId}`);
-        log.push(`merkle.proofNodes=${env.proof.merkle.proof.length}`);
       }
 
       if (declaredIssuer && recoveredSigner && normalizeAddress(declaredIssuer) !== normalizeAddress(recoveredSigner)) {
         throw new Error("Envelope issuer does not match EIP-712 recovered signer.");
       }
+
       const effectiveIssuer = declaredIssuer ?? recoveredSigner;
       if (!effectiveIssuer) {
         throw new Error("Missing issuer identity: provide proof.issuer or EIP-712 signature.");
       }
 
-      const statusCode = (await readStatusWithProof({
+      const statusCode = (await readStatusWithProofTrusted({
         publicClient,
         registry: REGISTRY,
         docHash,
@@ -268,12 +303,9 @@ export default function VerifyPage() {
         proof: batchProof,
       })) as 0 | 1 | 2;
       const status = statusLabel(statusCode);
-      log.push(`chain.status=${statusCode} (${status})`);
 
       const batch = await readBatch({ publicClient, registry: REGISTRY, issuer: effectiveIssuer, batchId });
       const onChainBatchRoot = batch.merkleRoot;
-      log.push(`batch.issuer=${batch.issuer}`);
-      log.push(`batch.root.onchain=${batch.merkleRoot}`);
 
       const merkleLeaf = computeMerkleLeaf({
         registry: REGISTRY,
@@ -285,116 +317,71 @@ export default function VerifyPage() {
       const merkleComputedRoot = computeRootFromProof({ leaf: merkleLeaf, proof: batchProof });
       const merkleRootMatches = merkleComputedRoot.toLowerCase() === onChainBatchRoot.toLowerCase();
 
-      log.push(`merkle.leaf.local=${merkleLeaf}`);
-      log.push(`merkle.root.localFromProof=${merkleComputedRoot}`);
-      log.push(`merkle.root.matchesOnChain=${merkleRootMatches ? "YES" : "NO"}`);
+      const [issuerTrustedNow, issuerUniversityId, onChainUniversity, onChainSnapshot, revoked] = await Promise.all([
+        readIsIssuer({ publicClient, registry: REGISTRY, issuer: effectiveIssuer }),
+        readIssuerUniversityId({ publicClient, registry: REGISTRY, issuer: effectiveIssuer }),
+        readUniversity({ publicClient, registry: REGISTRY, universityId: payloadUniversityId }),
+        readSnapshot({ publicClient, registry: REGISTRY }),
+        readIsRevoked({ publicClient, registry: REGISTRY, docHash, issuer: effectiveIssuer, batchId }),
+      ]);
 
-      const issuerTrustedNow = await readIsIssuer({
-        publicClient,
-        registry: REGISTRY,
-        issuer: effectiveIssuer,
-      });
-      log.push(`issuer.trustedNow=${issuerTrustedNow ? "YES" : "NO"}`);
-
-      const issuerUniversityId = await readIssuerUniversityId({
-        publicClient,
-        registry: REGISTRY,
-        issuer: effectiveIssuer,
-      });
-      const universityIdOk = issuerUniversityId === payloadUniversityId;
-      log.push(`issuer.universityId.onchain=${issuerUniversityId.toString()}`);
-      log.push(`check.universityIdMatch=${universityIdOk ? "OK" : "FAIL"}`);
-
-      const onChainUniversity = await readUniversity({
-        publicClient,
-        registry: REGISTRY,
-        universityId: payloadUniversityId,
-      });
       const onChainUniversityMetadataHash = onChainUniversity.metadataHash;
       const onChainUniversityStatus = onChainUniversity.status;
       const onChainUniversityActive = onChainUniversityStatus === 1;
-      log.push(`university.metadataHash.onchain=${onChainUniversityMetadataHash}`);
-      log.push(`university.status.onchain=${onChainUniversityStatus} (${onChainUniversityActive ? "Active" : "NotActive"})`);
-
-      const onChainSnapshot = await readSnapshot({
-        publicClient,
-        registry: REGISTRY,
-      });
-      log.push(`snapshot.hash.onchain=${onChainSnapshot.hash}`);
 
       let catalogSnapshotHash: Hex | null = null;
       let catalogUniversityMetadataHash: Hex | null = null;
       let catalogOfficialUniversityName: string | null = null;
       let universityNameMatches: boolean | null = null;
       let catalogOk = true;
+
       if (strictCatalog) {
         const rawCatalog = catalogFileText.trim();
         if (!rawCatalog) throw new Error(`Strict catalog is enabled. Missing default catalog: ${DEFAULT_CATALOG_PATH}.`);
         log.push(`catalog.source=${catalogFileName ?? DEFAULT_CATALOG_PATH}`);
+
         const catalog = parseCatalogSnapshot(rawCatalog);
-
         catalogSnapshotHash = hashPayload(catalog) as Hex;
-        log.push(`snapshot.hash.catalog=${catalogSnapshotHash}`);
-
-        const catalogSnapshotHashOk = catalogSnapshotHash.toLowerCase() === onChainSnapshot.hash.toLowerCase();
-        log.push(`check.snapshotHashMatch=${catalogSnapshotHashOk ? "OK" : "FAIL"}`);
 
         const entry = catalog.universities.find((u) => BigInt(u.universityId) === payloadUniversityId);
         if (!entry) throw new Error(`Catalog missing universityId=${payloadUniversityId.toString()}.`);
         catalogUniversityMetadataHash = entry.metadataHash;
         catalogOfficialUniversityName = entry.officialName;
-        log.push(`university.metadataHash.catalog=${catalogUniversityMetadataHash}`);
-        log.push(`university.officialName.catalog=${catalogOfficialUniversityName}`);
 
-        const metadataHashOk = catalogUniversityMetadataHash.toLowerCase() === onChainUniversityMetadataHash.toLowerCase();
-        log.push(`check.universityMetadataHashMatch=${metadataHashOk ? "OK" : "FAIL"}`);
-
-        const catalogName = entry.officialName.trim();
-        universityNameMatches = payloadUniversityName.toLowerCase() === catalogName.toLowerCase();
-        log.push(`check.universityNameMatch=${universityNameMatches ? "OK" : "FAIL"}`);
-
-        catalogOk = catalogSnapshotHashOk && metadataHashOk && universityNameMatches;
-      } else {
-        log.push("check.catalog=SKIPPED (strict catalog disabled)");
+        universityNameMatches = payloadUniversityName.toLowerCase() === entry.officialName.trim().toLowerCase();
+        const snapshotMatch = catalogSnapshotHash.toLowerCase() === onChainSnapshot.hash.toLowerCase();
+        const metadataMatch = catalogUniversityMetadataHash.toLowerCase() === onChainUniversityMetadataHash.toLowerCase();
+        catalogOk = snapshotMatch && metadataMatch && !!universityNameMatches;
       }
-
-      const revoked = await readIsRevoked({
-        publicClient,
-        registry: REGISTRY,
-        docHash,
-        issuer: effectiveIssuer,
-        batchId,
-      });
-      log.push(`record.revoked=${revoked === null ? "UNAVAILABLE (old contract ABI)" : String(revoked)}`);
 
       const declaredIssuerOk = declaredIssuer
         ? normalizeAddress(declaredIssuer) === normalizeAddress(effectiveIssuer)
         : true;
-      if (declaredIssuer) {
-        log.push(`proof.issuer.declared=${declaredIssuer}`);
-        log.push(`check.proofIssuerMatchesBatchIssuer=${declaredIssuerOk ? "OK" : "FAIL"}`);
-      } else {
-        log.push("check.proofIssuerMatchesBatchIssuer=SKIPPED (issuer not declared)");
-      }
+      const signatureIssuerOk = recoveredSigner
+        ? normalizeAddress(recoveredSigner) === normalizeAddress(effectiveIssuer)
+        : true;
+      const universityIdOk = issuerUniversityId === payloadUniversityId;
 
-      const statusOk = statusCode === 1;
-      const issuerOk = recoveredSigner ? normalizeAddress(recoveredSigner) === normalizeAddress(effectiveIssuer) : true;
-      const merkleOk = merkleRootMatches;
-      const universityActiveOk = onChainUniversityActive;
+      const verifyOk =
+        statusCode === 1 &&
+        merkleRootMatches &&
+        declaredIssuerOk &&
+        signatureIssuerOk &&
+        universityIdOk &&
+        onChainUniversityActive &&
+        catalogOk;
 
-      log.push(`check.statusValid=${statusOk ? "OK" : "FAIL"}`);
-      log.push(`check.merkleRoot=${merkleOk ? "OK" : "FAIL"}`);
-      log.push(`check.universityActive=${universityActiveOk ? "OK" : "FAIL"}`);
-      if (recoveredSigner) log.push(`check.signatureIssuerMatch=${issuerOk ? "OK" : "FAIL"}`);
-      else log.push("check.signatureIssuerMatch=SKIPPED (no signature)");
-
-      const verifyOk = statusOk && issuerOk && merkleOk && declaredIssuerOk && universityIdOk && universityActiveOk && catalogOk;
+      log.push(`chain.status.trusted=${statusCode} (${status})`);
+      log.push(`issuer.trustedNow=${issuerTrustedNow ? "YES" : "NO"}`);
+      log.push(`check.universityIdMatch=${universityIdOk ? "OK" : "FAIL"}`);
+      log.push(`check.merkleRoot=${merkleRootMatches ? "OK" : "FAIL"}`);
+      log.push(`check.universityActive=${onChainUniversityActive ? "OK" : "FAIL"}`);
+      log.push(`check.catalog=${strictCatalog ? (catalogOk ? "OK" : "FAIL") : "SKIPPED"}`);
       log.push(`RESULT=${verifyOk ? "VERIFIED ✅" : "NOT VERIFIED ❌"}`);
 
       setState({
         docHash,
         proofType,
-        verificationMode: "batch",
         statusCode,
         statusLabel: status,
         batchId: Number(batchId),
@@ -409,12 +396,15 @@ export default function VerifyPage() {
         payloadUniversityId,
         payloadUniversityName,
         issuerUniversityId,
+        onChainUniversityMetadataHash,
+        onChainUniversityStatus,
+        onChainSnapshotHash: onChainSnapshot.hash,
         catalogSnapshotHash,
         catalogUniversityMetadataHash,
         catalogOfficialUniversityName,
         universityNameMatches,
-        onChainUniversityMetadataHash,
-        onChainUniversityStatus,
+        declaredIssuerMatches: declaredIssuerOk,
+        signatureIssuerMatches: recoveredSigner ? signatureIssuerOk : null,
         verifyOk,
       });
     } catch (e: any) {
@@ -424,36 +414,30 @@ export default function VerifyPage() {
     }
   }
 
+  const failReasons = verificationFailures(state, strictCatalog);
+
   return (
-    <main style={{ maxWidth: 960, margin: "40px auto", padding: 16 }}>
-      <h1 style={{ fontSize: 28, fontWeight: 700 }}>UniVerify — Verifier</h1>
+    <main className="uv-page">
+      <h1 className="uv-title">UniVerify - Verifier</h1>
+      <p className="uv-subtitle">Result is based on strict on-chain trust semantics. Logs stay available for diagnostics.</p>
 
       <div className="uv-card">
-        <input
-          type="file"
-          accept="application/json"
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) void loadFile(f);
-          }}
-        />
-      </div>
-
-      <div className="uv-card">
-        <label style={{ display: "inline-flex", alignItems: "center", gap: 8, fontWeight: 600 }}>
+        <div className="uv-actions" style={{ marginTop: 0 }}>
           <input
-            type="checkbox"
-            checked={strictCatalog}
-            onChange={(e) => setStrictCatalog(e.target.checked)}
+            type="file"
+            accept="application/json"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void loadFile(f);
+            }}
           />
-          Strict catalog mode (snapshot hash + university metadata validation)
-        </label>
-        <p style={{ marginTop: 10, marginBottom: 0 }}>
-          <b>Catalog file:</b> {catalogFileName ?? DEFAULT_CATALOG_PATH}
-        </p>
-      </div>
+          <label style={{ display: "inline-flex", alignItems: "center", gap: 8, fontWeight: 600 }}>
+            <input type="checkbox" checked={strictCatalog} onChange={(e) => setStrictCatalog(e.target.checked)} />
+            Strict catalog mode
+          </label>
+        </div>
+        <p className="uv-hint"><b>Catalog file:</b> {catalogFileName ?? DEFAULT_CATALOG_PATH}</p>
 
-      <div className="uv-card">
         <label style={{ display: "block", fontWeight: 600, marginBottom: 8 }}>Envelope JSON</label>
         <textarea
           value={envelopeText}
@@ -462,60 +446,73 @@ export default function VerifyPage() {
           style={{ width: "100%", fontFamily: "monospace", padding: 12 }}
         />
         <div className="uv-actions">
-          <button onClick={() => void verify()} className="uv-btn uv-btn-primary">
-            Verify
-          </button>
+          <button onClick={() => void verify()} className="uv-btn uv-btn-primary">Verify</button>
         </div>
       </div>
 
-      <div style={{ marginTop: 18 }}>
-        {state.docHash && <p><b>docHash:</b> <code>{state.docHash}</code></p>}
-        <p><b>proof type:</b> {state.proofType}</p>
-        <p><b>verification mode:</b> {state.verificationMode}</p>
-        <p><b>on-chain status:</b> {state.statusLabel} ({state.statusCode})</p>
-        {state.batchId !== null && <p><b>batchId:</b> <code>{state.batchId}</code></p>}
-
-        {state.effectiveIssuer && <p><b>batch issuer:</b> <code>{state.effectiveIssuer}</code></p>}
-        {state.recoveredSigner && <p><b>recovered signer:</b> <code>{state.recoveredSigner}</code></p>}
-        {state.recoveredSigner === null && <p><b>signature check:</b> skipped (no EIP-712 in envelope)</p>}
-        {state.recordRevoked !== null && <p><b>revoked flag:</b> {String(state.recordRevoked)}</p>}
-        {state.issuerTrustedNow !== null && <p><b>issuer trusted now:</b> {state.issuerTrustedNow ? "YES" : "NO"}</p>}
-        {state.payloadUniversityId !== null && <p><b>payload universityId:</b> {state.payloadUniversityId.toString()}</p>}
-        {state.payloadUniversityName && <p><b>payload university name:</b> {state.payloadUniversityName}</p>}
-        {state.issuerUniversityId !== null && <p><b>issuer universityId (on-chain):</b> {state.issuerUniversityId.toString()}</p>}
-        {state.onChainUniversityStatus !== null && <p><b>university status (on-chain):</b> {state.onChainUniversityStatus}</p>}
-        {state.onChainUniversityMetadataHash && <p><b>university metadata hash (on-chain):</b> <code>{state.onChainUniversityMetadataHash}</code></p>}
-        {state.catalogUniversityMetadataHash && <p><b>university metadata hash (catalog):</b> <code>{state.catalogUniversityMetadataHash}</code></p>}
-        {state.catalogOfficialUniversityName && <p><b>official university name (catalog):</b> {state.catalogOfficialUniversityName}</p>}
-        {state.universityNameMatches !== null && <p><b>university name match:</b> {state.universityNameMatches ? "YES" : "NO"}</p>}
-        {state.catalogSnapshotHash && <p><b>catalog snapshot hash:</b> <code>{state.catalogSnapshotHash}</code></p>}
-
-        {state.onChainBatchRoot && <p><b>batch root (on-chain):</b> <code>{state.onChainBatchRoot}</code></p>}
-        {state.merkleLeaf && <p><b>merkle leaf (local):</b> <code>{state.merkleLeaf}</code></p>}
-        {state.merkleComputedRoot && <p><b>merkle root from proof (local):</b> <code>{state.merkleComputedRoot}</code></p>}
-        {state.merkleRootMatches !== null && <p><b>merkle root match:</b> {state.merkleRootMatches ? "YES" : "NO"}</p>}
-
-        {error && <p style={{ color: "red" }}><b>Error:</b> {error}</p>}
-        {state.verifyOk !== null && (
-          <p style={{ color: state.verifyOk ? "green" : "red" }}>
-            <b>Verification result:</b> {state.verifyOk ? "VERIFIED ✅" : "NOT VERIFIED ❌"}
-          </p>
-        )}
-
-        {logs.length > 0 && (
-          <div style={{ marginTop: 12, padding: 12, backgroundColor: "#f0f0f0", maxHeight: 360, overflowY: "auto" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h3 style={{ margin: 0 }}>Logs</h3>
-              <button onClick={log.clear} className="uv-btn">Clear logs</button>
-            </div>
-            <pre style={{ fontFamily: "monospace", fontSize: 12 }}>
-              {logs.map((line, idx) => (
-                <div key={idx}>{line}</div>
+      {state.verifyOk !== null && (
+        <div className={`uv-status-banner ${state.verifyOk ? "uv-status-ok" : "uv-status-fail"}`}>
+          <b>Verification result:</b> {state.verifyOk ? "VERIFIED" : "NOT VERIFIED"}
+          {state.verifyOk === false && failReasons.length > 0 && (
+            <ul className="uv-list">
+              {failReasons.map((reason) => (
+                <li key={reason}>{reason}</li>
               ))}
-            </pre>
-          </div>
-        )}
+            </ul>
+          )}
+        </div>
+      )}
+
+      {error && (
+        <div className="uv-status-banner uv-status-fail">
+          <b>Error:</b> {error}
+        </div>
+      )}
+
+      <div className="uv-card">
+        <h2 className="uv-card-title">Summary</h2>
+        <div className="uv-kv">
+          <b>Proof type</b><span>{state.proofType}</span>
+          <b>On-chain status</b><span>{state.statusLabel} ({state.statusCode})</span>
+          <b>Batch ID</b><span>{state.batchId ?? "-"}</span>
+          <b>Issuer</b><span><code>{state.effectiveIssuer ?? "-"}</code></span>
+          <b>Issuer trusted now</b><span>{state.issuerTrustedNow === null ? "-" : state.issuerTrustedNow ? "YES" : "NO"}</span>
+          <b>University status</b><span>{universityStatusLabel(state.onChainUniversityStatus)}</span>
+          <b>Revoked flag</b><span>{state.recordRevoked === null ? "UNAVAILABLE" : String(state.recordRevoked)}</span>
+        </div>
       </div>
+
+      <details className="uv-details">
+        <summary>Technical details</summary>
+        <div className="uv-kv">
+          <b>docHash</b><code>{state.docHash ?? "-"}</code>
+          <b>Merkle root match</b><span>{state.merkleRootMatches === null ? "-" : state.merkleRootMatches ? "YES" : "NO"}</span>
+          <b>Batch root on-chain</b><code>{state.onChainBatchRoot ?? "-"}</code>
+          <b>Merkle leaf local</b><code>{state.merkleLeaf ?? "-"}</code>
+          <b>Merkle root local</b><code>{state.merkleComputedRoot ?? "-"}</code>
+          <b>Payload universityId</b><span>{state.payloadUniversityId?.toString() ?? "-"}</span>
+          <b>Issuer universityId</b><span>{state.issuerUniversityId?.toString() ?? "-"}</span>
+          <b>University name match</b><span>{state.universityNameMatches === null ? "-" : state.universityNameMatches ? "YES" : "NO"}</span>
+          <b>Snapshot on-chain</b><code>{state.onChainSnapshotHash ?? "-"}</code>
+          <b>Snapshot catalog</b><code>{state.catalogSnapshotHash ?? "-"}</code>
+          <b>Metadata on-chain</b><code>{state.onChainUniversityMetadataHash ?? "-"}</code>
+          <b>Metadata catalog</b><code>{state.catalogUniversityMetadataHash ?? "-"}</code>
+        </div>
+      </details>
+
+      {logs.length > 0 && (
+        <div className="uv-card" style={{ maxHeight: 360, overflowY: "auto" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <h3 style={{ margin: 0 }}>Logs</h3>
+            <button onClick={log.clear} className="uv-btn">Clear logs</button>
+          </div>
+          <pre style={{ fontFamily: "monospace", fontSize: 12 }}>
+            {logs.map((line, idx) => (
+              <div key={idx}>{line}</div>
+            ))}
+          </pre>
+        </div>
+      )}
     </main>
   );
 }
