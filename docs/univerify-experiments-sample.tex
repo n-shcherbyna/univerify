@@ -1,0 +1,211 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[polish]{babel}
+\usepackage{lmodern}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\usepackage{xcolor}
+\usepackage{pgfplots}
+\usepackage{hyperref}
+\usepackage{caption}
+\pgfplotsset{compat=1.18}
+\geometry{margin=2.2cm}
+\sisetup{group-separator={\,}}
+
+\title{UniVerify: Wyniki Eksperymentów Kosztu Gazu}
+\author{Nazar\\Projekt badawczy / praca magisterska}
+\date{Wyniki z dnia 24 lutego 2026}
+
+\begin{document}
+\maketitle
+
+\section{Streszczenie}
+Przeprowadzono dwa etapy eksperymentów:
+\begin{enumerate}
+  \item optymalizacje kolejnych wersji kontraktu \texttt{A--F2},
+  \item porównanie modelu \textit{legacy} (per-dyplom, \texttt{F2}) z modelem \textit{Merkle batch} (\texttt{DiplomaRegistry}).
+\end{enumerate}
+Wyniki pokazują, że A--F2 różnią się realnie kosztowo, a przejście na Merkle zmienia model kosztów: większy deployment, ale dużo niższy koszt \textit{na dyplom} przy większych batchach.
+
+\section{Metodyka}
+\begin{itemize}
+  \item Środowisko: Foundry, Solidity \texttt{0.8.20}.
+  \item Komendy pomiarowe:
+\begin{verbatim}
+cd contracts
+forge test --match-path test/DiplomaRegistry*.t.sol --gas-report
+forge test --match-path test/DiplomaRegistryMerkle.t.sol --gas-report
+\end{verbatim}
+  \item Dane: logi \texttt{forge} z testów A, B, C, D, E, F1, F2 oraz Merkle.
+\end{itemize}
+
+\section{Etap 1: wyniki A--F2}
+\subsection{Suite-level (testy happy-path)}
+\begin{table}[h]
+\centering
+\caption{Koszt testów \texttt{testGas\_addIssuer}, \texttt{testGas\_issue}, \texttt{testGas\_revoke}}
+\begin{tabular}{lrrr}
+\toprule
+Wersja & addIssuer & issue & revoke \\
+\midrule
+A  & 57\,119 & 60\,721 & 93\,116 \\
+B  & 57\,153 & 62\,890 & 114\,348 \\
+C  & 57\,186 & 63\,012 & 114\,380 \\
+D  & 55\,100 & 63\,037 & 114\,431 \\
+E  & 55\,312 & 63\,047 & 114\,448 \\
+F1 & 55\,100 & 60\,569 & 92\,868 \\
+F2 & 55\,056 & 60\,531 & 92\,797 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent
+\textbf{Uwaga metodologiczna:} \texttt{testGas\_revoke()} obejmuje także przygotowanie stanu (\texttt{issue} przed \texttt{revoke}), więc ta metryka nie jest czystym kosztem samej funkcji \texttt{revoke()}.
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.95\textwidth,
+    height=7cm,
+    xlabel={Wersja kontraktu},
+    ylabel={Gas},
+    symbolic x coords={A,B,C,D,E,F1,F2},
+    xtick=data,
+    ymin=0,
+    grid=both,
+    legend style={at={(0.5,-0.2)},anchor=north,legend columns=2},
+]
+\addplot+[mark=*, very thick, color=blue!70!black] coordinates {(A,60721) (B,62890) (C,63012) (D,63037) (E,63047) (F1,60569) (F2,60531)};
+\addlegendentry{testGas\_issue}
+\addplot+[mark=square*, very thick, color=red!70!black] coordinates {(A,93116) (B,114348) (C,114380) (D,114431) (E,114448) (F1,92868) (F2,92797)};
+\addlegendentry{testGas\_revoke}
+\end{axis}
+\end{tikzpicture}
+\caption{Trend kosztów testów suite-level w wersjach A--F2.}
+\end{figure}
+
+\subsection{Function-level (czyste koszty funkcji, Avg)}
+\begin{table}[h]
+\centering
+\caption{Porównanie wersji A--F2 na poziomie raportu funkcji}
+\begin{tabular}{lrrrr}
+\toprule
+Wersja & Deployment & addIssuer & issue & revoke \\
+\midrule
+A  & 464\,211 & 45\,719 & 48\,458 & 31\,274 \\
+B  & 469\,181 & 46\,963 & 50\,659 & 50\,369 \\
+C  & 409\,497 & 45\,904 & 43\,367 & 38\,867 \\
+D  & 403\,109 & 43\,366 & 43\,370 & 38\,870 \\
+E  & 418\,029 & 43\,523 & 43\,377 & 38\,874 \\
+F1 & 373\,484 & 43\,366 & 41\,607 & 28\,825 \\
+F2 & 393\,596 & 43\,621 & 43\,084 & 29\,302 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Czym różnią się wersje A--F2 (z kodu)}
+\begin{itemize}
+  \item \textbf{A}: baza, \texttt{require(..., "STRING")}, rekord \texttt{\{issuer, issuedAt, revoked(bool)\}}.
+  \item \textbf{B}: revokacja przez \texttt{revokedAt(uint64)} zamiast bool.
+  \item \textbf{C}: przejście na \texttt{custom errors}.
+  \item \textbf{D}: \texttt{owner} jako \texttt{immutable}.
+  \item \textbf{E}: idempotentne \texttt{addIssuer/removeIssuer}, drobne porządki ścieżek.
+  \item \textbf{F1}: usunięcie timestampów ze storage; rekord to \texttt{\{issuer, revoked\}}.
+  \item \textbf{F2}: packed storage \texttt{mapping(bytes32 => uint256)} (issuer + bit revoked), plus \texttt{status()}.
+\end{itemize}
+
+\noindent
+\textbf{Wniosek A--F2:} wersje realnie się różnią. Najsłabsza kosztowo jest \texttt{B}. Najlepszy kompromis legacy daje \texttt{F2}; \texttt{F1} ma najniższy deployment.
+
+\section{Etap 2: F2 vs Merkle}
+\subsection{Porównanie function-level (min/avg/max)}
+\begin{table}[h]
+\centering
+\caption{Legacy \texttt{F2} -- raport funkcji}
+\begin{tabular}{lrrr}
+\toprule
+Operacja & Min & Avg & Max \\
+\midrule
+\texttt{addIssuer} & 21\,585 & 43\,621 & 44\,855 \\
+\texttt{issue} & 24\,030 & 43\,084 & 48\,200 \\
+\texttt{removeIssuer} & 21\,607 & 23\,112 & 24\,947 \\
+\texttt{revoke} & 26\,407 & 29\,302 & 31\,222 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Nowy \texttt{DiplomaRegistry} (Merkle) -- raport funkcji}
+\begin{tabular}{lrrr}
+\toprule
+Operacja & Min & Avg & Max \\
+\midrule
+\texttt{issueBatchRoot} & 24\,320 & 44\,433 & 50\,946 \\
+\texttt{revokeFromBatch} & 30\,063 & 42\,624 & 55\,175 \\
+\texttt{statusWithProof} & 5\,787 & 6\,071 & 6\,309 \\
+\texttt{statusWithProofTrusted} & 8\,679 & 10\,193 & 10\,957 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Co zmienia Merkle (funkcjonalnie)}
+\begin{itemize}
+  \item Brak \texttt{issue(docHash)} per dyplom; zamiast tego \texttt{issueBatchRoot(batchId, root)}.
+  \item Revokacja przez dowód Merkle: \texttt{revokeFromBatch(docHash, batchId, proof)}.
+  \item Weryfikacja na proofach: \texttt{statusWithProof} / \texttt{statusWithProofTrusted}.
+  \item Dodatkowo model uczelni: \texttt{issuerUniversityId}, status uczelni, \texttt{metadataHash}, \texttt{snapshotHash}.
+\end{itemize}
+
+\subsection{Amortyzacja kosztu publikacji}
+Porównanie jednostkowe (wartości \texttt{Max}):
+\[
+\text{legacy: } \texttt{issue}_{max}=48\,200,\qquad
+\text{Merkle: } \texttt{issueBatchRoot}_{max}=50\,946.
+\]
+\[
+\text{gas\_per\_diploma}(N)=\frac{50\,946}{N}.
+\]
+
+\begin{figure}[h]
+\centering
+\begin{tikzpicture}
+\begin{axis}[
+    width=0.95\textwidth,
+    height=7cm,
+    xlabel={Rozmiar batcha \(N\)},
+    ylabel={Gas / dyplom},
+    xmode=log,
+    log basis x={10},
+    ymin=0,
+    grid=both,
+    legend style={at={(0.5,-0.2)},anchor=north,legend columns=2}
+]
+\addplot+[mark=*, very thick, color=green!50!black] coordinates {(1,50946) (10,5094.6) (100,509.46) (1000,50.946)};
+\addlegendentry{Merkle: issueBatchRoot / N}
+\addplot+[mark=square*, very thick, color=orange!90!black] coordinates {(1,48200) (10,48200) (100,48200) (1000,48200)};
+\addlegendentry{Legacy: issue per dyplom}
+\end{axis}
+\end{tikzpicture}
+\caption{Koszt jednostkowy publikacji dyplomu: legacy vs Merkle.}
+\end{figure}
+
+\section{Wnioski}
+\begin{itemize}
+  \item A--F2 to rzeczywiste optymalizacje kodu, nie kosmetyka.
+  \item Największy regres kosztowy występuje w wersji \texttt{B}; najniższe koszty runtime osiągają \texttt{F1/F2}.
+  \item Merkle to zmiana architektury, nie kolejna mikrooptymalizacja.
+  \item Deployment Merkle jest wyższy (\texttt{1\,210\,329} vs \texttt{393\,596} dla F2), ale koszt operacyjny na dyplom spada wraz z \(N\).
+  \item Dla \(N=100\): ok. 509 gas/dyplom (Merkle) vs 48\,200 gas/dyplom (legacy), czyli ok. \(94.8\times\) mniej.
+\end{itemize}
+
+\section{Ograniczenia}
+\begin{itemize}
+  \item Pomiary lokalne (Foundry), bez zmienności opłat sieciowych.
+  \item Kolejny krok: eksperyment czułości \texttt{revokeFromBatch} na długość proof (\(O(\log N)\)).
+\end{itemize}
+
+\end{document}

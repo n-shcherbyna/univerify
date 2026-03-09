@@ -1,6 +1,6 @@
-// registry.ts
 import {
   createPublicClient,
+  hexToString,
   http,
   type Address,
   type Hex,
@@ -21,6 +21,17 @@ export function statusLabel(code: StatusCode): "Unknown" | "Valid" | "Revoked" {
   return "Revoked";
 }
 
+export function universityStatusLabel(status: number): string {
+  if (status === 1) return "Active";
+  if (status === 2) return "Suspended";
+  if (status === 3) return "Revoked";
+  return "Unknown";
+}
+
+export function bytes32ToName(hex: Hex): string {
+  return hexToString(hex, { size: 32 }).replace(/\0+$/, "").trim();
+}
+
 export async function readStatusWithProof(params: {
   publicClient: RegistryPublicClient;
   registry: Address;
@@ -29,14 +40,12 @@ export async function readStatusWithProof(params: {
   batchId: bigint;
   proof: readonly Hex[];
 }): Promise<StatusCode> {
-  const code = await params.publicClient.readContract({
+  return (await params.publicClient.readContract({
     address: params.registry,
     abi: DiplomaRegistryAbi,
     functionName: "statusWithProof",
     args: [params.docHash, params.issuer, params.batchId, params.proof],
-  });
-
-  return code as StatusCode;
+  })) as StatusCode;
 }
 
 export async function readStatusWithProofTrusted(params: {
@@ -47,14 +56,12 @@ export async function readStatusWithProofTrusted(params: {
   batchId: bigint;
   proof: readonly Hex[];
 }): Promise<StatusCode> {
-  const code = await params.publicClient.readContract({
+  return (await params.publicClient.readContract({
     address: params.registry,
     abi: DiplomaRegistryAbi,
     functionName: "statusWithProofTrusted",
     args: [params.docHash, params.issuer, params.batchId, params.proof],
-  });
-
-  return code as StatusCode;
+  })) as StatusCode;
 }
 
 export async function readBatch(params: {
@@ -63,14 +70,12 @@ export async function readBatch(params: {
   issuer: Address;
   batchId: bigint;
 }): Promise<{ issuer: Address; merkleRoot: Hex }> {
-  const res = await params.publicClient.readContract({
+  const merkleRoot = (await params.publicClient.readContract({
     address: params.registry,
     abi: DiplomaRegistryAbi,
     functionName: "getBatch",
     args: [params.issuer, params.batchId],
-  });
-
-  const merkleRoot = res as Hex;
+  })) as Hex;
   return { issuer: params.issuer, merkleRoot };
 }
 
@@ -80,19 +85,13 @@ export async function readIsRevoked(params: {
   docHash: Hex;
   issuer: Address;
   batchId: bigint;
-}): Promise<boolean | null> {
-  try {
-    const res = await params.publicClient.readContract({
-      address: params.registry,
-      abi: DiplomaRegistryAbi,
-      functionName: "isRevoked",
-      args: [params.docHash, params.issuer, params.batchId],
-    });
-    return res as boolean;
-  } catch {
-    // Backward compatibility: old deployments do not implement isRevoked().
-    return null;
-  }
+}): Promise<boolean> {
+  return (await params.publicClient.readContract({
+    address: params.registry,
+    abi: DiplomaRegistryAbi,
+    functionName: "isRevoked",
+    args: [params.docHash, params.issuer, params.batchId],
+  })) as boolean;
 }
 
 export async function readIsIssuer(params: {
@@ -100,14 +99,12 @@ export async function readIsIssuer(params: {
   registry: Address;
   issuer: Address;
 }): Promise<boolean> {
-  const res = await params.publicClient.readContract({
+  return (await params.publicClient.readContract({
     address: params.registry,
     abi: DiplomaRegistryAbi,
     functionName: "isIssuer",
     args: [params.issuer],
-  });
-
-  return res as boolean;
+  })) as boolean;
 }
 
 export async function readIssuerUniversityId(params: {
@@ -115,52 +112,36 @@ export async function readIssuerUniversityId(params: {
   registry: Address;
   issuer: Address;
 }): Promise<bigint> {
-  const res = await params.publicClient.readContract({
+  return (await params.publicClient.readContract({
     address: params.registry,
     abi: DiplomaRegistryAbi,
     functionName: "issuerUniversityId",
     args: [params.issuer],
-  });
-  return res as bigint;
+  })) as bigint;
 }
 
 export async function readOwner(params: {
   publicClient: RegistryPublicClient;
   registry: Address;
 }): Promise<Address> {
-  const res = await params.publicClient.readContract({
+  return (await params.publicClient.readContract({
     address: params.registry,
     abi: DiplomaRegistryAbi,
     functionName: "owner",
     args: [],
-  });
-  return res as Address;
+  })) as Address;
 }
 
 export async function readUniversity(params: {
   publicClient: RegistryPublicClient;
   registry: Address;
   universityId: bigint;
-}): Promise<{ metadataHash: Hex; status: number }> {
-  const res = await params.publicClient.readContract({
+}): Promise<{ name: string; status: number }> {
+  const [nameHex, status] = (await params.publicClient.readContract({
     address: params.registry,
     abi: DiplomaRegistryAbi,
     functionName: "getUniversity",
     args: [params.universityId],
-  });
-  const [metadataHash, status] = res as readonly [Hex, number];
-  return { metadataHash, status };
-}
-
-export async function readSnapshot(params: {
-  publicClient: RegistryPublicClient;
-  registry: Address;
-}): Promise<{ hash: Hex }> {
-  const hash = await params.publicClient.readContract({
-    address: params.registry,
-    abi: DiplomaRegistryAbi,
-    functionName: "snapshotHash",
-    args: [],
-  });
-  return { hash: hash as Hex };
+  })) as readonly [Hex, number];
+  return { name: bytes32ToName(nameHex), status };
 }

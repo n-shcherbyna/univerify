@@ -1,4 +1,3 @@
-// registryAdminWrite.ts
 import type { Address, Hex } from "viem";
 import { DiplomaRegistryAbi } from "@univerify/verifier-core";
 import type { TxState } from "./types";
@@ -23,27 +22,18 @@ type RemoveIssuerTx = AdminTxCommon & {
 type SetUniversityTx = AdminTxCommon & {
   fn: "setUniversity";
   universityId: bigint;
+  universityName: Hex;
   universityStatus: number;
-  universityMetadataHash: Hex;
-};
-
-type SetUniversityAndSnapshotTx = AdminTxCommon & {
-  fn: "setUniversityAndSnapshot";
-  universityId: bigint;
-  universityStatus: number;
-  universityMetadataHash: Hex;
-  snapshotHash: Hex;
 };
 
 type OnboardIssuerAndUniversityTx = AdminTxCommon & {
   fn: "onboardIssuerAndUniversity";
   issuer: Address;
   universityId: bigint;
-  universityMetadataHash: Hex;
-  snapshotHash: Hex;
+  universityName: Hex;
 };
 
-type AdminTxParams = RemoveIssuerTx | SetUniversityTx | SetUniversityAndSnapshotTx | OnboardIssuerAndUniversityTx;
+type AdminTxParams = RemoveIssuerTx | SetUniversityTx | OnboardIssuerAndUniversityTx;
 
 export async function writeIssuerAdminTx(params: AdminTxParams) {
   params.setTxState("submitting");
@@ -62,15 +52,7 @@ export async function writeIssuerAdminTx(params: AdminTxParams) {
         address: params.registry,
         abi: DiplomaRegistryAbi,
         functionName: "setUniversity",
-        args: [params.universityId, params.universityMetadataHash, params.universityStatus],
-        account: params.account,
-      });
-    } else if (params.fn === "setUniversityAndSnapshot") {
-      gas = await params.publicClient.estimateContractGas({
-        address: params.registry,
-        abi: DiplomaRegistryAbi,
-        functionName: "setUniversityAndSnapshot",
-        args: [params.universityId, params.universityMetadataHash, params.universityStatus, params.snapshotHash],
+        args: [params.universityId, params.universityName, params.universityStatus],
         account: params.account,
       });
     } else {
@@ -78,7 +60,7 @@ export async function writeIssuerAdminTx(params: AdminTxParams) {
         address: params.registry,
         abi: DiplomaRegistryAbi,
         functionName: "onboardIssuerAndUniversity",
-        args: [params.issuer, params.universityId, params.universityMetadataHash, params.snapshotHash],
+        args: [params.issuer, params.universityId, params.universityName],
         account: params.account,
       });
     }
@@ -97,15 +79,7 @@ export async function writeIssuerAdminTx(params: AdminTxParams) {
         address: params.registry,
         abi: DiplomaRegistryAbi,
         functionName: "setUniversity",
-        args: [params.universityId, params.universityMetadataHash, params.universityStatus],
-        gas: (gas * 120n) / 100n,
-      });
-    } else if (params.fn === "setUniversityAndSnapshot") {
-      tx = await params.walletClient.writeContract({
-        address: params.registry,
-        abi: DiplomaRegistryAbi,
-        functionName: "setUniversityAndSnapshot",
-        args: [params.universityId, params.universityMetadataHash, params.universityStatus, params.snapshotHash],
+        args: [params.universityId, params.universityName, params.universityStatus],
         gas: (gas * 120n) / 100n,
       });
     } else {
@@ -113,16 +87,14 @@ export async function writeIssuerAdminTx(params: AdminTxParams) {
         address: params.registry,
         abi: DiplomaRegistryAbi,
         functionName: "onboardIssuerAndUniversity",
-        args: [params.issuer, params.universityId, params.universityMetadataHash, params.snapshotHash],
+        args: [params.issuer, params.universityId, params.universityName],
         gas: (gas * 120n) / 100n,
       });
     }
 
     params.onTxHash?.(tx);
-
     params.setTxState("confirming");
     await params.publicClient.waitForTransactionReceipt({ hash: tx });
-
     if (params.onAfter) await params.onAfter();
     params.setTxState("idle");
   } catch (e) {

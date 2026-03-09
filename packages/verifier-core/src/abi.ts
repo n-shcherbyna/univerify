@@ -6,7 +6,7 @@ export const DiplomaRegistryAbi = [
   { type: "error", name: "BadIssuer", inputs: [] },
   { type: "error", name: "BadUniversityId", inputs: [] },
   { type: "error", name: "BadUniversityStatus", inputs: [] },
-  { type: "error", name: "BadSnapshot", inputs: [] },
+  { type: "error", name: "BadName", inputs: [] },
   { type: "error", name: "UniversityNotActive", inputs: [] },
   { type: "error", name: "BadHash", inputs: [] },
   { type: "error", name: "BadRoot", inputs: [] },
@@ -17,22 +17,13 @@ export const DiplomaRegistryAbi = [
 
   // view
   {
-    type: "function",
-    name: "owner",
+    type: "function", name: "owner",
     stateMutability: "view",
     inputs: [],
     outputs: [{ name: "", type: "address" }],
   },
   {
-    type: "function",
-    name: "snapshotHash",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [{ name: "", type: "bytes32" }],
-  },
-  {
-    type: "function",
-    name: "statusWithProof",
+    type: "function", name: "statusWithProof",
     stateMutability: "view",
     inputs: [
       { name: "docHash", type: "bytes32" },
@@ -43,8 +34,7 @@ export const DiplomaRegistryAbi = [
     outputs: [{ name: "", type: "uint8" }],
   },
   {
-    type: "function",
-    name: "statusWithProofTrusted",
+    type: "function", name: "statusWithProofTrusted",
     stateMutability: "view",
     inputs: [
       { name: "docHash", type: "bytes32" },
@@ -55,8 +45,7 @@ export const DiplomaRegistryAbi = [
     outputs: [{ name: "", type: "uint8" }],
   },
   {
-    type: "function",
-    name: "isRevoked",
+    type: "function", name: "isRevoked",
     stateMutability: "view",
     inputs: [
       { name: "docHash", type: "bytes32" },
@@ -66,8 +55,7 @@ export const DiplomaRegistryAbi = [
     outputs: [{ name: "", type: "bool" }],
   },
   {
-    type: "function",
-    name: "getBatch",
+    type: "function", name: "getBatch",
     stateMutability: "view",
     inputs: [
       { name: "issuer_", type: "address" },
@@ -76,39 +64,34 @@ export const DiplomaRegistryAbi = [
     outputs: [{ name: "merkleRoot", type: "bytes32" }],
   },
   {
-    type: "function",
-    name: "isIssuer",
+    type: "function", name: "isIssuer",
     stateMutability: "view",
     inputs: [{ name: "issuer", type: "address" }],
     outputs: [{ name: "", type: "bool" }],
   },
   {
-    type: "function",
-    name: "issuerUniversityId",
+    type: "function", name: "issuerUniversityId",
     stateMutability: "view",
     inputs: [{ name: "issuer", type: "address" }],
     outputs: [{ name: "", type: "uint64" }],
   },
   {
-    type: "function",
-    name: "getUniversity",
+    type: "function", name: "getUniversity",
     stateMutability: "view",
     inputs: [{ name: "universityId", type: "uint64" }],
     outputs: [
-      { name: "metadataHash", type: "bytes32" },
+      { name: "name", type: "bytes32" },
       { name: "status", type: "uint8" },
     ],
   },
   {
-    type: "function",
-    name: "isUniversityActive",
+    type: "function", name: "isUniversityActive",
     stateMutability: "view",
     inputs: [{ name: "universityId", type: "uint64" }],
     outputs: [{ name: "", type: "bool" }],
   },
   {
-    type: "function",
-    name: "verifyBatchMembership",
+    type: "function", name: "verifyBatchMembership",
     stateMutability: "view",
     inputs: [
       { name: "docHash", type: "bytes32" },
@@ -119,8 +102,7 @@ export const DiplomaRegistryAbi = [
     outputs: [{ name: "", type: "bool" }],
   },
   {
-    type: "function",
-    name: "merkleLeaf",
+    type: "function", name: "merkleLeaf",
     stateMutability: "view",
     inputs: [
       { name: "docHash", type: "bytes32" },
@@ -132,50 +114,33 @@ export const DiplomaRegistryAbi = [
 
   // write
   {
-    type: "function",
-    name: "setUniversity",
+    type: "function", name: "setUniversity",
     stateMutability: "nonpayable",
     inputs: [
       { name: "universityId", type: "uint64" },
-      { name: "metadataHash", type: "bytes32" },
+      { name: "name", type: "bytes32" },
       { name: "status", type: "uint8" },
     ],
     outputs: [],
   },
   {
-    type: "function",
-    name: "setUniversityAndSnapshot",
-    stateMutability: "nonpayable",
-    inputs: [
-      { name: "universityId", type: "uint64" },
-      { name: "metadataHash", type: "bytes32" },
-      { name: "status", type: "uint8" },
-      { name: "snapshotHash_", type: "bytes32" },
-    ],
-    outputs: [],
-  },
-  {
-    type: "function",
-    name: "onboardIssuerAndUniversity",
+    type: "function", name: "onboardIssuerAndUniversity",
     stateMutability: "nonpayable",
     inputs: [
       { name: "issuer", type: "address" },
       { name: "universityId", type: "uint64" },
-      { name: "metadataHash", type: "bytes32" },
-      { name: "snapshotHash_", type: "bytes32" },
+      { name: "name", type: "bytes32" },
     ],
     outputs: [],
   },
   {
-    type: "function",
-    name: "removeIssuer",
+    type: "function", name: "removeIssuer",
     stateMutability: "nonpayable",
     inputs: [{ name: "issuer", type: "address" }],
     outputs: [],
   },
   {
-    type: "function",
-    name: "issueBatchRoot",
+    type: "function", name: "issueBatchRoot",
     stateMutability: "nonpayable",
     inputs: [
       { name: "batchId", type: "uint64" },
@@ -184,8 +149,7 @@ export const DiplomaRegistryAbi = [
     outputs: [],
   },
   {
-    type: "function",
-    name: "revokeFromBatch",
+    type: "function", name: "revokeFromBatch",
     stateMutability: "nonpayable",
     inputs: [
       { name: "docHash", type: "bytes32" },
@@ -195,28 +159,20 @@ export const DiplomaRegistryAbi = [
     outputs: [],
   },
 
-  // events (opcjonalnie, ale zwykle warto)
-  { type: "event", name: "IssuerAdded", inputs: [{ name: "issuer", type: "address", indexed: false }], anonymous: false },
-  { type: "event", name: "IssuerRemoved", inputs: [{ name: "issuer", type: "address", indexed: false }], anonymous: false },
+  // events
+  { type: "event", name: "IssuerAdded", inputs: [{ name: "issuer", type: "address", indexed: true }], anonymous: false },
+  { type: "event", name: "IssuerRemoved", inputs: [{ name: "issuer", type: "address", indexed: true }], anonymous: false },
   {
-    type: "event",
-    name: "UniversitySet",
+    type: "event", name: "UniversitySet",
     inputs: [
       { name: "universityId", type: "uint64", indexed: true },
-      { name: "metadataHash", type: "bytes32", indexed: true },
+      { name: "name", type: "bytes32", indexed: false },
       { name: "status", type: "uint8", indexed: false },
     ],
     anonymous: false,
   },
   {
-    type: "event",
-    name: "SnapshotUpdated",
-    inputs: [{ name: "snapshotHash", type: "bytes32", indexed: true }],
-    anonymous: false,
-  },
-  {
-    type: "event",
-    name: "DiplomaRevoked",
+    type: "event", name: "DiplomaRevoked",
     inputs: [
       { name: "docHash", type: "bytes32", indexed: true },
       { name: "issuer", type: "address", indexed: true },
@@ -225,8 +181,7 @@ export const DiplomaRegistryAbi = [
     anonymous: false,
   },
   {
-    type: "event",
-    name: "BatchIssued",
+    type: "event", name: "BatchIssued",
     inputs: [
       { name: "batchId", type: "uint64", indexed: true },
       { name: "merkleRoot", type: "bytes32", indexed: true },
@@ -235,4 +190,5 @@ export const DiplomaRegistryAbi = [
     anonymous: false,
   },
 ] as const;
+
 export type StatusCode = 0 | 1 | 2; // Unknown | Valid | Revoked

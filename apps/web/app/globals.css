@@ -200,6 +200,39 @@ body {
   color: var(--muted);
 }
 
+.uv-label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 6px;
+  font-size: 14px;
+}
+
+.uv-muted {
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.uv-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--surface-border);
+  border-radius: 8px;
+  background: var(--background);
+  color: var(--foreground);
+  font-size: 14px;
+  font-family: var(--font-sans);
+}
+
+.uv-input:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+}
+
+.uv-mono {
+  font-family: var(--font-mono);
+}
+
 details.uv-details {
   margin-top: 12px;
   border: 1px solid #d1d5db;
@@ -270,6 +303,12 @@ details.uv-details > summary {
 
   .uv-hint {
     color: #cbd5e1;
+  }
+
+  .uv-input {
+    background: #1f2937;
+    border-color: var(--surface-border);
+    color: #f9fafb;
   }
 
   .uv-subtitle,

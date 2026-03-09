@@ -80,12 +80,18 @@ async function main() {
   const proof = env.proof.proof;
 
   const client = createPublicClient({ transport: http(RPC_URL) });
+
+  // statusWithProofTrusted checks Merkle proof validity AND that the issuer's
+  // university is currently Active on-chain. University identity is always resolved
+  // from the issuer address — never from payload fields.
   const code = (await client.readContract({
     address: REGISTRY,
     abi: DiplomaRegistryAbi,
-    functionName: "statusWithProof",
+    functionName: "statusWithProofTrusted",
     args: [docHash, issuer, batchId, proof],
   })) as StatusCode;
+
+  const verified = code === 1;
 
   console.log(
     JSON.stringify(
@@ -95,15 +101,17 @@ async function main() {
         batchId: batchId.toString(),
         status: statusLabel(code),
         statusCode: code,
+        verified,
       },
       null,
       2
     )
   );
+
+  if (!verified) process.exit(1);
 }
 
 main().catch((e) => {
   console.error(e instanceof Error ? e.message : e);
   process.exit(1);
 });
-

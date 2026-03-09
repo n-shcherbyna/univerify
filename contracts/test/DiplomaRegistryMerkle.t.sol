@@ -15,10 +15,13 @@ contract DiplomaRegistryMerkleTest is Test {
     bytes32 docA = keccak256("doc-a");
     bytes32 docB = keccak256("doc-b");
 
+    bytes32 constant UNI_1001_NAME = bytes32("Politechnika Warszawska");
+    bytes32 constant UNI_1002_NAME = bytes32("Uniwersytet Jagiellonski");
+
     function setUp() public {
         reg = new DiplomaRegistry();
-        reg.onboardIssuerAndUniversity(issuer1, 1001, keccak256("uni-1001"), keccak256("snapshot-setup-1"));
-        reg.onboardIssuerAndUniversity(issuer2, 1002, keccak256("uni-1002"), keccak256("snapshot-setup-2"));
+        reg.onboardIssuerAndUniversity(issuer1, 1001, UNI_1001_NAME);
+        reg.onboardIssuerAndUniversity(issuer2, 1002, UNI_1002_NAME);
     }
 
     function testIssueBatchAndVerifyWithProof() public {
@@ -32,9 +35,7 @@ contract DiplomaRegistryMerkleTest is Test {
         assertEq(uint256(reg.statusWithProof(docA, issuer1, batchId, proofA)), uint256(DiplomaRegistry.Status.Valid));
         assertEq(uint256(reg.statusWithProofTrusted(docA, issuer1, batchId, proofA)), uint256(DiplomaRegistry.Status.Valid));
         assertTrue(reg.verifyBatchMembership(docA, issuer1, batchId, proofA));
-
-        bytes32 onChainRoot = reg.getBatch(issuer1, batchId);
-        assertEq(onChainRoot, root);
+        assertEq(reg.getBatch(issuer1, batchId), root);
     }
 
     function testRevokeFromBatch() public {
@@ -92,57 +93,40 @@ contract DiplomaRegistryMerkleTest is Test {
 
     function testOnboardRejectsZeroUniversityId() public {
         vm.expectRevert(DiplomaRegistry.BadUniversityId.selector);
-        reg.onboardIssuerAndUniversity(address(0xD00D), 0, keccak256("meta"), keccak256("snap"));
+        reg.onboardIssuerAndUniversity(address(0xD00D), 0, bytes32("name"));
     }
 
     function testOnboardRejectsZeroIssuer() public {
         vm.expectRevert(DiplomaRegistry.BadIssuer.selector);
-        reg.onboardIssuerAndUniversity(address(0), 2001, keccak256("meta"), keccak256("snap"));
+        reg.onboardIssuerAndUniversity(address(0), 2001, bytes32("name"));
+    }
+
+    function testOnboardRejectsBadName() public {
+        vm.expectRevert(DiplomaRegistry.BadName.selector);
+        reg.onboardIssuerAndUniversity(address(0xD00D), 2001, bytes32(0));
     }
 
     function testOnboardRejectsNoop() public {
         vm.expectRevert(DiplomaRegistry.NoChange.selector);
-        reg.onboardIssuerAndUniversity(issuer1, 1001, keccak256("uni-1001"), keccak256("snapshot-setup-2"));
+        reg.onboardIssuerAndUniversity(issuer1, 1001, UNI_1001_NAME);
     }
 
     function testSetUniversityRejectsNoop() public {
         vm.expectRevert(DiplomaRegistry.NoChange.selector);
-        reg.setUniversity(1001, keccak256("uni-1001"), DiplomaRegistry.UniversityStatus.Active);
+        reg.setUniversity(1001, UNI_1001_NAME, DiplomaRegistry.UniversityStatus.Active);
     }
 
-    function testSetUniversityAndSnapshotUpdatesBoth() public {
-        uint64 universityId = 1001;
-        bytes32 nextMeta = keccak256("uni-1001-v3");
-        bytes32 nextSnap = keccak256("snapshot-v3");
+    function testSetUniversityUpdatesNameAndStatus() public {
+        bytes32 newName = bytes32("Politechnika v2");
+        reg.setUniversity(1001, newName, DiplomaRegistry.UniversityStatus.Suspended);
 
-        reg.setUniversityAndSnapshot(universityId, nextMeta, DiplomaRegistry.UniversityStatus.Suspended, nextSnap);
-
-        (bytes32 onChainMeta, DiplomaRegistry.UniversityStatus st) = reg.getUniversity(universityId);
-        assertEq(onChainMeta, nextMeta);
+        (bytes32 onChainName, DiplomaRegistry.UniversityStatus st) = reg.getUniversity(1001);
+        assertEq(onChainName, newName);
         assertEq(uint256(st), uint256(DiplomaRegistry.UniversityStatus.Suspended));
-        assertEq(reg.snapshotHash(), nextSnap);
-    }
-
-    function testSetUniversityAndSnapshotRejectsNoop() public {
-        bytes32 snap = reg.snapshotHash();
-        vm.expectRevert(DiplomaRegistry.NoChange.selector);
-        reg.setUniversityAndSnapshot(1001, keccak256("uni-1001"), DiplomaRegistry.UniversityStatus.Active, snap);
-    }
-
-    function testOnboardRejectsBadSnapshot() public {
-        vm.expectRevert(DiplomaRegistry.BadSnapshot.selector);
-        reg.onboardIssuerAndUniversity(address(0xD00D), 2001, keccak256("meta"), bytes32(0));
-    }
-
-    function testOnboardRejectsBadHash() public {
-        vm.expectRevert(DiplomaRegistry.BadHash.selector);
-        reg.onboardIssuerAndUniversity(address(0xD00D), 2001, bytes32(0), keccak256("snap"));
     }
 
     function testRemoveIssuerRejectsNoop() public {
-        vm.prank(address(reg.owner()));
         reg.removeIssuer(issuer1);
-
         vm.expectRevert(DiplomaRegistry.NoChange.selector);
         reg.removeIssuer(issuer1);
     }
@@ -150,28 +134,23 @@ contract DiplomaRegistryMerkleTest is Test {
     function testOnboardIssuerAndUniversityUpdatesAllInOneTx() public {
         address newIssuer = address(0xD00D);
         uint64 universityId = 3001;
-        bytes32 metadataHash = keccak256("uni-3001");
-        bytes32 snap = keccak256("snapshot-3001");
+        bytes32 name = bytes32("Nowa Uczelnia");
 
-        reg.onboardIssuerAndUniversity(newIssuer, universityId, metadataHash, snap);
+        reg.onboardIssuerAndUniversity(newIssuer, universityId, name);
 
-        (bytes32 onChainMetadataHash, DiplomaRegistry.UniversityStatus st) = reg.getUniversity(universityId);
-        assertEq(onChainMetadataHash, metadataHash);
+        (bytes32 onChainName, DiplomaRegistry.UniversityStatus st) = reg.getUniversity(universityId);
+        assertEq(onChainName, name);
         assertEq(uint256(st), uint256(DiplomaRegistry.UniversityStatus.Active));
         assertEq(reg.issuerUniversityId(newIssuer), universityId);
-        assertEq(reg.snapshotHash(), snap);
     }
 
     function testOnboardIssuerAndUniversityRejectsNoop() public {
-        uint64 universityId = 4001;
         address issuer = address(0xF001);
-        bytes32 metadataHash = keccak256("uni-4001");
-        bytes32 snap = keccak256("snapshot-same");
-
-        reg.onboardIssuerAndUniversity(issuer, universityId, metadataHash, snap);
+        bytes32 name = bytes32("Uczelnia 4001");
+        reg.onboardIssuerAndUniversity(issuer, 4001, name);
 
         vm.expectRevert(DiplomaRegistry.NoChange.selector);
-        reg.onboardIssuerAndUniversity(issuer, universityId, metadataHash, snap);
+        reg.onboardIssuerAndUniversity(issuer, 4001, name);
     }
 
     function testIssueBatchRootBlockedWhenUniversitySuspended() public {
@@ -182,14 +161,14 @@ contract DiplomaRegistryMerkleTest is Test {
         vm.prank(issuer1);
         reg.issueBatchRoot(batchId, root);
 
-        reg.setUniversity(1001, keccak256("uni-1001-v2"), DiplomaRegistry.UniversityStatus.Suspended);
+        reg.setUniversity(1001, bytes32("Politechnika v2"), DiplomaRegistry.UniversityStatus.Suspended);
 
         assertEq(uint256(reg.statusWithProof(docA, issuer1, batchId, proofA)), uint256(DiplomaRegistry.Status.Valid));
         assertEq(uint256(reg.statusWithProofTrusted(docA, issuer1, batchId, proofA)), uint256(DiplomaRegistry.Status.Unknown));
 
         vm.prank(issuer1);
         vm.expectRevert(DiplomaRegistry.UniversityNotActive.selector);
-        reg.issueBatchRoot(batchId, keccak256("root"));
+        reg.issueBatchRoot(batchId + 1, keccak256("root2"));
     }
 
     function testStatusWithProofTrustedUnknownAfterIssuerRemoved() public {
@@ -207,10 +186,8 @@ contract DiplomaRegistryMerkleTest is Test {
     }
 
     function testIssueBatchRootDuplicateBatchIdSameIssuer() public {
-        bytes32 root = keccak256("root");
-
         vm.prank(issuer1);
-        reg.issueBatchRoot(batchId, root);
+        reg.issueBatchRoot(batchId, keccak256("root"));
 
         vm.prank(issuer1);
         vm.expectRevert(DiplomaRegistry.BatchAlreadyIssued.selector);
@@ -256,13 +233,17 @@ contract DiplomaRegistryMerkleTest is Test {
         assertTrue(a != b);
     }
 
+    function testGetUniversityReturnsName() public view {
+        (bytes32 name, DiplomaRegistry.UniversityStatus st) = reg.getUniversity(1001);
+        assertEq(name, UNI_1001_NAME);
+        assertEq(uint256(st), uint256(DiplomaRegistry.UniversityStatus.Active));
+    }
+
     function _buildTwoLeafTree() internal view returns (bytes32 root, bytes32 leafA, bytes32 leafB) {
         leafA = reg.merkleLeaf(docA, batchId, issuer1);
         leafB = reg.merkleLeaf(docB, batchId, issuer1);
-        root = _hashPair(leafA, leafB);
-    }
-
-    function _hashPair(bytes32 a, bytes32 b) internal pure returns (bytes32) {
-        return a < b ? keccak256(abi.encodePacked(a, b)) : keccak256(abi.encodePacked(b, a));
+        root = leafA < leafB
+            ? keccak256(abi.encodePacked(leafA, leafB))
+            : keccak256(abi.encodePacked(leafB, leafA));
     }
 }

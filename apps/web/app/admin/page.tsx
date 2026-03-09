@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { isAddress, isHex, type Address, type Hex } from "viem";
-import { hashPayload } from "@univerify/verifier-core";
+import { useMemo, useState } from "react";
+import { isAddress, stringToHex, type Address, type Hex } from "viem";
 
 import { readPublicEnv } from "@/lib/univerify/env";
 import {
@@ -10,26 +9,21 @@ import {
   readIsIssuer,
   readIssuerUniversityId,
   readOwner,
-  readSnapshot,
   readUniversity,
+  universityStatusLabel,
 } from "@/lib/univerify/registry";
 import { getEthereum, ensureChain, makeWalletClient } from "@/lib/univerify/wallet";
 import { makeStateLogger } from "@/lib/univerify/logs";
 import type { ChainState, TxState } from "@/lib/univerify/types";
 import { writeIssuerAdminTx } from "@/lib/univerify/registryAdminWrite";
 
-type CatalogResponse = {
-  snapshotHash: Hex;
-  universitiesCount: number;
-};
+function nameToBytes32(name: string): Hex {
+  return stringToHex(name.trim(), { size: 32 });
+}
 
-const DEFAULT_CATALOG_PATH = "/catalog.snapshot.json";
-
-function statusLabel(status: number): string {
-  if (status === 1) return "Active";
-  if (status === 2) return "Suspended";
-  if (status === 3) return "Revoked";
-  return "Unknown";
+function isValidName(name: string): boolean {
+  const trimmed = name.trim();
+  return trimmed.length > 0 && trimmed.length <= 32;
 }
 
 export default function AdminPage() {
@@ -41,24 +35,22 @@ export default function AdminPage() {
   const [owner, setOwner] = useState<Address | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
 
-  const [issuerAddress, setIssuerAddress] = useState("");
-  const [issuerOpsInput, setIssuerOpsInput] = useState("");
-  const [assignUniversityIdInput, setAssignUniversityIdInput] = useState("1001");
-  const [universityIdInput, setUniversityIdInput] = useState("1001");
-  const [officialNameInput, setOfficialNameInput] = useState("UniVerify University");
-  const [countryInput, setCountryInput] = useState("PL");
-  const [websiteInput, setWebsiteInput] = useState("");
-  const [accreditationInput, setAccreditationInput] = useState("");
-  const [manageUniversityIdInput, setManageUniversityIdInput] = useState("1001");
-  const [manageUniversityStatusInput, setManageUniversityStatusInput] = useState("1");
-  const [manageUniversityOfficialNameInput, setManageUniversityOfficialNameInput] = useState("");
-  const [manageUniversityMetadataHashInput, setManageUniversityMetadataHashInput] = useState("");
-  const [manageUniversityMetadataJsonInput, setManageUniversityMetadataJsonInput] = useState("");
+  // Onboard form
+  const [onboardIssuer, setOnboardIssuer] = useState("");
+  const [onboardUniversityId, setOnboardUniversityId] = useState("1001");
+  const [onboardName, setOnboardName] = useState("");
 
-  const [checkUniversityIdInput, setCheckUniversityIdInput] = useState("1001");
+  // Manage university form
+  const [manageUniversityId, setManageUniversityId] = useState("1001");
+  const [manageName, setManageName] = useState("");
+  const [manageStatus, setManageStatus] = useState("1");
 
-  const [catalogSnapshotHash, setCatalogSnapshotHash] = useState<Hex | null>(null);
-  const [catalogUniversitiesCount, setCatalogUniversitiesCount] = useState<number>(0);
+  // Issuer ops form
+  const [issuerOpsAddress, setIssuerOpsAddress] = useState("");
+  const [assignUniversityId, setAssignUniversityId] = useState("1001");
+
+  // Diagnostics
+  const [checkUniversityId, setCheckUniversityId] = useState("1001");
 
   const [txState, setTxState] = useState<TxState>("idle");
   const [txHash, setTxHash] = useState<Hex | null>(null);
@@ -68,70 +60,11 @@ export default function AdminPage() {
 
   const isBusy = txState !== "idle";
 
-  const computedMetadataHash = useMemo(() => {
-    if (!/^\d+$/.test(universityIdInput.trim()) || universityIdInput.trim() === "0") return null;
-    if (!officialNameInput.trim()) return null;
-    if (!countryInput.trim()) return null;
-
-    const metadata: Record<string, unknown> = {
-      universityId: Number(universityIdInput.trim()),
-      officialName: officialNameInput.trim(),
-      country: countryInput.trim().toUpperCase(),
-    };
-    if (websiteInput.trim()) metadata.website = websiteInput.trim();
-    if (accreditationInput.trim()) metadata.accreditationId = accreditationInput.trim();
-
-    return hashPayload(metadata) as Hex;
-  }, [universityIdInput, officialNameInput, countryInput, websiteInput, accreditationInput]);
-
-  const computedManageMetadataHash = useMemo(() => {
-    const raw = manageUniversityMetadataJsonInput.trim();
-    if (!raw) return null;
-    try {
-      const parsed = JSON.parse(raw) as unknown;
-      return hashPayload(parsed) as Hex;
-    } catch {
-      return null;
-    }
-  }, [manageUniversityMetadataJsonInput]);
-
   function resetMessages() {
     setError("");
     setTxHash(null);
     log.clear();
   }
-
-  async function refreshOwnerAndSnapshot(addr?: Address) {
-    const [o, snap] = await Promise.all([
-      readOwner({ publicClient, registry: REGISTRY }),
-      readSnapshot({ publicClient, registry: REGISTRY }),
-    ]);
-    setOwner(o);
-
-    const acc = addr ?? (account || null);
-    const admin = !!acc && acc.toLowerCase() === o.toLowerCase();
-    setIsAdmin(admin);
-
-    log.push(`owner=${o}`);
-    if (acc) log.push(`account=${acc} isAdmin=${admin}`);
-    log.push(`snapshot.hash.onchain=${snap.hash}`);
-  }
-
-  async function loadCatalogInfo() {
-    try {
-      const res = await fetch("/api/catalog", { cache: "no-store" });
-      if (!res.ok) throw new Error(`Catalog API failed (${res.status})`);
-      const data = (await res.json()) as CatalogResponse;
-      setCatalogSnapshotHash(data.snapshotHash);
-      setCatalogUniversitiesCount(data.universitiesCount);
-    } catch (e: any) {
-      setError(e?.message ?? String(e));
-    }
-  }
-
-  useEffect(() => {
-    void loadCatalogInfo();
-  }, []);
 
   async function connect() {
     resetMessages();
@@ -147,65 +80,26 @@ export default function AdminPage() {
       await ensureChain({ eth, targetChainId: TARGET_CHAIN_ID });
       setChainState("ok");
 
-      await refreshOwnerAndSnapshot(a);
-      await loadCatalogInfo();
+      const o = await readOwner({ publicClient, registry: REGISTRY });
+      setOwner(o);
+      const admin = a.toLowerCase() === o.toLowerCase();
+      setIsAdmin(admin);
+
+      log.push(`owner=${o}`);
+      log.push(`account=${a} isAdmin=${admin}`);
     } catch (e: any) {
       setChainState("wrong");
       setError(e?.message ?? String(e));
     }
   }
 
-  async function upsertCatalogAndGetSnapshotHash(params: {
-    universityId: bigint;
-    officialName: string;
-    metadataHash: Hex;
-  }): Promise<Hex> {
-    const res = await fetch("/api/catalog", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        universityId: Number(params.universityId),
-        officialName: params.officialName,
-        metadataHash: params.metadataHash,
-      }),
-    });
-
-    const body = await res.json().catch(() => ({}));
-    if (!res.ok) throw new Error(body?.error ?? `Catalog update failed (${res.status}).`);
-
-    const snapshotHash = body?.snapshotHash as Hex;
-    if (!isHex(snapshotHash, { strict: true }) || snapshotHash.length !== 66) {
-      throw new Error("Catalog API returned invalid snapshotHash.");
-    }
-
-    setCatalogSnapshotHash(snapshotHash);
-    setCatalogUniversitiesCount(Number(body?.universitiesCount ?? 0));
-    return snapshotHash;
-  }
-
   async function onboardUniversityAndIssuer() {
     resetMessages();
     if (!account) return setError("Connect MetaMask first.");
     if (!isAdmin) return setError("Only contract owner can run onboarding.");
-    if (!isAddress(issuerAddress)) return setError("Issuer address is invalid.");
-    if (!/^\d+$/.test(universityIdInput.trim()) || universityIdInput.trim() === "0") {
-      return setError("University ID must be a positive integer.");
-    }
-    if (!officialNameInput.trim()) return setError("Official university name is required.");
-    if (!countryInput.trim()) return setError("Country is required.");
-    if (!computedMetadataHash) return setError("Cannot compute metadata hash from provided data.");
-
-    const universityId = BigInt(universityIdInput.trim());
-    const metadataHash = computedMetadataHash;
-    const officialName = officialNameInput.trim();
-
-    const metadata: Record<string, unknown> = {
-      universityId: Number(universityId),
-      officialName,
-      country: countryInput.trim().toUpperCase(),
-    };
-    if (websiteInput.trim()) metadata.website = websiteInput.trim();
-    if (accreditationInput.trim()) metadata.accreditationId = accreditationInput.trim();
+    if (!isAddress(onboardIssuer)) return setError("Issuer address is invalid.");
+    if (!/^\d+$/.test(onboardUniversityId.trim()) || onboardUniversityId.trim() === "0") return setError("University ID must be a positive integer.");
+    if (!isValidName(onboardName)) return setError("University name is required (max 32 characters).");
 
     const eth = getEthereum();
     if (!eth) return setError("MetaMask not found.");
@@ -214,29 +108,19 @@ export default function AdminPage() {
       await ensureChain({ eth, targetChainId: TARGET_CHAIN_ID });
       setChainState("ok");
       const walletClient = makeWalletClient({ eth, account });
+      const universityId = BigInt(onboardUniversityId.trim());
+      const universityName = nameToBytes32(onboardName);
 
-      log.push("=== University onboarding flow ===");
-      log.push(`issuer=${issuerAddress}`);
+      log.push("=== Onboard university + issuer ===");
+      log.push(`issuer=${onboardIssuer}`);
       log.push(`universityId=${universityId.toString()}`);
-      log.push(`officialName=${officialName}`);
-      log.push(`metadataHash=${metadataHash}`);
+      log.push(`name=${onboardName.trim()}`);
 
-      log.push(`step1=updateCatalog(${DEFAULT_CATALOG_PATH})`);
-      log.push(`catalog.metadata=${JSON.stringify(metadata)}`);
-      const newSnapshotHash = await upsertCatalogAndGetSnapshotHash({
-        universityId,
-        officialName,
-        metadataHash,
-      });
-      log.push(`catalog.snapshotHash=${newSnapshotHash}`);
-
-      log.push("step2=onboardIssuerAndUniversity(one tx)");
       await writeIssuerAdminTx({
         fn: "onboardIssuerAndUniversity",
-        issuer: issuerAddress as Address,
+        issuer: onboardIssuer as Address,
         universityId,
-        universityMetadataHash: metadataHash,
-        snapshotHash: newSnapshotHash,
+        universityName,
         registry: REGISTRY,
         account,
         publicClient,
@@ -245,157 +129,11 @@ export default function AdminPage() {
         onTxHash: setTxHash,
       });
 
-      await refreshOwnerAndSnapshot();
       log.push("RESULT=ONBOARDING_OK");
-    } catch (e: unknown) {
-      const err = e as { shortMessage?: string; message?: string };
-      setTxState("idle");
-      setError(err.shortMessage ?? err.message ?? String(e));
-      log.push(`ERROR=${err.shortMessage ?? err.message ?? String(e)}`);
-    }
-  }
-
-  async function checkIssuer() {
-    resetMessages();
-    if (!isAddress(issuerOpsInput)) return setError("Enter a valid issuer address.");
-    try {
-      const issuer = issuerOpsInput as Address;
-      const [ok, uid] = await Promise.all([
-        readIsIssuer({ publicClient, registry: REGISTRY, issuer }),
-        readIssuerUniversityId({ publicClient, registry: REGISTRY, issuer }),
-      ]);
-      log.push(`isIssuer=${ok}`);
-      log.push(`issuerUniversityId=${uid.toString()}`);
     } catch (e: any) {
-      setError(e?.message ?? String(e));
-    }
-  }
-
-  async function checkUniversity() {
-    resetMessages();
-    if (!/^\d+$/.test(checkUniversityIdInput.trim()) || checkUniversityIdInput.trim() === "0") {
-      return setError("University ID must be a positive integer.");
-    }
-    try {
-      const uni = await readUniversity({
-        publicClient,
-        registry: REGISTRY,
-        universityId: BigInt(checkUniversityIdInput.trim()),
-      });
-      log.push(`university.metadataHash=${uni.metadataHash}`);
-      log.push(`university.status=${uni.status} (${statusLabel(uni.status)})`);
-    } catch (e: any) {
-      setError(e?.message ?? String(e));
-    }
-  }
-
-  async function removeIssuer() {
-    resetMessages();
-    if (!account) return setError("Connect MetaMask first.");
-    if (!isAdmin) return setError("Only contract owner can remove issuer.");
-    if (!isAddress(issuerOpsInput)) return setError("Issuer address is invalid.");
-
-    const eth = getEthereum();
-    if (!eth) return setError("MetaMask not found.");
-
-    try {
-      await ensureChain({ eth, targetChainId: TARGET_CHAIN_ID });
-      setChainState("ok");
-      const walletClient = makeWalletClient({ eth, account });
-      const issuer = issuerOpsInput as Address;
-
-      log.push("=== Remove issuer flow ===");
-      log.push(`issuer=${issuer}`);
-
-      await writeIssuerAdminTx({
-        fn: "removeIssuer",
-        issuer,
-        registry: REGISTRY,
-        account,
-        publicClient,
-        walletClient,
-        setTxState,
-        onTxHash: setTxHash,
-      });
-
-      const [ok, uid] = await Promise.all([
-        readIsIssuer({ publicClient, registry: REGISTRY, issuer }),
-        readIssuerUniversityId({ publicClient, registry: REGISTRY, issuer }),
-      ]);
-      log.push(`isIssuer.after=${ok}`);
-      log.push(`issuerUniversityId.after=${uid.toString()}`);
-      log.push("RESULT=REMOVE_ISSUER_OK");
-    } catch (e: unknown) {
-      const err = e as { shortMessage?: string; message?: string };
       setTxState("idle");
-      setError(err.shortMessage ?? err.message ?? String(e));
-      log.push(`ERROR=${err.shortMessage ?? err.message ?? String(e)}`);
-    }
-  }
-
-  async function assignIssuerOnChainOnly() {
-    resetMessages();
-    if (!account) return setError("Connect MetaMask first.");
-    if (!isAdmin) return setError("Only contract owner can assign issuer.");
-    if (!isAddress(issuerOpsInput)) return setError("Issuer address is invalid.");
-    if (!/^\d+$/.test(assignUniversityIdInput.trim()) || assignUniversityIdInput.trim() === "0") {
-      return setError("University ID must be a positive integer.");
-    }
-
-    const eth = getEthereum();
-    if (!eth) return setError("MetaMask not found.");
-
-    try {
-      await ensureChain({ eth, targetChainId: TARGET_CHAIN_ID });
-      setChainState("ok");
-      const walletClient = makeWalletClient({ eth, account });
-      const issuer = issuerOpsInput as Address;
-      const universityId = BigInt(assignUniversityIdInput.trim());
-
-      const [uni, snap] = await Promise.all([
-        readUniversity({ publicClient, registry: REGISTRY, universityId }),
-        readSnapshot({ publicClient, registry: REGISTRY }),
-      ]);
-
-      if (uni.metadataHash === "0x0000000000000000000000000000000000000000000000000000000000000000") {
-        return setError("University metadataHash is empty on-chain. Initialize university first.");
-      }
-      if (snap.hash === "0x0000000000000000000000000000000000000000000000000000000000000000") {
-        return setError("snapshotHash is empty on-chain. Run onboarding flow first.");
-      }
-
-      log.push("=== Assign issuer (on-chain only) ===");
-      log.push(`issuer=${issuer}`);
-      log.push(`universityId=${universityId.toString()}`);
-      log.push(`university.metadataHash.onchain=${uni.metadataHash}`);
-      log.push(`snapshot.hash.onchain=${snap.hash}`);
-
-      await writeIssuerAdminTx({
-        fn: "onboardIssuerAndUniversity",
-        issuer,
-        universityId,
-        universityMetadataHash: uni.metadataHash,
-        snapshotHash: snap.hash,
-        registry: REGISTRY,
-        account,
-        publicClient,
-        walletClient,
-        setTxState,
-        onTxHash: setTxHash,
-      });
-
-      const [ok, uid] = await Promise.all([
-        readIsIssuer({ publicClient, registry: REGISTRY, issuer }),
-        readIssuerUniversityId({ publicClient, registry: REGISTRY, issuer }),
-      ]);
-      log.push(`isIssuer.after=${ok}`);
-      log.push(`issuerUniversityId.after=${uid.toString()}`);
-      log.push("RESULT=ASSIGN_ISSUER_ONCHAIN_OK");
-    } catch (e: unknown) {
-      const err = e as { shortMessage?: string; message?: string };
-      setTxState("idle");
-      setError(err.shortMessage ?? err.message ?? String(e));
-      log.push(`ERROR=${err.shortMessage ?? err.message ?? String(e)}`);
+      setError(e?.shortMessage ?? e?.message ?? String(e));
+      log.push(`ERROR=${e?.shortMessage ?? e?.message ?? String(e)}`);
     }
   }
 
@@ -403,12 +141,105 @@ export default function AdminPage() {
     resetMessages();
     if (!account) return setError("Connect MetaMask first.");
     if (!isAdmin) return setError("Only contract owner can set university.");
-    if (!/^\d+$/.test(manageUniversityIdInput.trim()) || manageUniversityIdInput.trim() === "0") {
-      return setError("University ID must be a positive integer.");
+    if (!/^\d+$/.test(manageUniversityId.trim()) || manageUniversityId.trim() === "0") return setError("University ID must be a positive integer.");
+    if (!isValidName(manageName)) return setError("University name is required (max 32 characters).");
+    if (!/^[123]$/.test(manageStatus)) return setError("Status must be 1=Active, 2=Suspended, 3=Revoked.");
+
+    const eth = getEthereum();
+    if (!eth) return setError("MetaMask not found.");
+
+    try {
+      await ensureChain({ eth, targetChainId: TARGET_CHAIN_ID });
+      setChainState("ok");
+      const walletClient = makeWalletClient({ eth, account });
+      const universityId = BigInt(manageUniversityId.trim());
+      const universityName = nameToBytes32(manageName);
+      const status = Number(manageStatus);
+
+      log.push("=== Set university ===");
+      log.push(`universityId=${universityId.toString()}`);
+      log.push(`name=${manageName.trim()}`);
+      log.push(`status=${status} (${universityStatusLabel(status)})`);
+
+      await writeIssuerAdminTx({
+        fn: "setUniversity",
+        universityId,
+        universityName,
+        universityStatus: status,
+        registry: REGISTRY,
+        account,
+        publicClient,
+        walletClient,
+        setTxState,
+        onTxHash: setTxHash,
+      });
+
+      const u = await readUniversity({ publicClient, registry: REGISTRY, universityId });
+      log.push(`name.onchain=${u.name}`);
+      log.push(`status.onchain=${u.status} (${universityStatusLabel(u.status)})`);
+      log.push("RESULT=SET_UNIVERSITY_OK");
+    } catch (e: any) {
+      setTxState("idle");
+      setError(e?.shortMessage ?? e?.message ?? String(e));
+      log.push(`ERROR=${e?.shortMessage ?? e?.message ?? String(e)}`);
     }
-    if (!/^[123]$/.test(manageUniversityStatusInput)) {
-      return setError("University status must be: 1=Active, 2=Suspended, 3=Revoked.");
+  }
+
+  async function assignIssuerOnChainOnly() {
+    resetMessages();
+    if (!account) return setError("Connect MetaMask first.");
+    if (!isAdmin) return setError("Only contract owner can assign issuer.");
+    if (!isAddress(issuerOpsAddress)) return setError("Issuer address is invalid.");
+    if (!/^\d+$/.test(assignUniversityId.trim()) || assignUniversityId.trim() === "0") return setError("University ID must be a positive integer.");
+
+    const eth = getEthereum();
+    if (!eth) return setError("MetaMask not found.");
+
+    try {
+      await ensureChain({ eth, targetChainId: TARGET_CHAIN_ID });
+      setChainState("ok");
+      const walletClient = makeWalletClient({ eth, account });
+      const universityId = BigInt(assignUniversityId.trim());
+
+      const uni = await readUniversity({ publicClient, registry: REGISTRY, universityId });
+      if (!uni.name) return setError("University not found on-chain. Run onboarding first.");
+
+      log.push("=== Assign issuer ===");
+      log.push(`issuer=${issuerOpsAddress}`);
+      log.push(`universityId=${universityId.toString()} (${uni.name})`);
+
+      await writeIssuerAdminTx({
+        fn: "onboardIssuerAndUniversity",
+        issuer: issuerOpsAddress as Address,
+        universityId,
+        universityName: stringToHex(uni.name, { size: 32 }),
+        registry: REGISTRY,
+        account,
+        publicClient,
+        walletClient,
+        setTxState,
+        onTxHash: setTxHash,
+      });
+
+      const [ok, uid] = await Promise.all([
+        readIsIssuer({ publicClient, registry: REGISTRY, issuer: issuerOpsAddress as Address }),
+        readIssuerUniversityId({ publicClient, registry: REGISTRY, issuer: issuerOpsAddress as Address }),
+      ]);
+      log.push(`isIssuer.after=${ok}`);
+      log.push(`issuerUniversityId.after=${uid.toString()}`);
+      log.push("RESULT=ASSIGN_ISSUER_OK");
+    } catch (e: any) {
+      setTxState("idle");
+      setError(e?.shortMessage ?? e?.message ?? String(e));
+      log.push(`ERROR=${e?.shortMessage ?? e?.message ?? String(e)}`);
     }
+  }
+
+  async function removeIssuer() {
+    resetMessages();
+    if (!account) return setError("Connect MetaMask first.");
+    if (!isAdmin) return setError("Only contract owner can remove issuer.");
+    if (!isAddress(issuerOpsAddress)) return setError("Issuer address is invalid.");
 
     const eth = getEthereum();
     if (!eth) return setError("MetaMask not found.");
@@ -418,268 +249,181 @@ export default function AdminPage() {
       setChainState("ok");
       const walletClient = makeWalletClient({ eth, account });
 
-      const universityId = BigInt(manageUniversityIdInput.trim());
-      const nextStatus = Number(manageUniversityStatusInput);
-      const current = await readUniversity({ publicClient, registry: REGISTRY, universityId });
+      log.push("=== Remove issuer ===");
+      log.push(`issuer=${issuerOpsAddress}`);
 
-      const metadataHash = manageUniversityMetadataHashInput.trim()
-        ? (manageUniversityMetadataHashInput.trim() as Hex)
-        : current.metadataHash;
-      if (!isHex(metadataHash, { strict: true }) || metadataHash.length !== 66) {
-        return setError("metadataHash must be bytes32 hex.");
-      }
-      const metadataChanged = metadataHash.toLowerCase() !== current.metadataHash.toLowerCase();
+      await writeIssuerAdminTx({
+        fn: "removeIssuer",
+        issuer: issuerOpsAddress as Address,
+        registry: REGISTRY,
+        account,
+        publicClient,
+        walletClient,
+        setTxState,
+        onTxHash: setTxHash,
+      });
 
-      log.push("=== Set university (on-chain) ===");
-      log.push(`universityId=${universityId.toString()}`);
-      log.push(`status.before=${current.status} (${statusLabel(current.status)})`);
-      log.push(`status.after=${nextStatus} (${statusLabel(nextStatus)})`);
-      log.push(`metadataHash.before=${current.metadataHash}`);
-      log.push(`metadataHash.after=${metadataHash}`);
-      log.push(`metadata.changed=${metadataChanged ? "YES" : "NO"}`);
-
-      if (metadataChanged) {
-        if (!manageUniversityOfficialNameInput.trim()) {
-          return setError("Official name is required when metadataHash changes (catalog must be updated).");
-        }
-        log.push("step1=updateCatalog");
-        const newSnapshotHash = await upsertCatalogAndGetSnapshotHash({
-          universityId,
-          officialName: manageUniversityOfficialNameInput.trim(),
-          metadataHash,
-        });
-        log.push(`catalog.snapshotHash=${newSnapshotHash}`);
-        log.push("step2=setUniversityAndSnapshot(one tx)");
-        await writeIssuerAdminTx({
-          fn: "setUniversityAndSnapshot",
-          universityId,
-          universityStatus: nextStatus,
-          universityMetadataHash: metadataHash,
-          snapshotHash: newSnapshotHash,
-          registry: REGISTRY,
-          account,
-          publicClient,
-          walletClient,
-          setTxState,
-          onTxHash: setTxHash,
-        });
-      } else {
-        log.push("step1=setUniversity(one tx)");
-        await writeIssuerAdminTx({
-          fn: "setUniversity",
-          universityId,
-          universityStatus: nextStatus,
-          universityMetadataHash: metadataHash,
-          registry: REGISTRY,
-          account,
-          publicClient,
-          walletClient,
-          setTxState,
-          onTxHash: setTxHash,
-        });
-      }
-
-      const uniAfter = await readUniversity({ publicClient, registry: REGISTRY, universityId });
-      log.push(`status.after.onchain=${uniAfter.status} (${statusLabel(uniAfter.status)})`);
-      log.push(`metadataHash.after.onchain=${uniAfter.metadataHash}`);
-      log.push("RESULT=SET_UNIVERSITY_ONCHAIN_OK");
-    } catch (e: unknown) {
-      const err = e as { shortMessage?: string; message?: string };
+      log.push("RESULT=REMOVE_ISSUER_OK");
+    } catch (e: any) {
       setTxState("idle");
-      setError(err.shortMessage ?? err.message ?? String(e));
-      log.push(`ERROR=${err.shortMessage ?? err.message ?? String(e)}`);
+      setError(e?.shortMessage ?? e?.message ?? String(e));
+      log.push(`ERROR=${e?.shortMessage ?? e?.message ?? String(e)}`);
     }
   }
 
-  function applyComputedManageMetadataHash() {
-    if (!computedManageMetadataHash) {
-      setError("Metadata JSON is invalid. Provide valid JSON first.");
-      return;
+  async function checkIssuer() {
+    resetMessages();
+    if (!isAddress(issuerOpsAddress)) return setError("Enter a valid issuer address.");
+    try {
+      const issuer = issuerOpsAddress as Address;
+      const [ok, uid] = await Promise.all([
+        readIsIssuer({ publicClient, registry: REGISTRY, issuer }),
+        readIssuerUniversityId({ publicClient, registry: REGISTRY, issuer }),
+      ]);
+      if (uid > 0n) {
+        const uni = await readUniversity({ publicClient, registry: REGISTRY, universityId: uid });
+        log.push(`isIssuer=${ok}`);
+        log.push(`universityId=${uid.toString()}`);
+        log.push(`universityName=${uni.name}`);
+        log.push(`universityStatus=${uni.status} (${universityStatusLabel(uni.status)})`);
+      } else {
+        log.push(`isIssuer=${ok}`);
+        log.push(`universityId=0 (not registered)`);
+      }
+    } catch (e: any) {
+      setError(e?.message ?? String(e));
     }
-    setManageUniversityMetadataHashInput(computedManageMetadataHash);
-    setError("");
-    log.push(`metadataHash.computed=${computedManageMetadataHash}`);
+  }
+
+  async function checkUniversity() {
+    resetMessages();
+    if (!/^\d+$/.test(checkUniversityId.trim()) || checkUniversityId.trim() === "0") return setError("University ID must be a positive integer.");
+    try {
+      const uni = await readUniversity({
+        publicClient,
+        registry: REGISTRY,
+        universityId: BigInt(checkUniversityId.trim()),
+      });
+      log.push(`university.name=${uni.name || "(not set)"}`);
+      log.push(`university.status=${uni.status} (${universityStatusLabel(uni.status)})`);
+    } catch (e: any) {
+      setError(e?.message ?? String(e));
+    }
   }
 
   return (
     <main className="uv-page">
-      <h1 className="uv-title">UniVerify - Admin</h1>
-      <p className="uv-subtitle">Operational management for issuers, universities, and on-chain trust consistency.</p>
+      <h1 className="uv-title">UniVerify — Admin</h1>
+      <p className="uv-subtitle">Manage issuers and universities on-chain. Requires contract owner wallet.</p>
 
-      <div className="uv-card" style={{ display: "flex", gap: 10, alignItems: "center" }}>
-        <button onClick={() => void connect()} disabled={isBusy} className="uv-btn uv-btn-primary">
-          Connect MetaMask
-        </button>
-        <div className="uv-kv" style={{ marginTop: 0 }}>
-          <b>Account</b><span>{account || "-"}</span>
-          <b>Network</b><span>{chainState === "ok" ? "OK" : chainState === "wrong" ? "Wrong network" : "-"}</span>
-          <b>Registry</b><code>{REGISTRY}</code>
-          <b>Owner</b><code>{owner ?? "-"}</code>
-          <b>Is admin</b><span style={{ color: isAdmin ? "#166534" : "#b45309" }}>{isAdmin ? "YES" : "NO"}</span>
-          <b>Catalog file</b><code>{DEFAULT_CATALOG_PATH}</code>
-          <b>Catalog entries</b><span>{catalogUniversitiesCount}</span>
-          <b>Catalog snapshot hash</b><code>{catalogSnapshotHash ?? "-"}</code>
+      <div className="uv-card">
+        <div style={{ display: "flex", gap: 12, alignItems: "flex-start", flexWrap: "wrap" }}>
+          <button onClick={() => void connect()} disabled={isBusy} className="uv-btn uv-btn-primary">
+            Connect MetaMask
+          </button>
+          <div className="uv-kv" style={{ marginTop: 0, flex: 1 }}>
+            <b>Account</b><code>{account || "-"}</code>
+            <b>Network</b><span>{chainState === "ok" ? "✓ OK" : chainState === "wrong" ? "⚠ Wrong network" : "-"}</span>
+            <b>Registry</b><code>{REGISTRY}</code>
+            <b>Owner</b><code>{owner ?? "-"}</code>
+            <b>Admin</b><span style={{ color: isAdmin ? "#166534" : "#b45309", fontWeight: 600 }}>{account ? (isAdmin ? "YES" : "NO") : "-"}</span>
+          </div>
         </div>
       </div>
 
       <div className="uv-card">
         <h2 className="uv-card-title">Operations</h2>
-        <p className="uv-hint">Grouped by workflow to keep day-to-day tasks concise and predictable.</p>
 
         <details className="uv-details" open>
-          <summary>Primary Workflow: Onboard University + Issuer</summary>
-          <label style={{ display: "block", fontWeight: 600, marginTop: 10, marginBottom: 8 }}>Issuer address</label>
-          <input
-            value={issuerAddress}
-            onChange={(e) => setIssuerAddress(e.target.value.trim())}
-            placeholder="0x..."
-            style={{ width: "100%", fontFamily: "monospace", padding: 10 }}
-          />
-          <label style={{ display: "block", fontWeight: 600, marginTop: 10, marginBottom: 8 }}>University ID (uint64)</label>
-          <input
-            value={universityIdInput}
-            onChange={(e) => setUniversityIdInput(e.target.value.trim())}
-            placeholder="1001"
-            style={{ width: "100%", fontFamily: "monospace", padding: 10 }}
-          />
-          <label style={{ display: "block", fontWeight: 600, marginTop: 10, marginBottom: 8 }}>Official name</label>
-          <input
-            value={officialNameInput}
-            onChange={(e) => setOfficialNameInput(e.target.value)}
-            placeholder="UniVerify University"
-            style={{ width: "100%", padding: 10 }}
-          />
-          <label style={{ display: "block", fontWeight: 600, marginTop: 10, marginBottom: 8 }}>Country (ISO)</label>
-          <input
-            value={countryInput}
-            onChange={(e) => setCountryInput(e.target.value)}
-            placeholder="PL"
-            style={{ width: "100%", padding: 10 }}
-          />
-          <label style={{ display: "block", fontWeight: 600, marginTop: 10, marginBottom: 8 }}>Website (optional)</label>
-          <input
-            value={websiteInput}
-            onChange={(e) => setWebsiteInput(e.target.value)}
-            placeholder="https://..."
-            style={{ width: "100%", padding: 10 }}
-          />
-          <label style={{ display: "block", fontWeight: 600, marginTop: 10, marginBottom: 8 }}>Accreditation ID (optional)</label>
-          <input
-            value={accreditationInput}
-            onChange={(e) => setAccreditationInput(e.target.value)}
-            placeholder="PL-ACC-2026-001"
-            style={{ width: "100%", padding: 10 }}
-          />
-          <p style={{ marginTop: 10 }}>
-            <b>Computed metadataHash:</b> <code>{computedMetadataHash ?? "-"}</code>
-          </p>
+          <summary>Onboard University + Issuer</summary>
+          <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
+            <div>
+              <label className="uv-label">Issuer address</label>
+              <input value={onboardIssuer} onChange={(e) => setOnboardIssuer(e.target.value.trim())} placeholder="0x..." className="uv-input uv-mono" />
+            </div>
+            <div>
+              <label className="uv-label">University ID (uint64)</label>
+              <input value={onboardUniversityId} onChange={(e) => setOnboardUniversityId(e.target.value.trim())} placeholder="1001" className="uv-input uv-mono" />
+            </div>
+            <div>
+              <label className="uv-label">University name <span className="uv-muted">(max 32 chars)</span></label>
+              <input
+                value={onboardName}
+                onChange={(e) => setOnboardName(e.target.value)}
+                placeholder="Politechnika Warszawska"
+                maxLength={32}
+                className="uv-input"
+              />
+              <p className="uv-hint">{onboardName.trim().length}/32 characters</p>
+            </div>
+          </div>
           <div className="uv-actions">
             <button onClick={() => void onboardUniversityAndIssuer()} disabled={isBusy} className="uv-btn uv-btn-primary">
-              Run onboarding flow
+              Onboard (1 transaction)
             </button>
           </div>
+          <p className="uv-hint">Registers the university on-chain and assigns the issuer in a single transaction.</p>
         </details>
 
         <details className="uv-details">
-          <summary>Primary Workflow: Manage University Status / Metadata</summary>
-          <label style={{ display: "block", fontWeight: 600, marginTop: 10, marginBottom: 8 }}>University ID</label>
-          <input
-            value={manageUniversityIdInput}
-            onChange={(e) => setManageUniversityIdInput(e.target.value.trim())}
-            placeholder="1001"
-            style={{ width: "100%", fontFamily: "monospace", padding: 10 }}
-          />
-          <label style={{ display: "block", fontWeight: 600, marginTop: 10, marginBottom: 8 }}>Status</label>
-          <select
-            value={manageUniversityStatusInput}
-            onChange={(e) => setManageUniversityStatusInput(e.target.value)}
-            style={{ width: "100%", padding: 10 }}
-          >
-            <option value="1">1 - Active</option>
-            <option value="2">2 - Suspended</option>
-            <option value="3">3 - Revoked</option>
-          </select>
-          <label style={{ display: "block", fontWeight: 600, marginTop: 10, marginBottom: 8 }}>
-            Official name (required only when metadata changes)
-          </label>
-          <input
-            value={manageUniversityOfficialNameInput}
-            onChange={(e) => setManageUniversityOfficialNameInput(e.target.value)}
-            placeholder="UniVerify University"
-            style={{ width: "100%", padding: 10 }}
-          />
-          <label style={{ display: "block", fontWeight: 600, marginTop: 10, marginBottom: 8 }}>
-            Metadata hash (optional)
-          </label>
-          <input
-            value={manageUniversityMetadataHashInput}
-            onChange={(e) => setManageUniversityMetadataHashInput(e.target.value.trim())}
-            placeholder="0x... (leave empty to keep current on-chain value)"
-            style={{ width: "100%", fontFamily: "monospace", padding: 10 }}
-          />
-          <label style={{ display: "block", fontWeight: 600, marginTop: 10, marginBottom: 8 }}>
-            Metadata JSON (optional, for auto-hash)
-          </label>
-          <textarea
-            value={manageUniversityMetadataJsonInput}
-            onChange={(e) => setManageUniversityMetadataJsonInput(e.target.value)}
-            placeholder='{"officialName":"UniVerify University","country":"PL"}'
-            rows={6}
-            style={{ width: "100%", fontFamily: "monospace", padding: 10 }}
-          />
-          <p style={{ marginTop: 10 }}>
-            <b>Computed metadataHash:</b> <code>{computedManageMetadataHash ?? "-"}</code>
-          </p>
+          <summary>Update University Status / Name</summary>
+          <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
+            <div>
+              <label className="uv-label">University ID</label>
+              <input value={manageUniversityId} onChange={(e) => setManageUniversityId(e.target.value.trim())} placeholder="1001" className="uv-input uv-mono" />
+            </div>
+            <div>
+              <label className="uv-label">University name <span className="uv-muted">(max 32 chars)</span></label>
+              <input
+                value={manageName}
+                onChange={(e) => setManageName(e.target.value)}
+                placeholder="Politechnika Warszawska"
+                maxLength={32}
+                className="uv-input"
+              />
+              <p className="uv-hint">{manageName.trim().length}/32 characters</p>
+            </div>
+            <div>
+              <label className="uv-label">Status</label>
+              <select value={manageStatus} onChange={(e) => setManageStatus(e.target.value)} className="uv-input">
+                <option value="1">Active</option>
+                <option value="2">Suspended</option>
+                <option value="3">Revoked</option>
+              </select>
+            </div>
+          </div>
           <div className="uv-actions">
-            <button onClick={applyComputedManageMetadataHash} disabled={isBusy} className="uv-btn">
-              Use computed hash
-            </button>
             <button onClick={() => void setUniversityOnChain()} disabled={isBusy} className="uv-btn uv-btn-primary">
-              Set university on-chain
+              Update university
             </button>
           </div>
         </details>
 
         <details className="uv-details">
           <summary>Issuer Operations</summary>
-          <label style={{ display: "block", fontWeight: 600, marginTop: 10, marginBottom: 8 }}>Issuer address</label>
-          <input
-            value={issuerOpsInput}
-            onChange={(e) => setIssuerOpsInput(e.target.value.trim())}
-            placeholder="0x..."
-            style={{ width: "100%", fontFamily: "monospace", padding: 10 }}
-          />
-          <label style={{ display: "block", fontWeight: 600, marginTop: 10, marginBottom: 8 }}>Assign to university ID</label>
-          <input
-            value={assignUniversityIdInput}
-            onChange={(e) => setAssignUniversityIdInput(e.target.value.trim())}
-            placeholder="1001"
-            style={{ width: "100%", fontFamily: "monospace", padding: 10 }}
-          />
+          <div style={{ marginTop: 12, display: "grid", gap: 10 }}>
+            <div>
+              <label className="uv-label">Issuer address</label>
+              <input value={issuerOpsAddress} onChange={(e) => setIssuerOpsAddress(e.target.value.trim())} placeholder="0x..." className="uv-input uv-mono" />
+            </div>
+            <div>
+              <label className="uv-label">Assign to university ID</label>
+              <input value={assignUniversityId} onChange={(e) => setAssignUniversityId(e.target.value.trim())} placeholder="1001" className="uv-input uv-mono" />
+            </div>
+          </div>
           <div className="uv-actions">
             <button onClick={() => void checkIssuer()} disabled={isBusy} className="uv-btn">Check issuer</button>
-            <button onClick={() => void assignIssuerOnChainOnly()} disabled={isBusy} className="uv-btn">
-              Assign issuer on-chain
-            </button>
-          </div>
-
-          <p className="uv-hint">The same issuer address is reused for check, assign, and remove actions.</p>
-          <div className="uv-actions">
-            <button onClick={() => void removeIssuer()} disabled={isBusy} className="uv-btn uv-btn-danger">
-              Remove issuer
-            </button>
+            <button onClick={() => void assignIssuerOnChainOnly()} disabled={isBusy} className="uv-btn">Assign issuer</button>
+            <button onClick={() => void removeIssuer()} disabled={isBusy} className="uv-btn uv-btn-danger">Remove issuer</button>
           </div>
         </details>
 
         <details className="uv-details">
           <summary>Diagnostics</summary>
-          <label style={{ display: "block", fontWeight: 600, marginTop: 10, marginBottom: 8 }}>Check university ID</label>
-          <input
-            value={checkUniversityIdInput}
-            onChange={(e) => setCheckUniversityIdInput(e.target.value.trim())}
-            placeholder="1001"
-            style={{ width: "100%", fontFamily: "monospace", padding: 10 }}
-          />
+          <div style={{ marginTop: 12 }}>
+            <label className="uv-label">University ID</label>
+            <input value={checkUniversityId} onChange={(e) => setCheckUniversityId(e.target.value.trim())} placeholder="1001" className="uv-input uv-mono" />
+          </div>
           <div className="uv-actions">
             <button onClick={() => void checkUniversity()} disabled={isBusy} className="uv-btn">Check university</button>
           </div>
@@ -688,7 +432,7 @@ export default function AdminPage() {
 
       {(txState !== "idle" || txHash) && (
         <div className="uv-status-banner uv-status-ok">
-          {txState !== "idle" && <p><b>Tx state:</b> {txState}</p>}
+          {txState !== "idle" && <p><b>State:</b> {txState}</p>}
           {txHash && <p><b>tx:</b> <code>{txHash}</code></p>}
         </div>
       )}
@@ -699,15 +443,13 @@ export default function AdminPage() {
       )}
 
       {logs.length > 0 && (
-        <div className="uv-card" style={{ maxHeight: 360, overflowY: "auto" }}>
+        <div className="uv-card" style={{ maxHeight: 320, overflowY: "auto" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <h3 style={{ margin: 0 }}>Logs</h3>
-            <button onClick={log.clear} className="uv-btn">Clear logs</button>
+            <button onClick={log.clear} className="uv-btn">Clear</button>
           </div>
-          <pre style={{ fontFamily: "monospace", fontSize: 12 }}>
-            {logs.map((line, idx) => (
-              <div key={idx}>{line}</div>
-            ))}
+          <pre style={{ fontFamily: "monospace", fontSize: 12, marginTop: 8 }}>
+            {logs.map((line, idx) => <div key={idx}>{line}</div>)}
           </pre>
         </div>
       )}
