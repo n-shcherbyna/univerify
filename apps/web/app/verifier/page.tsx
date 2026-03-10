@@ -6,6 +6,7 @@ import { hashPayload } from "@univerify/verifier-core";
 
 import { readPublicEnv } from "@/lib/univerify/env";
 import type { DiplomaEnvelope } from "@/lib/univerify/types";
+import { DiplomaPayloadSchema, type DiplomaPayload } from "@/lib/univerify/schema";
 import {
   makePublicClient,
   readBatch,
@@ -40,6 +41,7 @@ type VerifyState = {
   universityWebsite: string | null;
   universityStatus: number | null;
   verifyOk: boolean | null;
+  diplomaPayload: DiplomaPayload | null;
 };
 
 function emptyState(): VerifyState {
@@ -61,6 +63,7 @@ function emptyState(): VerifyState {
     universityWebsite: null,
     universityStatus: null,
     verifyOk: null,
+    diplomaPayload: null,
   };
 }
 
@@ -77,7 +80,7 @@ function verificationFailures(state: VerifyState): string[] {
 
 export default function VerifyPage() {
   const { rpcUrl: RPC_URL, registry: REGISTRY, chainId: TARGET_CHAIN_ID, deployBlock: DEPLOY_BLOCK } = useMemo(() => readPublicEnv(), []);
-  const publicClient = useMemo(() => makePublicClient(RPC_URL), [RPC_URL]);
+  const publicClient = useMemo(() => makePublicClient(RPC_URL, TARGET_CHAIN_ID), [RPC_URL, TARGET_CHAIN_ID]);
 
   const [envelopeText, setEnvelopeText] = useState("");
   const [error, setError] = useState("");
@@ -101,6 +104,7 @@ export default function VerifyPage() {
       const parsed = parseJson(text);
       if (!parsed.ok) throw new Error(parsed.error);
       const env: DiplomaEnvelope = validateDiplomaEnvelope(parsed.value);
+      const parsedPayload = DiplomaPayloadSchema.safeParse(env.payload);
 
       const docHash = hashPayload(env.payload);
       const issuer = env.proof.issuer;
@@ -154,6 +158,7 @@ export default function VerifyPage() {
         universityWebsite: university?.website ?? null,
         universityStatus: university?.status ?? null,
         verifyOk,
+        diplomaPayload: parsedPayload.success ? parsedPayload.data : null,
       });
     } catch (e: any) {
       setError(e?.message ?? String(e));
@@ -197,6 +202,21 @@ export default function VerifyPage() {
       )}
 
       {error && <div className="uv-status-banner uv-status-fail"><b>Error:</b> {error}</div>}
+
+      {state.verifyOk !== null && state.diplomaPayload !== null && (
+        <div className="uv-card">
+          <h2 className="uv-card-title">Diploma</h2>
+          <div className="uv-kv">
+            <b>Student</b><span>{state.diplomaPayload.student.firstName} {state.diplomaPayload.student.lastName}</span>
+            <b>Student ID</b><span>{state.diplomaPayload.student.studentId}</span>
+            <b>Degree</b><span>{state.diplomaPayload.degree.name}</span>
+            <b>Level</b><span>{state.diplomaPayload.degree.level}</span>
+            <b>Issued</b><span>{state.diplomaPayload.issuedAt}</span>
+            <b>Diploma No.</b><span>{state.diplomaPayload.diplomaNumber}</span>
+            {state.universityName && <><b>University</b><span>{state.universityName}</span></>}
+          </div>
+        </div>
+      )}
 
       {state.verifyOk !== null && (
         <div className="uv-card">

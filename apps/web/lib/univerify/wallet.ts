@@ -34,6 +34,10 @@ export async function ensureChain(params: { eth: any; targetChainId: number }) {
     method: "wallet_switchEthereumChain",
     params: [{ chainId: `0x${params.targetChainId.toString(16)}` }],
   });
+  const afterHex = (await params.eth.request({ method: "eth_chainId" })) as string;
+  if (Number.parseInt(afterHex, 16) !== params.targetChainId) {
+    throw new Error(`Failed to switch to chain ${params.targetChainId}.`);
+  }
 }
 
 export function makeWalletClient(params: { eth: any; account: Address; chainId: number }) {

@@ -6,6 +6,7 @@ import { hashPayload } from "@univerify/verifier-core";
 
 import { readPublicEnv } from "@/lib/univerify/env";
 import type { ChainState, TxState, DiplomaEnvelope } from "@/lib/univerify/types";
+import { DiplomaPayloadSchema, formatZodError, type DiplomaPayload } from "@/lib/univerify/schema";
 import { makePublicClient, readIssuerUniversityId, readUniversityMeta } from "@/lib/univerify/registry";
 import { downloadJson, parseJson } from "@/lib/univerify/json";
 import { getEthereum, ensureChain, makeWalletClient } from "@/lib/univerify/wallet";
@@ -17,7 +18,7 @@ const UINT64_MAX = (1n << 64n) - 1n;
 
 type BatchItem = {
   index: number;
-  payload: unknown;
+  payload: DiplomaPayload;
   docHash: Hex;
   leaf: Hex;
   proof: Hex[];
@@ -30,20 +31,17 @@ type ComputedBatch = {
   items: BatchItem[];
 };
 
-function payloadLabel(payload: unknown, index: number): string {
-  if (payload && typeof payload === "object") {
-    const p = payload as any;
-    const first = p?.student?.firstName ?? p?.firstName ?? "";
-    const last = p?.student?.lastName ?? p?.lastName ?? "";
-    if (first || last) return `${first} ${last}`.trim();
-    if (p?.diplomaNumber) return String(p.diplomaNumber);
-  }
+function payloadLabel(payload: DiplomaPayload, index: number): string {
+  const first = payload.student?.firstName ?? "";
+  const last = payload.student?.lastName ?? "";
+  if (first || last) return `${first} ${last}`.trim();
+  if (payload.diplomaNumber) return String(payload.diplomaNumber);
   return `#${index}`;
 }
 
 export default function IssuerPage() {
   const { rpcUrl: RPC_URL, registry: REGISTRY, chainId: TARGET_CHAIN_ID, deployBlock: DEPLOY_BLOCK } = useMemo(() => readPublicEnv(), []);
-  const publicClient = useMemo(() => makePublicClient(RPC_URL), [RPC_URL]);
+  const publicClient = useMemo(() => makePublicClient(RPC_URL, TARGET_CHAIN_ID), [RPC_URL, TARGET_CHAIN_ID]);
 
   const [account, setAccount] = useState<Address | "">("");
   const [chainState, setChainState] = useState<ChainState>("unknown");
@@ -122,14 +120,22 @@ export default function IssuerPage() {
       const parsed = parseJson<unknown[]>(batchPayloadsText);
       if (!parsed.ok) throw new Error(parsed.error);
       if (!Array.isArray(parsed.value) || parsed.value.length === 0) throw new Error("Must be a non-empty JSON array.");
+      if (parsed.value.length > 10_000) throw new Error("Maximum 10 000 diplomas per batch.");
       const { batchIdBigint, batchIdNumber } = parseBatchId(batchIdInput);
+      const payloads: DiplomaPayload[] = parsed.value.map((p, i) => {
+        try {
+          return DiplomaPayloadSchema.parse(p);
+        } catch (e: unknown) {
+          throw new Error(`Payload [${i}] invalid: ${formatZodError(e)}`);
+        }
+      });
       const chainId = BigInt(TARGET_CHAIN_ID);
-      const docHashes = parsed.value.map((p) => hashPayload(p));
+      const docHashes = payloads.map((p) => hashPayload(p));
       const leaves = docHashes.map((docHash) =>
         computeMerkleLeaf({ registry: REGISTRY, chainId, issuer: account, batchId: batchIdBigint, docHash })
       );
       const { root, proofs } = buildMerkleFromLeaves(leaves);
-      const items: BatchItem[] = parsed.value.map((payload, i) => ({
+      const items: BatchItem[] = payloads.map((payload, i) => ({
         index: i, payload, docHash: docHashes[i], leaf: leaves[i], proof: proofs[i],
       }));
       setComputedBatch({ batchIdBigint, batchIdNumber, merkleRoot: root, items });

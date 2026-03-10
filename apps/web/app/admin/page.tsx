@@ -45,7 +45,7 @@ function uniFormValid(f: UniversityForm): boolean {
 
 export default function AdminPage() {
   const { rpcUrl: RPC_URL, registry: REGISTRY, chainId: TARGET_CHAIN_ID, deployBlock: DEPLOY_BLOCK } = useMemo(() => readPublicEnv(), []);
-  const publicClient = useMemo(() => makePublicClient(RPC_URL), [RPC_URL]);
+  const publicClient = useMemo(() => makePublicClient(RPC_URL, TARGET_CHAIN_ID), [RPC_URL, TARGET_CHAIN_ID]);
 
   const [account, setAccount] = useState<Address | "">("");
   const [chainState, setChainState] = useState<ChainState>("unknown");

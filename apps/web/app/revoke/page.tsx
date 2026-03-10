@@ -8,36 +8,25 @@ import { readPublicEnv } from "@/lib/univerify/env";
 import { readFileAsText } from "@/lib/univerify/file";
 import { makeStateLogger } from "@/lib/univerify/logs";
 import { parseJson, validateDiplomaEnvelope } from "@/lib/univerify/json";
-import { makePublicClient, readIsRevoked, readStatusWithProof, statusLabel } from "@/lib/univerify/registry";
+import { makePublicClient, readStatusWithProof, statusLabel } from "@/lib/univerify/registry";
 import { writeRevokeFromBatchTx } from "@/lib/univerify/registryWrite";
-import type { ChainState, TxState } from "@/lib/univerify/types";
+import type { ChainState, TxState, DiplomaEnvelope } from "@/lib/univerify/types";
 import { ensureChain, getEthereum, makeWalletClient } from "@/lib/univerify/wallet";
-
-function isBytes32Hex(v: string): v is Hex {
-  return /^0x[0-9a-fA-F]{64}$/.test(v);
-}
-
-function isHexArray(v: unknown): v is Hex[] {
-  return Array.isArray(v) && v.every((x) => typeof x === "string" && isBytes32Hex(x));
-}
 
 export default function RevokePage() {
   const { rpcUrl: RPC_URL, registry: REGISTRY, chainId: TARGET_CHAIN_ID } = useMemo(() => readPublicEnv(), []);
-  const publicClient = useMemo(() => makePublicClient(RPC_URL), [RPC_URL]);
+  const publicClient = useMemo(() => makePublicClient(RPC_URL, TARGET_CHAIN_ID), [RPC_URL, TARGET_CHAIN_ID]);
 
   const [account, setAccount] = useState<Address | "">("");
   const [chainState, setChainState] = useState<ChainState>("unknown");
   const [txState, setTxState] = useState<TxState>("idle");
   const [txHash, setTxHash] = useState<Hex | null>(null);
 
-  const [inputText, setInputText] = useState("");
-  const [docHash, setDocHash] = useState<Hex | "">("");
-  const [overrideIssuer, setOverrideIssuer] = useState(false);
-  const [issuerInput, setIssuerInput] = useState<Address | "">("");
-  const [batchIdInput, setBatchIdInput] = useState("1");
-  const [proofText, setProofText] = useState("[]");
-  const [status, setStatus] = useState<"Unknown" | "Valid" | "Revoked" | "-">("-");
-  const [recordRevoked, setRecordRevoked] = useState<boolean | null>(null);
+  const [envelopeText, setEnvelopeText] = useState("");
+  const [envelope, setEnvelope] = useState<DiplomaEnvelope | null>(null);
+  const [previewStatus, setPreviewStatus] = useState<"idle" | "loading" | "loaded" | "error">("idle");
+  const [onChainStatus, setOnChainStatus] = useState<string | null>(null);
+  const [confirmRevoke, setConfirmRevoke] = useState(false);
 
   const [error, setError] = useState("");
   const [logs, setLogs] = useState<string[]>([]);
@@ -51,25 +40,52 @@ export default function RevokePage() {
     setTxHash(null);
   }
 
-  function parseBatchIdBigint(): bigint {
-    if (!/^\d+$/.test(batchIdInput.trim())) throw new Error("Batch ID must be a non-negative integer.");
-    return BigInt(batchIdInput.trim());
-  }
-
-  function resolveIssuer(): Address {
-    if (overrideIssuer) {
-      if (issuerInput && isAddress(issuerInput)) return issuerInput;
-      throw new Error("Provide a valid issuer override address.");
+  async function fetchStatus(env: DiplomaEnvelope) {
+    setPreviewStatus("loading");
+    try {
+      const docHash = hashPayload(env.payload);
+      const code = await readStatusWithProof({
+        publicClient,
+        registry: REGISTRY,
+        docHash,
+        issuer: env.proof.issuer,
+        batchId: BigInt(env.proof.batchId),
+        proof: env.proof.proof,
+      });
+      setOnChainStatus(statusLabel(code));
+      setPreviewStatus("loaded");
+      log.push(`on-chain status: ${statusLabel(code)}`);
+    } catch (e: any) {
+      setPreviewStatus("error");
+      log.push(`status fetch error: ${e?.message ?? String(e)}`);
     }
-    if (account) return account;
-    throw new Error("Provide issuer address or connect issuer wallet.");
   }
 
-  function parseProof(): Hex[] {
-    const parsed = parseJson<unknown>(proofText);
-    if (!parsed.ok) throw new Error("Proof JSON is invalid.");
-    if (!isHexArray(parsed.value)) throw new Error("Proof must be JSON array of bytes32 hex values.");
-    return parsed.value;
+  async function parseAndLoad(text: string) {
+    resetMessages();
+    setEnvelope(null);
+    setPreviewStatus("idle");
+    setOnChainStatus(null);
+    if (!text.trim()) return;
+
+    try {
+      const parsed = parseJson<unknown>(text);
+      if (!parsed.ok) throw new Error(parsed.error);
+      const env = validateDiplomaEnvelope(parsed.value);
+      setEnvelope(env);
+      log.push(`envelope parsed: batchId=${env.proof.batchId}, issuer=${env.proof.issuer}`);
+      await fetchStatus(env);
+    } catch (e: any) {
+      setError(e?.message ?? String(e));
+      log.push(`parse error: ${e?.message ?? String(e)}`);
+    }
+  }
+
+  async function loadFile(file: File) {
+    const text = await readFileAsText(file);
+    setEnvelopeText(text);
+    log.push(`file loaded: ${file.name}`);
+    await parseAndLoad(text);
   }
 
   async function connect() {
@@ -91,107 +107,18 @@ export default function RevokePage() {
     }
   }
 
-  async function loadFile(file: File) {
-    resetMessages();
-    const text = await readFileAsText(file);
-    setInputText(text);
-    log.push(`file loaded: ${file.name}`);
-  }
-
-  function loadFromJsonInput() {
-    resetMessages();
-    const parsed = parseJson<unknown>(inputText);
-    if (!parsed.ok) return setError(parsed.error);
-
-    try {
-      const raw = parsed.value as any;
-
-      // Full diploma envelope (preferred)
-      if (raw?.payload && raw?.proof) {
-        const env = validateDiplomaEnvelope(raw);
-        const h = hashPayload(env.payload);
-        setDocHash(h);
-        setBatchIdInput(String(env.proof.batchId));
-        setProofText(JSON.stringify(env.proof.proof, null, 2));
-        setIssuerInput(env.proof.issuer);
-        setOverrideIssuer(true);
-        log.push(`loaded from envelope: batchId=${env.proof.batchId}, proofNodes=${env.proof.proof.length}`);
-        return;
-      }
-
-      // Proof JSON exported from issuer
-      if (typeof raw?.docHash === "string" && typeof raw?.batchId !== "undefined" && Array.isArray(raw?.proof)) {
-        if (!isBytes32Hex(raw.docHash)) throw new Error("Invalid docHash in proof JSON.");
-        if (!isHexArray(raw.proof)) throw new Error("Invalid proof[] in proof JSON.");
-        if (!/^\d+$/.test(String(raw.batchId))) throw new Error("Invalid batchId in proof JSON.");
-        if (raw.issuer != null && (!isAddress(raw.issuer))) throw new Error("Invalid issuer in proof JSON.");
-
-        setDocHash(raw.docHash);
-        setBatchIdInput(String(raw.batchId));
-        setProofText(JSON.stringify(raw.proof, null, 2));
-        if (raw.issuer) {
-          setIssuerInput(raw.issuer);
-          setOverrideIssuer(true);
-        }
-        log.push(`loaded from proof JSON: docHash=${raw.docHash}, batchId=${raw.batchId}, proofNodes=${raw.proof.length}`);
-        return;
-      }
-
-      throw new Error("Unsupported JSON format. Load diploma envelope or proof JSON.");
-    } catch (e: any) {
-      setError(e?.message ?? String(e));
-      log.push(`load json error: ${e?.message ?? String(e)}`);
-    }
-  }
-
-  async function refreshStatus() {
-    resetMessages();
-    if (!docHash || !isBytes32Hex(docHash)) return setError("Enter valid docHash.");
-
-    try {
-      const batchId = parseBatchIdBigint();
-      const proof = parseProof();
-      const issuer = resolveIssuer();
-
-      const code = await readStatusWithProof({
-        publicClient,
-        registry: REGISTRY,
-        docHash,
-        issuer,
-        batchId,
-        proof,
-      });
-      const label = statusLabel(code);
-      setStatus(label);
-
-      const revoked = await readIsRevoked({
-        publicClient,
-        registry: REGISTRY,
-        docHash,
-        issuer,
-        batchId,
-      });
-      setRecordRevoked(revoked);
-
-      log.push(`statusWithProof=${code} (${label}), issuer=${issuer}`);
-      log.push(`record.revoked=${revoked === null ? "UNAVAILABLE (old contract ABI)" : String(revoked)}`);
-    } catch (e: any) {
-      setError(e?.message ?? String(e));
-      log.push(`refresh status error: ${e?.message ?? String(e)}`);
-    }
-  }
-
   async function revoke() {
     resetMessages();
     if (!account) return setError("Connect MetaMask first.");
-    if (!docHash || !isBytes32Hex(docHash)) return setError("Enter valid docHash.");
+    if (!envelope) return setError("Load a diploma envelope first.");
 
     const eth = getEthereum();
     if (!eth) return setError("MetaMask not found.");
 
     try {
-      const batchId = parseBatchIdBigint();
-      const proof = parseProof();
+      const docHash = hashPayload(envelope.payload);
+      const batchId = BigInt(envelope.proof.batchId);
+      const proof = envelope.proof.proof;
 
       await ensureChain({ eth, targetChainId: TARGET_CHAIN_ID });
       setChainState("ok");
@@ -208,11 +135,11 @@ export default function RevokePage() {
         setTxState,
         onTxHash: setTxHash,
         onAfter: async () => {
-          await refreshStatus();
+          await fetchStatus(envelope);
         },
       });
 
-      log.push(`revokeFromBatch sent: docHash=${docHash}, batchId=${batchId.toString()}, proofNodes=${proof.length}`);
+      log.push(`revokeFromBatch sent: docHash=${docHash}, batchId=${batchId.toString()}`);
     } catch (e: any) {
       setTxState("idle");
       setError(e?.shortMessage ?? e?.message ?? String(e));
@@ -220,128 +147,144 @@ export default function RevokePage() {
     }
   }
 
+  const payload = envelope?.payload;
+
   return (
     <main className="uv-page">
-      <h1 className="uv-title">UniVerify - Revoke</h1>
-      <p className="uv-subtitle">Load proof data and revoke a batch record on-chain.</p>
+      <h1 className="uv-title">UniVerify — Revoke</h1>
+      <p className="uv-subtitle">Load a diploma envelope and revoke it on-chain.</p>
 
-      <div className="uv-card" style={{ display: "flex", gap: 10, alignItems: "center" }}>
+      {/* Wallet */}
+      <div className="uv-card" style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
         <button onClick={() => void connect()} disabled={isBusy} className="uv-btn uv-btn-primary">
-          Connect MetaMask
+          {account ? "Reconnect" : "Connect MetaMask"}
         </button>
-        <div>
-          <div><b>Account:</b> {account || "-"}</div>
-          <div><b>Network:</b> {chainState === "ok" ? "OK" : chainState === "wrong" ? "Wrong network" : "-"}</div>
-          <div><b>Registry:</b> <code>{REGISTRY}</code></div>
+        <div className="uv-kv" style={{ flex: 1, minWidth: 260, gap: "4px 16px" }}>
+          <b>Account</b>
+          <code style={{ fontSize: 12 }}>{account || "—"}</code>
+          <b>Network</b>
+          <span style={{ color: chainState === "ok" ? "green" : chainState === "wrong" ? "red" : undefined }}>
+            {chainState === "ok" ? "OK ✓" : chainState === "wrong" ? "Wrong network" : "—"}
+          </span>
         </div>
       </div>
 
+      {/* Load envelope */}
       <div className="uv-card">
-        <h2 className="uv-card-title">Step 1: Load Revoke Data</h2>
-        <input
-          type="file"
-          accept="application/json"
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) void loadFile(f);
-          }}
-        />
-
-        <label style={{ display: "block", fontWeight: 600, marginTop: 10, marginBottom: 8 }}>Input JSON</label>
-        <textarea
-          value={inputText}
-          onChange={(e) => setInputText(e.target.value)}
-          rows={10}
-          style={{ width: "100%", fontFamily: "monospace", padding: 12 }}
-        />
-        <button onClick={loadFromJsonInput} className="uv-btn" style={{ marginTop: 10 }}>
-          Load docHash + batchId + proof from JSON
-        </button>
-      </div>
-
-      <div className="uv-card">
-        <h2 className="uv-card-title">Step 2: Review / Edit</h2>
-        <label style={{ display: "block", fontWeight: 600, marginBottom: 8 }}>docHash (bytes32)</label>
-        <input
-          value={docHash}
-          onChange={(e) => setDocHash((e.target.value.trim() as Hex) || "")}
-          placeholder="0x..."
-          style={{ width: "100%", fontFamily: "monospace", padding: 10 }}
-        />
-
-        <label style={{ display: "inline-flex", alignItems: "center", gap: 8, fontWeight: 600, marginTop: 10 }}>
+        <h2 className="uv-card-title">Load diploma envelope</h2>
+        <div className="uv-actions" style={{ marginTop: 0 }}>
           <input
-            type="checkbox"
-            checked={overrideIssuer}
-            onChange={(e) => setOverrideIssuer(e.target.checked)}
+            type="file"
+            accept="application/json"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void loadFile(f);
+            }}
           />
-          Override issuer address (default: connected wallet)
-        </label>
-        {overrideIssuer && (
-          <>
-            <label style={{ display: "block", fontWeight: 600, marginTop: 10, marginBottom: 8 }}>issuer</label>
-            <input
-              value={issuerInput}
-              onChange={(e) => setIssuerInput((e.target.value.trim() as Address) || "")}
-              placeholder="0x..."
-              style={{ width: "100%", fontFamily: "monospace", padding: 10 }}
-            />
-          </>
-        )}
-
-        <label style={{ display: "block", fontWeight: 600, marginTop: 10, marginBottom: 8 }}>batchId</label>
-        <input
-          value={batchIdInput}
-          onChange={(e) => setBatchIdInput(e.target.value.trim())}
-          style={{ width: "100%", fontFamily: "monospace", padding: 10 }}
-        />
-
-        <label style={{ display: "block", fontWeight: 600, marginTop: 10, marginBottom: 8 }}>proof[] JSON</label>
+        </div>
+        <label className="uv-label">Or paste envelope JSON</label>
         <textarea
-          value={proofText}
-          onChange={(e) => setProofText(e.target.value)}
+          value={envelopeText}
+          onChange={(e) => {
+            setEnvelopeText(e.target.value);
+            void parseAndLoad(e.target.value);
+          }}
           rows={8}
+          placeholder='{ "payload": { ... }, "proof": { "type": "MERKLE_BATCH", ... } }'
           style={{ width: "100%", fontFamily: "monospace", padding: 12 }}
         />
-
-        <div className="uv-actions">
-          <button onClick={() => void refreshStatus()} disabled={isBusy} className="uv-btn">
-            Refresh status (chain)
-          </button>
-          <button onClick={() => void revoke()} disabled={isBusy || !hasWallet} className="uv-btn uv-btn-danger">
-            Revoke from batch (tx)
-          </button>
-        </div>
-        <p className="uv-hint">The red button sends an irreversible blockchain transaction.</p>
       </div>
 
-      <div style={{ marginTop: 18 }}>
+      {/* Diploma preview */}
+      {envelope && payload && (
+        <div className="uv-card">
+          <h2 className="uv-card-title">Diploma preview</h2>
+          <div className="uv-kv">
+            <b>Student</b><span>{payload.student.firstName} {payload.student.lastName}</span>
+            <b>Student ID</b><span>{payload.student.studentId}</span>
+            <b>Degree</b><span>{payload.degree.name}</span>
+            <b>Level</b><span>{payload.degree.level}</span>
+            <b>Issued</b><span>{payload.issuedAt}</span>
+            <b>Diploma No.</b><span>{payload.diplomaNumber}</span>
+            <b>Batch ID</b><span>{envelope.proof.batchId}</span>
+            <b>Issuer</b><code style={{ fontSize: 12 }}>{envelope.proof.issuer}</code>
+            <b>On-chain status</b>
+            <span>
+              {previewStatus === "loading" ? "Loading…" : previewStatus === "error" ? "Failed to fetch" : onChainStatus ?? "—"}
+            </span>
+          </div>
+          <div className="uv-actions" style={{ marginTop: 16 }}>
+            <button
+              onClick={() => setConfirmRevoke(true)}
+              disabled={isBusy || !hasWallet}
+              className="uv-btn uv-btn-danger"
+            >
+              Revoke diploma
+            </button>
+          </div>
+          <p className="uv-hint">The button above sends an irreversible blockchain transaction.</p>
+        </div>
+      )}
+
+      {/* Status / tx feedback */}
+      {(txHash || txState !== "idle") && (
         <div className="uv-status-banner uv-status-warn">
-          <p><b>Status:</b> {status}</p>
-          {recordRevoked !== null && <p><b>Record revoked:</b> {String(recordRevoked)}</p>}
-          {txHash && <p><b>tx:</b> <code>{txHash}</code></p>}
+          {txHash && <p><b>Tx:</b> <code>{txHash}</code></p>}
           {txState !== "idle" && <p><b>State:</b> {txState}</p>}
         </div>
-        {error && (
-          <div className="uv-status-banner uv-status-fail">
-            <b>Error:</b> {error}
-          </div>
-        )}
+      )}
+      {error && (
+        <div className="uv-status-banner uv-status-fail">
+          <b>Error:</b> {error}
+        </div>
+      )}
 
-        {logs.length > 0 && (
-          <div className="uv-card" style={{ maxHeight: 320, overflowY: "auto" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h3 style={{ margin: 0 }}>Logs</h3>
-              <button onClick={log.clear} className="uv-btn">Clear logs</button>
+      {/* Confirmation modal */}
+      {confirmRevoke && envelope && payload && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
+          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100,
+        }}>
+          <div className="uv-card" style={{ maxWidth: 480, width: "100%", margin: 16 }}>
+            <h2 className="uv-card-title" style={{ marginBottom: 12 }}>Confirm revocation</h2>
+            <p style={{ fontSize: 14, marginBottom: 12, color: "var(--muted)" }}>
+              This action is irreversible. The diploma will be permanently revoked on-chain.
+            </p>
+            <div className="uv-kv" style={{ marginTop: 0 }}>
+              <b>Diploma No.</b><span>{payload.diplomaNumber}</span>
+              <b>Student</b><span>{payload.student.firstName} {payload.student.lastName}</span>
+              <b>Issuer</b><code style={{ fontSize: 12, wordBreak: "break-all" }}>{envelope.proof.issuer}</code>
+              <b>Batch ID</b><span>{envelope.proof.batchId}</span>
             </div>
-            <pre style={{ fontFamily: "monospace", fontSize: 12 }}>
-              {logs.map((line, idx) => (
-                <div key={idx}>{line}</div>
-              ))}
-            </pre>
+            <div className="uv-actions" style={{ marginTop: 16 }}>
+              <button
+                onClick={() => { setConfirmRevoke(false); void revoke(); }}
+                className="uv-btn uv-btn-danger"
+                disabled={isBusy}
+              >
+                Confirm revocation
+              </button>
+              <button onClick={() => setConfirmRevoke(false)} className="uv-btn">
+                Cancel
+              </button>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+
+      {logs.length > 0 && (
+        <div className="uv-card" style={{ maxHeight: 320, overflowY: "auto" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <h3 style={{ margin: 0 }}>Logs</h3>
+            <button onClick={log.clear} className="uv-btn">Clear logs</button>
+          </div>
+          <pre style={{ fontFamily: "monospace", fontSize: 12 }}>
+            {logs.map((line, idx) => (
+              <div key={idx}>{line}</div>
+            ))}
+          </pre>
+        </div>
+      )}
     </main>
   );
 }

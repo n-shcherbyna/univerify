@@ -1,4 +1,5 @@
 import { isAddress, type Address } from "viem";
+import { DiplomaPayloadSchema, formatZodError } from "./schema";
 import type { DiplomaEnvelope } from "./types";
 
 export function parseJson<T = unknown>(text: string): { ok: true; value: T } | { ok: false; error: string } {
@@ -33,12 +34,28 @@ export function validateDiplomaEnvelope(obj: any): DiplomaEnvelope {
   if (proof.type !== "MERKLE_BATCH") throw new Error(`Unsupported proof.type: "${proof.type}". Expected "MERKLE_BATCH".`);
   if (!Number.isInteger(proof.batchId) || proof.batchId < 0) throw new Error("Invalid proof.batchId.");
   if (!Array.isArray(proof.proof)) throw new Error("proof.proof must be an array.");
+  if (proof.proof.length > 64) throw new Error("proof.proof is unreasonably large (max 64 nodes).");
   for (const sib of proof.proof) {
     if (!isBytes32Hex(sib)) throw new Error("proof.proof[] entries must be bytes32 hex.");
   }
   if (typeof proof.issuer !== "string" || !isAddress(proof.issuer)) throw new Error("proof.issuer must be a valid address.");
 
-  return obj as DiplomaEnvelope;
+  let payload;
+  try {
+    payload = DiplomaPayloadSchema.parse(obj.payload);
+  } catch (e: unknown) {
+    throw new Error(`Invalid diploma payload: ${formatZodError(e)}`);
+  }
+
+  return {
+    payload,
+    proof: {
+      type: proof.type,
+      batchId: proof.batchId,
+      proof: proof.proof,
+      issuer: proof.issuer,
+    },
+  };
 }
 
 export function normalizeAddress(a: Address): string {

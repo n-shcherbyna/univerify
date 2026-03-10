@@ -1,12 +1,25 @@
 import {
   createPublicClient,
+  defineChain,
   http,
   type Address,
+  type Chain,
   type Hex,
   type PublicClient,
 } from "viem";
-import { sepolia } from "viem/chains";
+import { mainnet, sepolia } from "viem/chains";
 import { DiplomaRegistryAbi, type StatusCode } from "@univerify/verifier-core";
+
+const KNOWN_CHAINS: Record<number, Chain> = { 1: mainnet, 11155111: sepolia };
+
+function resolveChain(chainId: number): Chain {
+  return KNOWN_CHAINS[chainId] ?? defineChain({
+    id: chainId,
+    name: `Chain ${chainId}`,
+    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+    rpcUrls: { default: { http: [] } },
+  });
+}
 
 export type RegistryPublicClient = PublicClient;
 
@@ -18,8 +31,8 @@ export type UniversityMeta = {
   status: number;
 };
 
-export function makePublicClient(rpcUrl: string): RegistryPublicClient {
-  return createPublicClient({ chain: sepolia, transport: http(rpcUrl) });
+export function makePublicClient(rpcUrl: string, chainId: number): RegistryPublicClient {
+  return createPublicClient({ chain: resolveChain(chainId), transport: http(rpcUrl) });
 }
 
 export function statusLabel(code: StatusCode): "Unknown" | "Valid" | "Revoked" {
