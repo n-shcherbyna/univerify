@@ -69,6 +69,7 @@ export default function IssuerPage() {
   );
 
   const [computedBatch, setComputedBatch] = useState<ComputedBatch | null>(null);
+  const [pendingPublish, setPendingPublish] = useState(false);
   const [txHash, setTxHash] = useState<Hex | null>(null);
   const [txState, setTxState] = useState<TxState>("idle");
   const [error, setError] = useState("");
@@ -141,11 +142,12 @@ export default function IssuerPage() {
   async function publishBatchRoot() {
     resetMessages();
     if (!account || !computedBatch) return;
+    setPendingPublish(false);
     const eth = getEthereum();
     if (!eth) return setError("MetaMask not found.");
     try {
       await ensureChain({ eth, targetChainId: TARGET_CHAIN_ID });
-      const walletClient = makeWalletClient({ eth, account });
+      const walletClient = makeWalletClient({ eth, account, chainId: TARGET_CHAIN_ID });
       await writeIssueBatchRootTx({
         batchId: computedBatch.batchIdBigint,
         merkleRoot: computedBatch.merkleRoot,
@@ -233,7 +235,11 @@ export default function IssuerPage() {
           <button onClick={computeBatch} disabled={isBusy || !account} className="uv-btn">
             Compute
           </button>
-          <button onClick={() => void publishBatchRoot()} disabled={isBusy || !account || !computedBatch} className="uv-btn uv-btn-primary">
+          <button
+            onClick={() => { resetMessages(); setPendingPublish(true); }}
+            disabled={isBusy || !account || !computedBatch}
+            className="uv-btn uv-btn-primary"
+          >
             {txState === "submitting" ? "Submitting…" : txState === "confirming" ? "Confirming…" : "Publish root on-chain"}
           </button>
         </div>
@@ -289,6 +295,35 @@ export default function IssuerPage() {
               ))}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {/* Publish confirmation modal */}
+      {pendingPublish && computedBatch && (
+        <div style={{
+          position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
+          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100,
+        }}>
+          <div className="uv-card" style={{ maxWidth: 480, width: "100%", margin: 16 }}>
+            <h2 className="uv-card-title" style={{ marginBottom: 12 }}>Confirm publish</h2>
+            <p style={{ fontSize: 14, marginBottom: 12, color: "var(--muted)" }}>
+              This will send an on-chain transaction. The batch root cannot be changed after publishing.
+            </p>
+            <div className="uv-kv" style={{ marginTop: 0 }}>
+              <b>Batch ID</b><span>{computedBatch.batchIdBigint.toString()}</span>
+              <b>Diplomas</b><span>{computedBatch.items.length}</span>
+              <b>Registry</b><code style={{ fontSize: 12, wordBreak: "break-all" }}>{REGISTRY}</code>
+              <b>Merkle root</b><code style={{ fontSize: 11, wordBreak: "break-all" }}>{computedBatch.merkleRoot}</code>
+            </div>
+            <div className="uv-actions" style={{ marginTop: 16 }}>
+              <button onClick={() => void publishBatchRoot()} className="uv-btn uv-btn-primary">
+                Confirm & sign transaction
+              </button>
+              <button onClick={() => setPendingPublish(false)} className="uv-btn">
+                Cancel
+              </button>
+            </div>
+          </div>
         </div>
       )}
 

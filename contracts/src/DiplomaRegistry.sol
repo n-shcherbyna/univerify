@@ -122,10 +122,6 @@ contract DiplomaRegistry {
     // ── View ───────────────────────────────────────────────────────────────
 
     function statusWithProof(bytes32 docHash, address issuer_, uint64 batchId, bytes32[] calldata proof) external view returns (Status) {
-        return _statusWithProof(docHash, issuer_, batchId, proof);
-    }
-
-    function statusWithProofTrusted(bytes32 docHash, address issuer_, uint64 batchId, bytes32[] calldata proof) external view returns (Status) {
         Status s = _statusWithProof(docHash, issuer_, batchId, proof);
         if (s != Status.Valid) return s;
         uint64 uid = issuerUniversityIds[issuer_];

@@ -39,7 +39,6 @@ contract DiplomaRegistryMerkleTest is Test {
         reg.issueBatchRoot(batchId, root);
 
         assertEq(uint256(reg.statusWithProof(docA, issuer1, batchId, proofA)), uint256(DiplomaRegistry.Status.Valid));
-        assertEq(uint256(reg.statusWithProofTrusted(docA, issuer1, batchId, proofA)), uint256(DiplomaRegistry.Status.Valid));
         assertTrue(reg.verifyBatchMembership(docA, issuer1, batchId, proofA));
         assertEq(reg.getBatch(issuer1, batchId), root);
     }
@@ -158,15 +157,15 @@ contract DiplomaRegistryMerkleTest is Test {
 
         reg.setUniversity(1001, DiplomaRegistry.UniversityStatus.Suspended, "Politechnika Warszawska", "PL", "", "");
 
-        assertEq(uint256(reg.statusWithProof(docA, issuer1, batchId, proofA)), uint256(DiplomaRegistry.Status.Valid));
-        assertEq(uint256(reg.statusWithProofTrusted(docA, issuer1, batchId, proofA)), uint256(DiplomaRegistry.Status.Unknown));
+        // statusWithProof now always checks university status
+        assertEq(uint256(reg.statusWithProof(docA, issuer1, batchId, proofA)), uint256(DiplomaRegistry.Status.Unknown));
 
         vm.prank(issuer1);
         vm.expectRevert(DiplomaRegistry.UniversityNotActive.selector);
         reg.issueBatchRoot(batchId + 1, keccak256("root2"));
     }
 
-    function testStatusWithProofTrustedUnknownAfterIssuerRemoved() public {
+    function testStatusWithProofUnknownAfterIssuerRemoved() public {
         (bytes32 root,, bytes32 leafB) = _buildTwoLeafTree();
         bytes32[] memory proofA = new bytes32[](1);
         proofA[0] = leafB;
@@ -176,8 +175,8 @@ contract DiplomaRegistryMerkleTest is Test {
 
         reg.removeIssuer(issuer1);
 
-        assertEq(uint256(reg.statusWithProof(docA, issuer1, batchId, proofA)), uint256(DiplomaRegistry.Status.Valid));
-        assertEq(uint256(reg.statusWithProofTrusted(docA, issuer1, batchId, proofA)), uint256(DiplomaRegistry.Status.Unknown));
+        // statusWithProof checks current issuer trust — Unknown after removal
+        assertEq(uint256(reg.statusWithProof(docA, issuer1, batchId, proofA)), uint256(DiplomaRegistry.Status.Unknown));
     }
 
     function testIssueBatchRootDuplicateBatchIdSameIssuer() public {

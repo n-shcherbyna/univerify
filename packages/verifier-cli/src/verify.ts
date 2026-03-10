@@ -81,13 +81,13 @@ async function main() {
 
   const client = createPublicClient({ transport: http(RPC_URL) });
 
-  // statusWithProofTrusted checks Merkle proof validity AND that the issuer's
+  // statusWithProof checks Merkle proof validity AND that the issuer's
   // university is currently Active on-chain. University identity is always resolved
   // from the issuer address — never from payload fields.
   const code = (await client.readContract({
     address: REGISTRY,
     abi: DiplomaRegistryAbi,
-    functionName: "statusWithProofTrusted",
+    functionName: "statusWithProof",
     args: [docHash, issuer, batchId, proof],
   })) as StatusCode;
 

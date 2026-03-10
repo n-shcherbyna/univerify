@@ -26,14 +26,6 @@ export const DiplomaRegistryAbi = [
     outputs: [{ name: "", type: "uint8" }],
   },
   {
-    type: "function", name: "statusWithProofTrusted", stateMutability: "view",
-    inputs: [
-      { name: "docHash", type: "bytes32" }, { name: "issuer_", type: "address" },
-      { name: "batchId", type: "uint64" }, { name: "proof", type: "bytes32[]" },
-    ],
-    outputs: [{ name: "", type: "uint8" }],
-  },
-  {
     type: "function", name: "isRevoked", stateMutability: "view",
     inputs: [{ name: "docHash", type: "bytes32" }, { name: "issuer_", type: "address" }, { name: "batchId", type: "uint64" }],
     outputs: [{ name: "", type: "bool" }],

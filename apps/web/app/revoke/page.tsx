@@ -195,7 +195,7 @@ export default function RevokePage() {
 
       await ensureChain({ eth, targetChainId: TARGET_CHAIN_ID });
       setChainState("ok");
-      const walletClient = makeWalletClient({ eth, account });
+      const walletClient = makeWalletClient({ eth, account, chainId: TARGET_CHAIN_ID });
 
       await writeRevokeFromBatchTx({
         docHash,

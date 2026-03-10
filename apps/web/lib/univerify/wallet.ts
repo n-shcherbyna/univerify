@@ -1,10 +1,24 @@
-import { createWalletClient, custom, type Address } from "viem";
-import { sepolia } from "viem/chains";
+import { createWalletClient, custom, defineChain, type Address, type Chain } from "viem";
+import { sepolia, mainnet } from "viem/chains";
 
 declare global {
   interface Window {
     ethereum?: any;
   }
+}
+
+const KNOWN_CHAINS: Record<number, Chain> = {
+  1: mainnet,
+  11155111: sepolia,
+};
+
+function resolveChain(chainId: number): Chain {
+  return KNOWN_CHAINS[chainId] ?? defineChain({
+    id: chainId,
+    name: `Chain ${chainId}`,
+    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+    rpcUrls: { default: { http: [] } },
+  });
 }
 
 export function getEthereum(): any | null {
@@ -15,18 +29,16 @@ export function getEthereum(): any | null {
 export async function ensureChain(params: { eth: any; targetChainId: number }) {
   const currentChainIdHex = (await params.eth.request({ method: "eth_chainId" })) as string;
   const currentChainId = Number.parseInt(currentChainIdHex, 16);
-
   if (currentChainId === params.targetChainId) return;
-
   await params.eth.request({
     method: "wallet_switchEthereumChain",
     params: [{ chainId: `0x${params.targetChainId.toString(16)}` }],
   });
 }
 
-export function makeWalletClient(params: { eth: any; account: Address }) {
+export function makeWalletClient(params: { eth: any; account: Address; chainId: number }) {
   return createWalletClient({
-    chain: sepolia,
+    chain: resolveChain(params.chainId),
     transport: custom(params.eth),
     account: params.account,
   });

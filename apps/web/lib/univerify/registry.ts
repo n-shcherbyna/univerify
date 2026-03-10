@@ -35,22 +35,6 @@ export function universityStatusLabel(status: number): string {
   return "Unknown";
 }
 
-export async function readStatusWithProofTrusted(params: {
-  publicClient: RegistryPublicClient;
-  registry: Address;
-  docHash: Hex;
-  issuer: Address;
-  batchId: bigint;
-  proof: readonly Hex[];
-}): Promise<StatusCode> {
-  return (await params.publicClient.readContract({
-    address: params.registry,
-    abi: DiplomaRegistryAbi,
-    functionName: "statusWithProofTrusted",
-    args: [params.docHash, params.issuer, params.batchId, params.proof],
-  })) as StatusCode;
-}
-
 export async function readStatusWithProof(params: {
   publicClient: RegistryPublicClient;
   registry: Address;
@@ -146,6 +130,89 @@ export async function readUniversityStatus(params: {
     functionName: "getUniversityStatus",
     args: [params.universityId],
   })) as number;
+}
+
+export type UniversityOverview = UniversityMeta & { universityId: bigint };
+
+export type IssuerOverview = {
+  issuer: Address;
+  universityId: bigint;
+  universityName: string | null;
+  active: boolean;
+};
+
+export async function readRegistryOverview(params: {
+  publicClient: RegistryPublicClient;
+  registry: Address;
+  fromBlock: bigint;
+}): Promise<{ universities: UniversityOverview[]; issuers: IssuerOverview[] }> {
+  const uniEventAbi = {
+    type: "event" as const,
+    name: "UniversitySet",
+    inputs: [
+      { name: "universityId", type: "uint64", indexed: true },
+      { name: "status", type: "uint8", indexed: true },
+      { name: "name", type: "string", indexed: false },
+      { name: "country", type: "string", indexed: false },
+      { name: "website", type: "string", indexed: false },
+      { name: "accreditationId", type: "string", indexed: false },
+    ],
+  };
+
+  const [uniLogs, issuerAddedLogs] = await Promise.all([
+    params.publicClient.getLogs({
+      address: params.registry,
+      event: uniEventAbi,
+      fromBlock: params.fromBlock,
+      toBlock: "latest",
+    }),
+    params.publicClient.getLogs({
+      address: params.registry,
+      event: { type: "event" as const, name: "IssuerAdded", inputs: [{ name: "issuer", type: "address", indexed: true }] },
+      fromBlock: params.fromBlock,
+      toBlock: "latest",
+    }),
+  ]);
+
+  // Latest UniversitySet event per universityId
+  const uniMap = new Map<string, UniversityOverview>();
+  for (const l of uniLogs) {
+    const a = l.args as any;
+    const id: bigint = a.universityId;
+    uniMap.set(id.toString(), {
+      universityId: id,
+      status: Number(a.status ?? 0),
+      name: a.name ?? "",
+      country: a.country ?? "",
+      website: a.website ?? "",
+      accreditationId: a.accreditationId ?? "",
+    });
+  }
+  const universities = [...uniMap.values()].sort((a, b) =>
+    a.universityId < b.universityId ? -1 : 1
+  );
+
+  // Unique issuer addresses ever added
+  const uniqueIssuers = [
+    ...new Set(issuerAddedLogs.map((l) => ((l.args as any).issuer as Address).toLowerCase())),
+  ] as Address[];
+
+  // Resolve current state for each
+  const issuerData = await Promise.all(
+    uniqueIssuers.map(async (issuer) => {
+      const uid = await readIssuerUniversityId({ publicClient: params.publicClient, registry: params.registry, issuer });
+      const uni = uid > 0n ? uniMap.get(uid.toString()) : undefined;
+      return {
+        issuer,
+        universityId: uid,
+        universityName: uni?.name ?? null,
+        active: uid > 0n,
+      } as IssuerOverview;
+    })
+  );
+  const issuers = issuerData.sort((a, b) => (a.active === b.active ? 0 : a.active ? -1 : 1));
+
+  return { universities, issuers };
 }
 
 export async function readUniversityMeta(params: {

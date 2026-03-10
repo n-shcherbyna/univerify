@@ -12,7 +12,7 @@ import {
   readIsIssuer,
   readIsRevoked,
   readIssuerUniversityId,
-  readStatusWithProofTrusted,
+  readStatusWithProof,
   readUniversityMeta,
   statusLabel,
   universityStatusLabel,
@@ -111,7 +111,7 @@ export default function VerifyPage() {
       log.push(`issuer=${issuer} batchId=${batchId}`);
 
       const [statusCode, batch, issuerTrustedNow, issuerUniversityId, revoked] = await Promise.all([
-        readStatusWithProofTrusted({ publicClient, registry: REGISTRY, docHash, issuer, batchId, proof }),
+        readStatusWithProof({ publicClient, registry: REGISTRY, docHash, issuer, batchId, proof }),
         readBatch({ publicClient, registry: REGISTRY, issuer, batchId }),
         readIsIssuer({ publicClient, registry: REGISTRY, issuer }),
         readIssuerUniversityId({ publicClient, registry: REGISTRY, issuer }),
