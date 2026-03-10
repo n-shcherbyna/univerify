@@ -154,14 +154,32 @@ export async function readUniversityMeta(params: {
   universityId: bigint;
   fromBlock?: bigint;
 }): Promise<UniversityMeta | null> {
-  const result = await params.publicClient.readContract({
+  const logs = await params.publicClient.getLogs({
     address: params.registry,
-    abi: DiplomaRegistryAbi,
-    functionName: "getUniversity",
-    args: [params.universityId],
-  }) as [number, string, string, string, string];
+    event: {
+      type: "event",
+      name: "UniversitySet",
+      inputs: [
+        { name: "universityId", type: "uint64", indexed: true },
+        { name: "status", type: "uint8", indexed: true },
+        { name: "name", type: "string", indexed: false },
+        { name: "country", type: "string", indexed: false },
+        { name: "website", type: "string", indexed: false },
+        { name: "accreditationId", type: "string", indexed: false },
+      ],
+    },
+    args: { universityId: params.universityId },
+    fromBlock: params.fromBlock ?? 0n,
+    toBlock: "latest",
+  });
 
-  const [status, name, country, website, accreditationId] = result;
-  if (status === 0) return null;
-  return { status: Number(status), name, country, website, accreditationId };
+  if (logs.length === 0) return null;
+  const latest = logs[logs.length - 1].args as any;
+  return {
+    name: latest.name ?? "",
+    country: latest.country ?? "",
+    website: latest.website ?? "",
+    accreditationId: latest.accreditationId ?? "",
+    status: Number(latest.status ?? 0),
+  };
 }

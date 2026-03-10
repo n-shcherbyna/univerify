@@ -7,7 +7,7 @@ import {DiplomaRegistry} from "../src/DiplomaRegistry.sol";
 contract DiplomaRegistryMerkleTest is Test {
     event UniversitySet(
         uint64 indexed universityId,
-        DiplomaRegistry.UniversityStatus status,
+        DiplomaRegistry.UniversityStatus indexed status,
         string name,
         string country,
         string website,

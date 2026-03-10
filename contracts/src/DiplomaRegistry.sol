@@ -5,14 +5,6 @@ contract DiplomaRegistry {
     enum Status { Unknown, Valid, Revoked }
     enum UniversityStatus { Unknown, Active, Suspended, Revoked }
 
-    struct University {
-        UniversityStatus status;
-        string name;
-        string country;
-        string website;
-        string accreditationId;
-    }
-
     error OnlyOwner();
     error OnlyIssuer();
     error NoChange();
@@ -30,16 +22,16 @@ contract DiplomaRegistry {
 
     address public immutable owner;
 
-    mapping(address => uint64) private issuerUniversityIds;
-    mapping(uint64 => University) private universities;
-    mapping(bytes32 => bool) private revokedLeaf;
+    mapping(address => uint64)  private issuerUniversityIds;
+    mapping(uint64 => UniversityStatus) private universityStatus;
+    mapping(bytes32 => bool)    private revokedLeaf;
     mapping(address => mapping(uint64 => bytes32)) private batchRoots;
 
     event IssuerAdded(address indexed issuer);
     event IssuerRemoved(address indexed issuer);
     event UniversitySet(
         uint64 indexed universityId,
-        UniversityStatus status,
+        UniversityStatus indexed status,
         string name,
         string country,
         string website,
@@ -70,7 +62,7 @@ contract DiplomaRegistry {
         if (universityId == 0) revert BadUniversityId();
         if (status == UniversityStatus.Unknown) revert BadUniversityStatus();
         if (bytes(name).length == 0) revert BadName();
-        universities[universityId] = University(status, name, country, website, accreditationId);
+        universityStatus[universityId] = status;
         emit UniversitySet(universityId, status, name, country, website, accreditationId);
     }
 
@@ -86,13 +78,11 @@ contract DiplomaRegistry {
         if (universityId == 0) revert BadUniversityId();
         if (bytes(name).length == 0) revert BadName();
 
-        University storage uni = universities[universityId];
-        bool universityChanged = uni.status != UniversityStatus.Active
-            || keccak256(bytes(uni.name)) != keccak256(bytes(name));
+        bool universityChanged = universityStatus[universityId] != UniversityStatus.Active;
         bool issuerChanged = issuerUniversityIds[issuer] != universityId;
         if (!universityChanged && !issuerChanged) revert NoChange();
 
-        universities[universityId] = University(UniversityStatus.Active, name, country, website, accreditationId);
+        universityStatus[universityId] = UniversityStatus.Active;
         emit UniversitySet(universityId, UniversityStatus.Active, name, country, website, accreditationId);
 
         if (issuerChanged) {
@@ -153,18 +143,7 @@ contract DiplomaRegistry {
     }
 
     function getUniversityStatus(uint64 universityId) external view returns (UniversityStatus) {
-        return universities[universityId].status;
-    }
-
-    function getUniversity(uint64 universityId) external view returns (
-        UniversityStatus status,
-        string memory name,
-        string memory country,
-        string memory website,
-        string memory accreditationId
-    ) {
-        University storage uni = universities[universityId];
-        return (uni.status, uni.name, uni.country, uni.website, uni.accreditationId);
+        return universityStatus[universityId];
     }
 
     function isUniversityActive(uint64 universityId) external view returns (bool) {
@@ -209,7 +188,7 @@ contract DiplomaRegistry {
     }
 
     function _isUniversityActive(uint64 universityId) private view returns (bool) {
-        return universities[universityId].status == UniversityStatus.Active;
+        return universityStatus[universityId] == UniversityStatus.Active;
     }
 
     function _verifyProof(bytes32[] calldata proof, bytes32 root, bytes32 leaf) private pure returns (bool) {

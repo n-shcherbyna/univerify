@@ -59,17 +59,6 @@ export const DiplomaRegistryAbi = [
     outputs: [{ name: "", type: "uint8" }],
   },
   {
-    type: "function", name: "getUniversity", stateMutability: "view",
-    inputs: [{ name: "universityId", type: "uint64" }],
-    outputs: [
-      { name: "status", type: "uint8" },
-      { name: "name", type: "string" },
-      { name: "country", type: "string" },
-      { name: "website", type: "string" },
-      { name: "accreditationId", type: "string" },
-    ],
-  },
-  {
     type: "function", name: "isUniversityActive", stateMutability: "view",
     inputs: [{ name: "universityId", type: "uint64" }],
     outputs: [{ name: "", type: "bool" }],
@@ -134,7 +123,7 @@ export const DiplomaRegistryAbi = [
     type: "event", name: "UniversitySet",
     inputs: [
       { name: "universityId", type: "uint64", indexed: true },
-      { name: "status", type: "uint8", indexed: false },
+      { name: "status", type: "uint8", indexed: true },
       { name: "name", type: "string", indexed: false },
       { name: "country", type: "string", indexed: false },
       { name: "website", type: "string", indexed: false },
