@@ -14,83 +14,53 @@ type AdminTxCommon = {
   onAfter?: () => Promise<void>;
 };
 
-type RemoveIssuerTx = AdminTxCommon & {
-  fn: "removeIssuer";
-  issuer: Address;
-};
-
-type SetUniversityTx = AdminTxCommon & {
-  fn: "setUniversity";
+type UniversityFields = {
   universityId: bigint;
-  universityName: Hex;
-  universityStatus: number;
+  name: string;
+  country: string;
+  website: string;
+  accreditationId: string;
 };
 
-type OnboardIssuerAndUniversityTx = AdminTxCommon & {
-  fn: "onboardIssuerAndUniversity";
-  issuer: Address;
-  universityId: bigint;
-  universityName: Hex;
-};
+type RemoveIssuerTx = AdminTxCommon & { fn: "removeIssuer"; issuer: Address };
+type SetUniversityTx = AdminTxCommon & { fn: "setUniversity"; status: number } & UniversityFields;
+type OnboardTx = AdminTxCommon & { fn: "onboardIssuerAndUniversity"; issuer: Address } & UniversityFields;
 
-type AdminTxParams = RemoveIssuerTx | SetUniversityTx | OnboardIssuerAndUniversityTx;
+type AdminTxParams = RemoveIssuerTx | SetUniversityTx | OnboardTx;
 
 export async function writeIssuerAdminTx(params: AdminTxParams) {
   params.setTxState("submitting");
   try {
-    let gas: bigint;
+    type FnName = "removeIssuer" | "setUniversity" | "onboardIssuerAndUniversity";
+    let args: any[];
+    let functionName: FnName;
+
     if (params.fn === "removeIssuer") {
-      gas = await params.publicClient.estimateContractGas({
-        address: params.registry,
-        abi: DiplomaRegistryAbi,
-        functionName: "removeIssuer",
-        args: [params.issuer],
-        account: params.account,
-      });
+      functionName = "removeIssuer";
+      args = [params.issuer];
     } else if (params.fn === "setUniversity") {
-      gas = await params.publicClient.estimateContractGas({
-        address: params.registry,
-        abi: DiplomaRegistryAbi,
-        functionName: "setUniversity",
-        args: [params.universityId, params.universityName, params.universityStatus],
-        account: params.account,
-      });
+      functionName = "setUniversity";
+      args = [params.universityId, params.status, params.name, params.country, params.website, params.accreditationId];
     } else {
-      gas = await params.publicClient.estimateContractGas({
-        address: params.registry,
-        abi: DiplomaRegistryAbi,
-        functionName: "onboardIssuerAndUniversity",
-        args: [params.issuer, params.universityId, params.universityName],
-        account: params.account,
-      });
+      functionName = "onboardIssuerAndUniversity";
+      args = [params.issuer, params.universityId, params.name, params.country, params.website, params.accreditationId];
     }
 
-    let tx: Hex;
-    if (params.fn === "removeIssuer") {
-      tx = await params.walletClient.writeContract({
-        address: params.registry,
-        abi: DiplomaRegistryAbi,
-        functionName: "removeIssuer",
-        args: [params.issuer],
-        gas: (gas * 120n) / 100n,
-      });
-    } else if (params.fn === "setUniversity") {
-      tx = await params.walletClient.writeContract({
-        address: params.registry,
-        abi: DiplomaRegistryAbi,
-        functionName: "setUniversity",
-        args: [params.universityId, params.universityName, params.universityStatus],
-        gas: (gas * 120n) / 100n,
-      });
-    } else {
-      tx = await params.walletClient.writeContract({
-        address: params.registry,
-        abi: DiplomaRegistryAbi,
-        functionName: "onboardIssuerAndUniversity",
-        args: [params.issuer, params.universityId, params.universityName],
-        gas: (gas * 120n) / 100n,
-      });
-    }
+    const gas = await params.publicClient.estimateContractGas({
+      address: params.registry,
+      abi: DiplomaRegistryAbi,
+      functionName,
+      args: args as any,
+      account: params.account,
+    });
+
+    const tx = await params.walletClient.writeContract({
+      address: params.registry,
+      abi: DiplomaRegistryAbi,
+      functionName,
+      args: args as any,
+      gas: (gas * 120n) / 100n,
+    });
 
     params.onTxHash?.(tx);
     params.setTxState("confirming");

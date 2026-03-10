@@ -7,7 +7,7 @@ import { hashPayload } from "@univerify/verifier-core";
 import { readPublicEnv } from "@/lib/univerify/env";
 import type { ChainState, TxState, DiplomaEnvelopeMerkleBatch } from "@/lib/univerify/types";
 import { buildUniVerifyDomain, recoverIssuerFromEip712, DIPLOMA_TYPES } from "@/lib/univerify/eip712";
-import { makePublicClient, readIsRevoked, readIssuerUniversityId, readUniversity, readStatusWithProof, statusLabel } from "@/lib/univerify/registry";
+import { makePublicClient, readIsRevoked, readIssuerUniversityId, readUniversityMeta, readStatusWithProof, statusLabel } from "@/lib/univerify/registry";
 import { downloadJson, parseJson } from "@/lib/univerify/json";
 import { getEthereum, ensureChain, makeWalletClient } from "@/lib/univerify/wallet";
 import { makeStateLogger } from "@/lib/univerify/logs";
@@ -32,7 +32,7 @@ type ComputedBatch = {
 };
 
 export default function IssuerPage() {
-  const { rpcUrl: RPC_URL, registry: REGISTRY, chainId: TARGET_CHAIN_ID } = useMemo(() => readPublicEnv(), []);
+  const { rpcUrl: RPC_URL, registry: REGISTRY, chainId: TARGET_CHAIN_ID, deployBlock: DEPLOY_BLOCK } = useMemo(() => readPublicEnv(), []);
   const publicClient = useMemo(() => makePublicClient(RPC_URL), [RPC_URL]);
 
   const [account, setAccount] = useState<Address | "">("");
@@ -132,9 +132,9 @@ export default function IssuerPage() {
       const uid = await readIssuerUniversityId({ publicClient, registry: REGISTRY, issuer: addr as Address });
       setAccountUniversityId(uid === 0n ? null : uid);
       if (uid > 0n) {
-        const uni = await readUniversity({ publicClient, registry: REGISTRY, universityId: uid });
-        setAccountUniversityName(uni.name || null);
-        log.push(`issuer.universityId=${uid.toString()} name=${uni.name}`);
+        const meta = await readUniversityMeta({ publicClient, registry: REGISTRY, universityId: uid, fromBlock: DEPLOY_BLOCK });
+        setAccountUniversityName(meta?.name || null);
+        log.push(`issuer.universityId=${uid.toString()} name=${meta?.name ?? "unknown"}`);
       } else {
         setAccountUniversityName(null);
         log.push(`issuer.universityId=0 (not registered)`);

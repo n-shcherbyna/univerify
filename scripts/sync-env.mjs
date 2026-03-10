@@ -15,6 +15,7 @@ if (!fs.existsSync(deploymentsPath)) {
 const deployments = JSON.parse(fs.readFileSync(deploymentsPath, "utf8"));
 const registry = deployments.DiplomaRegistry;
 if (!registry) throw new Error(`Missing DiplomaRegistry in ${deploymentsPath}`);
+const deployBlock = deployments.deployBlock ?? "0";
 
 function upsertEnvFile(filePath, updates) {
   const abs = path.resolve(filePath);
@@ -45,8 +46,11 @@ upsertEnvFile(".env", {
 upsertEnvFile("apps/web/.env.local", {
   NEXT_PUBLIC_REGISTRY_ADDRESS: registry,
   NEXT_PUBLIC_CHAIN_ID: String(chainId),
+  NEXT_PUBLIC_DEPLOY_BLOCK: String(deployBlock),
   // RPC URL zostawiasz ręcznie w .env.local albo też tu ustawiasz, jeśli chcesz:
   NEXT_PUBLIC_RPC_URL: process.env.RPC_URL ?? ""
 });
 
-console.log(`Registry: ${registry}`);
+console.log(`Registry:     ${registry}`);
+console.log(`Deploy block: ${deployBlock}`);
+console.log(`Chain ID:     ${chainId}`);

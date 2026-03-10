@@ -13,7 +13,7 @@ import {
   readIsRevoked,
   readIssuerUniversityId,
   readStatusWithProofTrusted,
-  readUniversity,
+  readUniversityMeta,
   statusLabel,
   universityStatusLabel,
 } from "@/lib/univerify/registry";
@@ -39,6 +39,8 @@ type VerifyState = {
   issuerTrustedNow: boolean | null;
   issuerUniversityId: bigint | null;
   universityName: string | null;
+  universityCountry: string | null;
+  universityWebsite: string | null;
   universityStatus: number | null;
   declaredIssuerMatches: boolean | null;
   signatureIssuerMatches: boolean | null;
@@ -62,6 +64,8 @@ function emptyState(): VerifyState {
     issuerTrustedNow: null,
     issuerUniversityId: null,
     universityName: null,
+    universityCountry: null,
+    universityWebsite: null,
     universityStatus: null,
     declaredIssuerMatches: null,
     signatureIssuerMatches: null,
@@ -83,7 +87,7 @@ function verificationFailures(state: VerifyState): string[] {
 }
 
 export default function VerifyPage() {
-  const { rpcUrl: RPC_URL, registry: REGISTRY, chainId: TARGET_CHAIN_ID } = useMemo(() => readPublicEnv(), []);
+  const { rpcUrl: RPC_URL, registry: REGISTRY, chainId: TARGET_CHAIN_ID, deployBlock: DEPLOY_BLOCK } = useMemo(() => readPublicEnv(), []);
   const publicClient = useMemo(() => makePublicClient(RPC_URL), [RPC_URL]);
 
   const [envelopeText, setEnvelopeText] = useState("");
@@ -186,7 +190,7 @@ export default function VerifyPage() {
       const merkleRootMatches = merkleComputedRoot.toLowerCase() === onChainBatchRoot.toLowerCase();
 
       const university = issuerUniversityId > 0n
-        ? await readUniversity({ publicClient, registry: REGISTRY, universityId: issuerUniversityId })
+        ? await readUniversityMeta({ publicClient, registry: REGISTRY, universityId: issuerUniversityId, fromBlock: DEPLOY_BLOCK })
         : null;
 
       const universityActive = university?.status === 1;
@@ -217,6 +221,8 @@ export default function VerifyPage() {
         issuerTrustedNow,
         issuerUniversityId,
         universityName: university?.name ?? null,
+        universityCountry: university?.country ?? null,
+        universityWebsite: university?.website ?? null,
         universityStatus: university?.status ?? null,
         declaredIssuerMatches: declaredIssuerOk,
         signatureIssuerMatches: recoveredSigner ? signatureIssuerOk : null,
@@ -282,6 +288,8 @@ export default function VerifyPage() {
             <b>Status</b><span>{state.statusLabel} ({state.statusCode})</span>
             <b>University</b><span>{state.universityName ?? "-"}</span>
             <b>University status</b><span>{universityStatusLabel(state.universityStatus ?? 0)}</span>
+            {state.universityCountry && <><b>Country</b><span>{state.universityCountry}</span></>}
+            {state.universityWebsite && <><b>Website</b><a href={state.universityWebsite} target="_blank" rel="noopener noreferrer">{state.universityWebsite}</a></>}
             <b>Issuer</b><code>{state.effectiveIssuer ?? "-"}</code>
             <b>Issuer trusted</b><span>{state.issuerTrustedNow === null ? "-" : state.issuerTrustedNow ? "YES" : "NO"}</span>
             <b>Batch ID</b><span>{state.batchId ?? "-"}</span>

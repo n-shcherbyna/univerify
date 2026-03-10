@@ -1,6 +1,5 @@
 import {
   createPublicClient,
-  hexToString,
   http,
   type Address,
   type Hex,
@@ -10,6 +9,14 @@ import { sepolia } from "viem/chains";
 import { DiplomaRegistryAbi, type StatusCode } from "@univerify/verifier-core";
 
 export type RegistryPublicClient = PublicClient;
+
+export type UniversityMeta = {
+  name: string;
+  country: string;
+  website: string;
+  accreditationId: string;
+  status: number;
+};
 
 export function makePublicClient(rpcUrl: string): RegistryPublicClient {
   return createPublicClient({ chain: sepolia, transport: http(rpcUrl) });
@@ -28,8 +35,20 @@ export function universityStatusLabel(status: number): string {
   return "Unknown";
 }
 
-export function bytes32ToName(hex: Hex): string {
-  return hexToString(hex, { size: 32 }).replace(/\0+$/, "").trim();
+export async function readStatusWithProofTrusted(params: {
+  publicClient: RegistryPublicClient;
+  registry: Address;
+  docHash: Hex;
+  issuer: Address;
+  batchId: bigint;
+  proof: readonly Hex[];
+}): Promise<StatusCode> {
+  return (await params.publicClient.readContract({
+    address: params.registry,
+    abi: DiplomaRegistryAbi,
+    functionName: "statusWithProofTrusted",
+    args: [params.docHash, params.issuer, params.batchId, params.proof],
+  })) as StatusCode;
 }
 
 export async function readStatusWithProof(params: {
@@ -44,22 +63,6 @@ export async function readStatusWithProof(params: {
     address: params.registry,
     abi: DiplomaRegistryAbi,
     functionName: "statusWithProof",
-    args: [params.docHash, params.issuer, params.batchId, params.proof],
-  })) as StatusCode;
-}
-
-export async function readStatusWithProofTrusted(params: {
-  publicClient: RegistryPublicClient;
-  registry: Address;
-  docHash: Hex;
-  issuer: Address;
-  batchId: bigint;
-  proof: readonly Hex[];
-}): Promise<StatusCode> {
-  return (await params.publicClient.readContract({
-    address: params.registry,
-    abi: DiplomaRegistryAbi,
-    functionName: "statusWithProofTrusted",
     args: [params.docHash, params.issuer, params.batchId, params.proof],
   })) as StatusCode;
 }
@@ -132,16 +135,33 @@ export async function readOwner(params: {
   })) as Address;
 }
 
-export async function readUniversity(params: {
+export async function readUniversityStatus(params: {
   publicClient: RegistryPublicClient;
   registry: Address;
   universityId: bigint;
-}): Promise<{ name: string; status: number }> {
-  const [nameHex, status] = (await params.publicClient.readContract({
+}): Promise<number> {
+  return (await params.publicClient.readContract({
+    address: params.registry,
+    abi: DiplomaRegistryAbi,
+    functionName: "getUniversityStatus",
+    args: [params.universityId],
+  })) as number;
+}
+
+export async function readUniversityMeta(params: {
+  publicClient: RegistryPublicClient;
+  registry: Address;
+  universityId: bigint;
+  fromBlock?: bigint;
+}): Promise<UniversityMeta | null> {
+  const result = await params.publicClient.readContract({
     address: params.registry,
     abi: DiplomaRegistryAbi,
     functionName: "getUniversity",
     args: [params.universityId],
-  })) as readonly [Hex, number];
-  return { name: bytes32ToName(nameHex), status };
+  }) as [number, string, string, string, string];
+
+  const [status, name, country, website, accreditationId] = result;
+  if (status === 0) return null;
+  return { status: Number(status), name, country, website, accreditationId };
 }

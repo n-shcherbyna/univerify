@@ -19,17 +19,21 @@ contract Deploy is Script {
             ".json"
         );
 
+        uint256 deployBlock = block.number;
+
         // minimalny JSON, łatwy do parsowania
         string memory json = string.concat(
             "{\n",
             '  "chainId": ', vm.toString(chainId), ",\n",
-            '  "DiplomaRegistry": "', vm.toString(addr), '"\n',
+            '  "DiplomaRegistry": "', vm.toString(addr), '",\n',
+            '  "deployBlock": ', vm.toString(deployBlock), "\n",
             "}\n"
         );
 
         vm.writeFile(path, json);
 
         console2.log("Deployed DiplomaRegistry:", addr);
+        console2.log("Deploy block:", deployBlock);
         console2.log("Saved deployment file:", path);
     }
 }

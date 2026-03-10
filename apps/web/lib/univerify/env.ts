@@ -18,6 +18,7 @@ export function readPublicEnv() {
     "NEXT_PUBLIC_REGISTRY_ADDRESS"
   );
   const chainId = Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? "11155111");
+  const deployBlock = BigInt(process.env.NEXT_PUBLIC_DEPLOY_BLOCK ?? "0");
 
-  return { rpcUrl, registry, chainId };
+  return { rpcUrl, registry, chainId, deployBlock };
 }

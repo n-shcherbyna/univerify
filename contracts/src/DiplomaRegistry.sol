@@ -5,6 +5,14 @@ contract DiplomaRegistry {
     enum Status { Unknown, Valid, Revoked }
     enum UniversityStatus { Unknown, Active, Suspended, Revoked }
 
+    struct University {
+        UniversityStatus status;
+        string name;
+        string country;
+        string website;
+        string accreditationId;
+    }
+
     error OnlyOwner();
     error OnlyIssuer();
     error NoChange();
@@ -22,11 +30,6 @@ contract DiplomaRegistry {
 
     address public immutable owner;
 
-    struct University {
-        bytes32 name;
-        UniversityStatus status;
-    }
-
     mapping(address => uint64) private issuerUniversityIds;
     mapping(uint64 => University) private universities;
     mapping(bytes32 => bool) private revokedLeaf;
@@ -34,7 +37,14 @@ contract DiplomaRegistry {
 
     event IssuerAdded(address indexed issuer);
     event IssuerRemoved(address indexed issuer);
-    event UniversitySet(uint64 indexed universityId, bytes32 name, UniversityStatus status);
+    event UniversitySet(
+        uint64 indexed universityId,
+        UniversityStatus status,
+        string name,
+        string country,
+        string website,
+        string accreditationId
+    );
     event DiplomaRevoked(bytes32 indexed docHash, address indexed issuer, uint64 revokedAt);
     event BatchIssued(uint64 indexed batchId, bytes32 indexed merkleRoot, address indexed issuer);
 
@@ -49,30 +59,42 @@ contract DiplomaRegistry {
 
     // ── Owner: universities ────────────────────────────────────────────────
 
-    function setUniversity(uint64 universityId, bytes32 name, UniversityStatus status) external onlyOwner {
+    function setUniversity(
+        uint64 universityId,
+        UniversityStatus status,
+        string calldata name,
+        string calldata country,
+        string calldata website,
+        string calldata accreditationId
+    ) external onlyOwner {
         if (universityId == 0) revert BadUniversityId();
-        if (name == bytes32(0)) revert BadName();
         if (status == UniversityStatus.Unknown) revert BadUniversityStatus();
-        University storage u = universities[universityId];
-        if (u.name == name && u.status == status) revert NoChange();
-        universities[universityId] = University({ name: name, status: status });
-        emit UniversitySet(universityId, name, status);
+        if (bytes(name).length == 0) revert BadName();
+        universities[universityId] = University(status, name, country, website, accreditationId);
+        emit UniversitySet(universityId, status, name, country, website, accreditationId);
     }
 
-    function onboardIssuerAndUniversity(address issuer, uint64 universityId, bytes32 name) external onlyOwner {
+    function onboardIssuerAndUniversity(
+        address issuer,
+        uint64 universityId,
+        string calldata name,
+        string calldata country,
+        string calldata website,
+        string calldata accreditationId
+    ) external onlyOwner {
         if (issuer == address(0)) revert BadIssuer();
         if (universityId == 0) revert BadUniversityId();
-        if (name == bytes32(0)) revert BadName();
+        if (bytes(name).length == 0) revert BadName();
 
-        University storage u = universities[universityId];
-        bool universityChanged = (u.name != name) || (u.status != UniversityStatus.Active);
+        University storage uni = universities[universityId];
+        bool universityChanged = uni.status != UniversityStatus.Active
+            || keccak256(bytes(uni.name)) != keccak256(bytes(name));
         bool issuerChanged = issuerUniversityIds[issuer] != universityId;
         if (!universityChanged && !issuerChanged) revert NoChange();
 
-        if (universityChanged) {
-            universities[universityId] = University({ name: name, status: UniversityStatus.Active });
-            emit UniversitySet(universityId, name, UniversityStatus.Active);
-        }
+        universities[universityId] = University(UniversityStatus.Active, name, country, website, accreditationId);
+        emit UniversitySet(universityId, UniversityStatus.Active, name, country, website, accreditationId);
+
         if (issuerChanged) {
             issuerUniversityIds[issuer] = universityId;
             emit IssuerAdded(issuer);
@@ -85,7 +107,7 @@ contract DiplomaRegistry {
         emit IssuerRemoved(issuer);
     }
 
-    // ── Owner/Issuer: batch ────────────────────────────────────────────────
+    // ── Issuer: batch ──────────────────────────────────────────────────────
 
     function issueBatchRoot(uint64 batchId, bytes32 merkleRoot) external {
         _requireActiveIssuer();
@@ -98,14 +120,11 @@ contract DiplomaRegistry {
     function revokeFromBatch(bytes32 docHash, uint64 batchId, bytes32[] calldata proof) external {
         _requireActiveIssuer();
         if (docHash == bytes32(0)) revert BadHash();
-
         bytes32 root = batchRoots[msg.sender][batchId];
         if (root == bytes32(0)) revert NotIssuerOfBatch();
-
         bytes32 leaf = merkleLeaf(docHash, batchId, msg.sender);
         if (!_verifyProof(proof, root, leaf)) revert InvalidProof();
         if (revokedLeaf[leaf]) revert AlreadyRevoked();
-
         revokedLeaf[leaf] = true;
         emit DiplomaRevoked(docHash, msg.sender, uint64(block.timestamp));
     }
@@ -133,16 +152,26 @@ contract DiplomaRegistry {
         return issuerUniversityIds[issuer];
     }
 
-    function getUniversity(uint64 universityId) external view returns (bytes32 name, UniversityStatus status) {
-        University storage u = universities[universityId];
-        return (u.name, u.status);
+    function getUniversityStatus(uint64 universityId) external view returns (UniversityStatus) {
+        return universities[universityId].status;
+    }
+
+    function getUniversity(uint64 universityId) external view returns (
+        UniversityStatus status,
+        string memory name,
+        string memory country,
+        string memory website,
+        string memory accreditationId
+    ) {
+        University storage uni = universities[universityId];
+        return (uni.status, uni.name, uni.country, uni.website, uni.accreditationId);
     }
 
     function isUniversityActive(uint64 universityId) external view returns (bool) {
         return _isUniversityActive(universityId);
     }
 
-    function getBatch(address issuer_, uint64 batchId) external view returns (bytes32 merkleRoot) {
+    function getBatch(address issuer_, uint64 batchId) external view returns (bytes32) {
         return batchRoots[issuer_][batchId];
     }
 
