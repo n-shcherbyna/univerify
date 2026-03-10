@@ -111,31 +111,12 @@ export default function RevokePage() {
         const env = validateDiplomaEnvelope(raw);
         const h = hashPayload(env.payload);
         setDocHash(h);
-        log.push(`docHash(payload)=${h}`);
-
-        if (env.proof.type === "MERKLE_BATCH") {
-          setBatchIdInput(String(env.proof.batchId));
-          setProofText(JSON.stringify(env.proof.proof, null, 2));
-          if (env.proof.issuer) {
-            setIssuerInput(env.proof.issuer);
-            setOverrideIssuer(true);
-          }
-          log.push(`loaded from envelope: batchId=${env.proof.batchId}, proofNodes=${env.proof.proof.length}`);
-          return;
-        }
-
-        if (env.proof.merkle) {
-          setBatchIdInput(String(env.proof.merkle.batchId));
-          setProofText(JSON.stringify(env.proof.merkle.proof, null, 2));
-          if (env.proof.issuer) {
-            setIssuerInput(env.proof.issuer);
-            setOverrideIssuer(true);
-          }
-          log.push(`loaded from legacy envelope+merkle: batchId=${env.proof.merkle.batchId}, proofNodes=${env.proof.merkle.proof.length}`);
-          return;
-        }
-
-        throw new Error("Envelope does not contain Merkle proof data.");
+        setBatchIdInput(String(env.proof.batchId));
+        setProofText(JSON.stringify(env.proof.proof, null, 2));
+        setIssuerInput(env.proof.issuer);
+        setOverrideIssuer(true);
+        log.push(`loaded from envelope: batchId=${env.proof.batchId}, proofNodes=${env.proof.proof.length}`);
+        return;
       }
 
       // Proof JSON exported from issuer
