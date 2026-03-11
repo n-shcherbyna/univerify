@@ -2,10 +2,17 @@ import "dotenv/config";
 import fs from "node:fs";
 import path from "node:path";
 import { createPublicClient, http, isAddress, isHex, type Address, type Hex } from "viem";
-import { DiplomaRegistryAbi, hashPayload, type StatusCode } from "@univerify/verifier-core";
+import {
+  DiplomaRegistryAbi,
+  DiplomaPayloadSchema,
+  formatZodError,
+  hashPayload,
+  type DiplomaPayload,
+  type StatusCode,
+} from "@univerify/verifier-core";
 
 type MerkleBatchEnvelope = {
-  payload: unknown;
+  payload: DiplomaPayload;
   proof: {
     type: "MERKLE_BATCH";
     issuer: Address;
@@ -60,12 +67,29 @@ function assertMerkleBatchEnvelope(v: unknown): MerkleBatchEnvelope {
   if (!isAddress(env.proof.issuer)) throw new Error("proof.issuer must be a valid address.");
   if (!Number.isInteger(env.proof.batchId) || env.proof.batchId < 0) throw new Error("proof.batchId must be uint64 integer.");
   if (!Array.isArray(env.proof.proof)) throw new Error("proof.proof must be a bytes32[] array.");
+  if (env.proof.proof.length > 64) throw new Error("proof.proof is unreasonably large (max 64 nodes).");
   for (const p of env.proof.proof) {
     if (!isHex(p, { strict: true }) || String(p).length !== 66) {
       throw new Error("proof.proof entries must be bytes32 hex.");
     }
   }
-  return env as MerkleBatchEnvelope;
+
+  let payload: DiplomaPayload;
+  try {
+    payload = DiplomaPayloadSchema.parse(env.payload);
+  } catch (e: unknown) {
+    throw new Error(`Invalid diploma payload: ${formatZodError(e)}`);
+  }
+
+  return {
+    payload,
+    proof: {
+      type: env.proof.type,
+      issuer: env.proof.issuer,
+      batchId: env.proof.batchId,
+      proof: env.proof.proof,
+    },
+  };
 }
 
 async function main() {
@@ -99,6 +123,8 @@ async function main() {
         docHash,
         issuer,
         batchId: batchId.toString(),
+        student: `${env.payload.student.firstName} ${env.payload.student.lastName}`,
+        diplomaNumber: env.payload.diplomaNumber,
         status: statusLabel(code),
         statusCode: code,
         verified,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { isAddress, type Address, type Hex } from "viem";
 import { hashPayload } from "@univerify/verifier-core";
 
@@ -30,6 +30,22 @@ type ComputedBatch = {
   merkleRoot: Hex;
   items: BatchItem[];
 };
+
+const BATCH_STORAGE_KEY = "univerify:issuer:computedBatch";
+
+function serializeBatch(batch: ComputedBatch): string {
+  return JSON.stringify({ ...batch, batchIdBigint: batch.batchIdBigint.toString() });
+}
+
+function deserializeBatch(json: string): ComputedBatch | null {
+  try {
+    const raw = JSON.parse(json);
+    if (!raw || typeof raw !== "object") return null;
+    return { ...raw, batchIdBigint: BigInt(raw.batchIdBigint) } as ComputedBatch;
+  } catch {
+    return null;
+  }
+}
 
 function payloadLabel(payload: DiplomaPayload, index: number): string {
   const first = payload.student?.firstName ?? "";
@@ -75,6 +91,14 @@ export default function IssuerPage() {
   const log = useMemo(() => makeStateLogger(setLogs), [setLogs]);
 
   const isBusy = txState !== "idle";
+
+  useEffect(() => {
+    const stored = localStorage.getItem(BATCH_STORAGE_KEY);
+    if (stored) {
+      const batch = deserializeBatch(stored);
+      if (batch) setComputedBatch(batch);
+    }
+  }, []);
 
   function resetMessages() { setError(""); setTxHash(null); }
 
@@ -138,7 +162,9 @@ export default function IssuerPage() {
       const items: BatchItem[] = payloads.map((payload, i) => ({
         index: i, payload, docHash: docHashes[i], leaf: leaves[i], proof: proofs[i],
       }));
-      setComputedBatch({ batchIdBigint, batchIdNumber, merkleRoot: root, items });
+      const batch: ComputedBatch = { batchIdBigint, batchIdNumber, merkleRoot: root, items };
+      setComputedBatch(batch);
+      localStorage.setItem(BATCH_STORAGE_KEY, serializeBatch(batch));
       log.push(`batch computed | id=${batchIdBigint} items=${items.length} root=${root}`);
     } catch (e: any) {
       setError(e?.message ?? String(e));
@@ -225,14 +251,14 @@ export default function IssuerPage() {
         <input
           className="uv-input"
           value={batchIdInput}
-          onChange={(e) => { setBatchIdInput(e.target.value.trim()); setComputedBatch(null); resetMessages(); }}
+          onChange={(e) => { setBatchIdInput(e.target.value.trim()); setComputedBatch(null); localStorage.removeItem(BATCH_STORAGE_KEY); resetMessages(); }}
           style={{ width: 160 }}
         />
 
         <label className="uv-label" style={{ marginTop: 14 }}>Payloads JSON (array)</label>
         <textarea
           value={batchPayloadsText}
-          onChange={(e) => { setBatchPayloadsText(e.target.value); setComputedBatch(null); resetMessages(); }}
+          onChange={(e) => { setBatchPayloadsText(e.target.value); setComputedBatch(null); localStorage.removeItem(BATCH_STORAGE_KEY); resetMessages(); }}
           rows={10}
           style={{ width: "100%", fontFamily: "monospace", padding: 12 }}
         />
@@ -265,6 +291,18 @@ export default function IssuerPage() {
       {computedBatch && (
         <div className="uv-card">
           <h2 className="uv-card-title">Step 2 — Export diploma files</h2>
+          {typeof window !== "undefined" && localStorage.getItem(BATCH_STORAGE_KEY) && !isBusy && (
+            <p className="uv-hint" style={{ marginBottom: 8 }}>
+              Batch restored from previous session.{" "}
+              <button
+                className="uv-btn"
+                style={{ padding: "2px 10px", fontSize: 12 }}
+                onClick={() => { setComputedBatch(null); localStorage.removeItem(BATCH_STORAGE_KEY); }}
+              >
+                Clear
+              </button>
+            </p>
+          )}
           <p className="uv-hint" style={{ marginBottom: 14 }}>
             Each file contains the payload and Merkle proof. No signing required — the issuer identity is proven by the on-chain transaction.
           </p>
