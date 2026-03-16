@@ -122,7 +122,7 @@ contract DiplomaRegistryMerkleTest is Test {
     }
 
     function testSetUniversityEmitsEvent() public {
-        vm.expectEmit(true, false, false, true);
+        vm.expectEmit(true, true, false, true);
         emit UniversitySet(1001, DiplomaRegistry.UniversityStatus.Suspended, "New Name", "PL", "", "");
         reg.setUniversity(1001, DiplomaRegistry.UniversityStatus.Suspended, "New Name", "PL", "", "");
     }
@@ -221,6 +221,149 @@ contract DiplomaRegistryMerkleTest is Test {
     function testGetUniversityStatus() public view {
         assertEq(uint256(reg.getUniversityStatus(1001)), uint256(DiplomaRegistry.UniversityStatus.Active));
         assertEq(uint256(reg.getUniversityStatus(9999)), uint256(DiplomaRegistry.UniversityStatus.Unknown));
+    }
+
+    // ── Deep-proof integration tests ───────────────────────────────────────
+
+    function testStatusWithProof_Depth4() public {
+        (bytes32 root, bytes32[] memory leaves, bytes32[][] memory levels) = _buildBalancedTree(16);
+
+        vm.prank(issuer1);
+        reg.issueBatchRoot(batchId, root);
+
+        // Verify leaf 0 (first diploma)
+        bytes32[] memory proof = _getProof(levels, 0);
+        bytes32 doc0 = keccak256(abi.encodePacked("doc", uint256(0)));
+        assertEq(
+            uint256(reg.statusWithProof(doc0, issuer1, batchId, proof)),
+            uint256(DiplomaRegistry.Status.Valid)
+        );
+        assertTrue(reg.verifyBatchMembership(doc0, issuer1, batchId, proof));
+
+        // Verify leaf 15 (last diploma)
+        bytes32[] memory proof15 = _getProof(levels, 15);
+        bytes32 doc15 = keccak256(abi.encodePacked("doc", uint256(15)));
+        assertEq(
+            uint256(reg.statusWithProof(doc15, issuer1, batchId, proof15)),
+            uint256(DiplomaRegistry.Status.Valid)
+        );
+
+        // leaves array is built but only referenced through levels
+        assertEq(leaves.length, 16);
+    }
+
+    function testStatusWithProof_Depth8() public {
+        (bytes32 root, bytes32[] memory leaves, bytes32[][] memory levels) = _buildBalancedTree(256);
+
+        vm.prank(issuer1);
+        reg.issueBatchRoot(batchId, root);
+
+        bytes32[] memory proof = _getProof(levels, 0);
+        bytes32 doc0 = keccak256(abi.encodePacked("doc", uint256(0)));
+        assertEq(
+            uint256(reg.statusWithProof(doc0, issuer1, batchId, proof)),
+            uint256(DiplomaRegistry.Status.Valid)
+        );
+        assertEq(proof.length, 8);
+        assertEq(leaves.length, 256);
+    }
+
+    function testRevokeFromBatch_Depth4() public {
+        (bytes32 root,, bytes32[][] memory levels) = _buildBalancedTree(16);
+
+        vm.prank(issuer1);
+        reg.issueBatchRoot(batchId, root);
+
+        bytes32 doc0 = keccak256(abi.encodePacked("doc", uint256(0)));
+        bytes32[] memory proof = _getProof(levels, 0);
+
+        vm.prank(issuer1);
+        reg.revokeFromBatch(doc0, batchId, proof);
+
+        assertTrue(reg.isRevoked(doc0, issuer1, batchId));
+        assertEq(
+            uint256(reg.statusWithProof(doc0, issuer1, batchId, proof)),
+            uint256(DiplomaRegistry.Status.Revoked)
+        );
+
+        // Other diplomas in the same batch remain valid
+        bytes32 doc1 = keccak256(abi.encodePacked("doc", uint256(1)));
+        bytes32[] memory proof1 = _getProof(levels, 1);
+        assertEq(
+            uint256(reg.statusWithProof(doc1, issuer1, batchId, proof1)),
+            uint256(DiplomaRegistry.Status.Valid)
+        );
+    }
+
+    function testInvalidProof_Depth4() public {
+        (bytes32 root,, bytes32[][] memory levels) = _buildBalancedTree(16);
+
+        vm.prank(issuer1);
+        reg.issueBatchRoot(batchId, root);
+
+        bytes32 doc0 = keccak256(abi.encodePacked("doc", uint256(0)));
+        bytes32[] memory goodProof = _getProof(levels, 0);
+
+        // Corrupt one element
+        goodProof[2] = keccak256("garbage");
+
+        vm.prank(issuer1);
+        vm.expectRevert(DiplomaRegistry.InvalidProof.selector);
+        reg.revokeFromBatch(doc0, batchId, goodProof);
+    }
+
+    // ── Tree helpers ───────────────────────────────────────────────────────
+
+    /// @dev Build a balanced Merkle tree with `n` leaves (n must be a power of 2).
+    ///      Returns the root, the leaf array, and all levels (level[0] = leaves).
+    function _buildBalancedTree(uint256 n)
+        internal
+        view
+        returns (bytes32 root, bytes32[] memory leaves, bytes32[][] memory levels)
+    {
+        // Compute depth
+        uint256 depth = 0;
+        { uint256 tmp = n; while (tmp > 1) { depth++; tmp >>= 1; } }
+
+        levels = new bytes32[][](depth + 1);
+
+        // Level 0: compute leaves
+        leaves = new bytes32[](n);
+        for (uint256 i = 0; i < n; i++) {
+            bytes32 doc = keccak256(abi.encodePacked("doc", i));
+            leaves[i] = reg.merkleLeaf(doc, batchId, issuer1);
+        }
+        levels[0] = leaves;
+
+        // Build up the tree
+        for (uint256 d = 0; d < depth; d++) {
+            uint256 width = levels[d].length / 2;
+            levels[d + 1] = new bytes32[](width);
+            for (uint256 i = 0; i < width; i++) {
+                bytes32 l = levels[d][2 * i];
+                bytes32 r = levels[d][2 * i + 1];
+                levels[d + 1][i] = l < r
+                    ? keccak256(abi.encodePacked(l, r))
+                    : keccak256(abi.encodePacked(r, l));
+            }
+        }
+        root = levels[depth][0];
+    }
+
+    /// @dev Return the Merkle proof for leaf at `leafIndex` given the full level array.
+    function _getProof(bytes32[][] memory levels, uint256 leafIndex)
+        internal
+        pure
+        returns (bytes32[] memory proof)
+    {
+        uint256 depth = levels.length - 1;
+        proof = new bytes32[](depth);
+        uint256 idx = leafIndex;
+        for (uint256 d = 0; d < depth; d++) {
+            uint256 sibling = (idx % 2 == 0) ? idx + 1 : idx - 1;
+            proof[d] = levels[d][sibling];
+            idx /= 2;
+        }
     }
 
     function _buildTwoLeafTree() internal view returns (bytes32 root, bytes32 leafA, bytes32 leafB) {
