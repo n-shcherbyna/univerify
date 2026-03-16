@@ -1,0 +1,23 @@
+{
+  "name": "@univerify/sdk",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "echo \"no tests\""
+  },
+  "dependencies": {
+    "@univerify/verifier-core": "file:../verifier-core",
+    "viem": "^2.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0",
+    "vitest": "^3.0.0"
+  }
+}

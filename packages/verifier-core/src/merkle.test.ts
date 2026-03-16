@@ -127,8 +127,6 @@ describe("computeMerkleLeaf", () => {
     expect(computeMerkleLeaf(base)).not.toBe(computeMerkleLeaf({ ...base, docHash: h(43) }));
   });
 
-  // Regression: leaf used in integration must match what the contract computes.
-  // Pin the exact value once the contract is deployed — replace EXPECTED_LEAF below.
   it("leaf can be used as input to buildMerkleFromLeaves round-trip", () => {
     const leaf = computeMerkleLeaf(base);
     const { root, proofs } = buildMerkleFromLeaves([leaf]);
