@@ -19,8 +19,11 @@ contract DiplomaRegistry {
     error NotIssuerOfBatch();
     error AlreadyRevoked();
     error InvalidProof();
+    error OnlyPendingOwner();
+    error NewOwnerIsZero();
 
-    address public immutable owner;
+    address public owner;
+    address public pendingOwner;
 
     mapping(address => uint64)  private issuerUniversityIds;
     mapping(uint64 => UniversityStatus) private universityStatus;
@@ -39,6 +42,8 @@ contract DiplomaRegistry {
     );
     event DiplomaRevoked(bytes32 indexed docHash, address indexed issuer, uint64 revokedAt);
     event BatchIssued(uint64 indexed batchId, bytes32 indexed merkleRoot, address indexed issuer);
+    event OwnershipTransferStarted(address indexed previousOwner, address indexed newOwner);
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
     modifier onlyOwner() {
         if (msg.sender != owner) revert OnlyOwner();
@@ -47,6 +52,22 @@ contract DiplomaRegistry {
 
     constructor() {
         owner = msg.sender;
+        emit OwnershipTransferred(address(0), msg.sender);
+    }
+
+    // ── Owner: two-step transfer ────────────────────────────────────────────
+
+    function transferOwnership(address newOwner) external onlyOwner {
+        if (newOwner == address(0)) revert NewOwnerIsZero();
+        pendingOwner = newOwner;
+        emit OwnershipTransferStarted(owner, newOwner);
+    }
+
+    function acceptOwnership() external {
+        if (msg.sender != pendingOwner) revert OnlyPendingOwner();
+        emit OwnershipTransferred(owner, msg.sender);
+        owner = msg.sender;
+        pendingOwner = address(0);
     }
 
     // ── Owner: universities ────────────────────────────────────────────────

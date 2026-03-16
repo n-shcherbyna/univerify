@@ -132,6 +132,18 @@ export async function readOwner(params: {
   })) as Address;
 }
 
+export async function readPendingOwner(params: {
+  publicClient: RegistryPublicClient;
+  registry: Address;
+}): Promise<Address> {
+  return (await params.publicClient.readContract({
+    address: params.registry,
+    abi: DiplomaRegistryAbi,
+    functionName: "pendingOwner",
+    args: [],
+  })) as Address;
+}
+
 export async function readUniversityStatus(params: {
   publicClient: RegistryPublicClient;
   registry: Address;

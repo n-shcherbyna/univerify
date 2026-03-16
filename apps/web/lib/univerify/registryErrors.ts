@@ -34,6 +34,8 @@ export function decodeRegistryRevert(err: unknown, abi: Abi): string | null {
     case "NotIssuerOfBatch": return "You are not the issuer of this batch.";
     case "AlreadyRevoked": return "Already revoked.";
     case "InvalidProof": return "Invalid Merkle proof.";
+    case "OnlyPendingOwner": return "Only the pending owner can accept ownership.";
+    case "NewOwnerIsZero": return "New owner cannot be the zero address.";
     default: return `Transaction reverted: ${name}.`;
   }
 }

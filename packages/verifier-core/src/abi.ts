@@ -14,9 +14,12 @@ export const DiplomaRegistryAbi = [
   { type: "error", name: "NotIssuerOfBatch", inputs: [] },
   { type: "error", name: "AlreadyRevoked", inputs: [] },
   { type: "error", name: "InvalidProof", inputs: [] },
+  { type: "error", name: "OnlyPendingOwner", inputs: [] },
+  { type: "error", name: "NewOwnerIsZero", inputs: [] },
 
   // view
   { type: "function", name: "owner", stateMutability: "view", inputs: [], outputs: [{ name: "", type: "address" }] },
+  { type: "function", name: "pendingOwner", stateMutability: "view", inputs: [], outputs: [{ name: "", type: "address" }] },
   {
     type: "function", name: "statusWithProof", stateMutability: "view",
     inputs: [
@@ -107,6 +110,16 @@ export const DiplomaRegistryAbi = [
     ],
     outputs: [],
   },
+  {
+    type: "function", name: "transferOwnership", stateMutability: "nonpayable",
+    inputs: [{ name: "newOwner", type: "address" }],
+    outputs: [],
+  },
+  {
+    type: "function", name: "acceptOwnership", stateMutability: "nonpayable",
+    inputs: [],
+    outputs: [],
+  },
 
   // events
   { type: "event", name: "IssuerAdded", inputs: [{ name: "issuer", type: "address", indexed: true }], anonymous: false },
@@ -138,6 +151,22 @@ export const DiplomaRegistryAbi = [
       { name: "batchId", type: "uint64", indexed: true },
       { name: "merkleRoot", type: "bytes32", indexed: true },
       { name: "issuer", type: "address", indexed: true },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event", name: "OwnershipTransferStarted",
+    inputs: [
+      { name: "previousOwner", type: "address", indexed: true },
+      { name: "newOwner", type: "address", indexed: true },
+    ],
+    anonymous: false,
+  },
+  {
+    type: "event", name: "OwnershipTransferred",
+    inputs: [
+      { name: "previousOwner", type: "address", indexed: true },
+      { name: "newOwner", type: "address", indexed: true },
     ],
     anonymous: false,
   },
