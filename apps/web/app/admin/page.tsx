@@ -9,6 +9,7 @@ import {
   readIsIssuer,
   readIssuerUniversityId,
   readOwner,
+  readPendingOwner,
   readRegistryOverview,
   readUniversityMeta,
   universityStatusLabel,
@@ -21,7 +22,7 @@ import type { ChainState, TxState } from "@/lib/univerify/types";
 import { writeIssuerAdminTx } from "@/lib/univerify/registryAdminWrite";
 
 type UniversityForm = { id: string; name: string; country: string; website: string; accreditationId: string };
-type Tab = "overview" | "onboard" | "university" | "issuer";
+type Tab = "overview" | "onboard" | "university" | "issuer" | "ownership";
 
 const EMPTY_UNI: UniversityForm = { id: "", name: "", country: "", website: "", accreditationId: "" };
 
@@ -51,6 +52,8 @@ export default function AdminPage() {
   const [chainState, setChainState] = useState<ChainState>("unknown");
   const [owner, setOwner] = useState<Address | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [pendingOwner, setPendingOwner] = useState<Address | null>(null);
+  const [isPendingOwner, setIsPendingOwner] = useState(false);
   const [tab, setTab] = useState<Tab>("overview");
 
   // Overview state
@@ -66,6 +69,7 @@ export default function AdminPage() {
   const [manageStatus, setManageStatus] = useState("1");
   const [issuerOpsAddress, setIssuerOpsAddress] = useState("");
   const [assignUniversityId, setAssignUniversityId] = useState("");
+  const [transferTarget, setTransferTarget] = useState("");
 
   const [txState, setTxState] = useState<TxState>("idle");
   const [txHash, setTxHash] = useState<Hex | null>(null);
@@ -103,9 +107,15 @@ export default function AdminPage() {
       setAccount(a);
       await ensureChain({ eth, targetChainId: TARGET_CHAIN_ID });
       setChainState("ok");
-      const o = await readOwner({ publicClient, registry: REGISTRY });
+      const [o, po] = await Promise.all([
+        readOwner({ publicClient, registry: REGISTRY }),
+        readPendingOwner({ publicClient, registry: REGISTRY }),
+      ]);
       setOwner(o);
       setIsAdmin(a.toLowerCase() === o.toLowerCase());
+      const hasPending = po !== "0x0000000000000000000000000000000000000000";
+      setPendingOwner(hasPending ? po : null);
+      setIsPendingOwner(hasPending && a.toLowerCase() === po.toLowerCase());
       await loadOverview();
     } catch (e: any) {
       setChainState("wrong");
@@ -113,10 +123,10 @@ export default function AdminPage() {
     }
   }
 
-  async function runTx(fn: () => Promise<void>) {
+  async function runTx(fn: () => Promise<void>, { allowPendingOwner = false } = {}) {
     resetMessages();
     if (!account) return setError("Connect MetaMask first.");
-    if (!isAdmin) return setError("Only contract owner can perform this action.");
+    if (!isAdmin && !(allowPendingOwner && isPendingOwner)) return setError("Only contract owner can perform this action.");
     const eth = getEthereum();
     if (!eth) return setError("MetaMask not found.");
     try {
@@ -206,6 +216,34 @@ export default function AdminPage() {
     });
   }
 
+  async function transferOwnership() {
+    if (!isAddress(transferTarget)) return setError("Invalid address.");
+    const eth = getEthereum()!;
+    await runTx(async () => {
+      const walletClient = makeWalletClient({ eth, account: account as Address, chainId: TARGET_CHAIN_ID });
+      log.push(`Transfer ownership → ${transferTarget}`);
+      await writeIssuerAdminTx({
+        fn: "transferOwnership", newOwner: transferTarget as Address,
+        registry: REGISTRY, account: account as Address, publicClient, walletClient, setTxState, onTxHash: setTxHash,
+      });
+      setTransferTarget("");
+    });
+    await connect();
+  }
+
+  async function acceptOwnership() {
+    const eth = getEthereum()!;
+    await runTx(async () => {
+      const walletClient = makeWalletClient({ eth, account: account as Address, chainId: TARGET_CHAIN_ID });
+      log.push("Accept ownership");
+      await writeIssuerAdminTx({
+        fn: "acceptOwnership",
+        registry: REGISTRY, account: account as Address, publicClient, walletClient, setTxState, onTxHash: setTxHash,
+      });
+    }, { allowPendingOwner: true });
+    await connect();
+  }
+
   function prefillUniForm(uni: UniversityOverview) {
     setManageUni({
       id: uni.universityId.toString(),
@@ -258,6 +296,7 @@ export default function AdminPage() {
     { id: "onboard",     label: "Onboard" },
     { id: "university",  label: "Update university" },
     { id: "issuer",      label: "Manage issuer" },
+    { id: "ownership",   label: "Ownership" },
   ];
 
   return (
@@ -470,6 +509,59 @@ export default function AdminPage() {
             </button>
           </div>
           <p className="uv-hint">Assigning re-runs onboardIssuerAndUniversity — safe to use for existing universities.</p>
+        </div>
+      )}
+
+      {/* ── OWNERSHIP ── */}
+      {tab === "ownership" && (
+        <div className="uv-card" style={{ marginTop: 0, borderTopLeftRadius: 0 }}>
+          <h2 className="uv-card-title">Ownership transfer (2-step)</h2>
+          <p className="uv-hint">Transfer contract ownership safely. The new owner must accept before the transfer completes.</p>
+
+          <div className="uv-kv" style={{ marginTop: 16, gap: "6px 16px" }}>
+            <b>Current owner</b><code style={{ fontSize: 12 }}>{owner ?? "—"}</code>
+            <b>Pending owner</b>
+            <code style={{ fontSize: 12 }}>
+              {pendingOwner ?? <span className="uv-muted">None</span>}
+            </code>
+          </div>
+
+          {/* Accept panel — shown to pending owner */}
+          {isPendingOwner && (
+            <div style={{ marginTop: 20, padding: 16, background: "#dcfce7", borderRadius: 8 }}>
+              <p style={{ margin: 0, fontWeight: 700, color: "#166534" }}>
+                You are the pending owner. Accept to complete the transfer.
+              </p>
+              <div className="uv-actions" style={{ marginTop: 12 }}>
+                <button onClick={() => void acceptOwnership()} disabled={isBusy} className="uv-btn uv-btn-primary">
+                  {txState !== "idle" ? `${txState}…` : "Accept ownership"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* Transfer panel — shown to current owner */}
+          {isAdmin && (
+            <div style={{ marginTop: 20 }}>
+              <label className="uv-label">New owner address</label>
+              <input value={transferTarget} onChange={(e) => setTransferTarget(e.target.value.trim())} placeholder="0x..." className="uv-input uv-mono" />
+              <div className="uv-actions">
+                <button onClick={() => void transferOwnership()} disabled={isBusy} className="uv-btn uv-btn-danger">
+                  {txState !== "idle" ? `${txState}…` : "Initiate transfer"}
+                </button>
+              </div>
+              <p className="uv-hint" style={{ marginTop: 8 }}>
+                The new owner must connect their wallet and click &quot;Accept ownership&quot; to complete the transfer.
+                Until then, you remain the owner.
+              </p>
+            </div>
+          )}
+
+          {!isAdmin && !isPendingOwner && account && (
+            <p className="uv-hint" style={{ marginTop: 16 }}>
+              You are neither the current owner nor the pending owner.
+            </p>
+          )}
         </div>
       )}
 

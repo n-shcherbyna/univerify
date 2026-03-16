@@ -113,3 +113,9 @@ Consumed by both the web app and CLI. Exports:
 - `StatusCode` — verification result type
 
 Must be **built before** the web app or CLI (`dist/` is the entry point).
+
+## Rules
+
+- **Never deploy to mainnet without explicit user confirmation.** Always show the chain ID and network name before broadcasting any transaction.
+- **Always run `forge test` before deploying.** Do not deploy if any test fails.
+- **Always rebuild `verifier-core` before building `web` or `cli`.** Stale builds cause subtle bugs.

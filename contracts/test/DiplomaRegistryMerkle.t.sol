@@ -373,4 +373,58 @@ contract DiplomaRegistryMerkleTest is Test {
             ? keccak256(abi.encodePacked(leafA, leafB))
             : keccak256(abi.encodePacked(leafB, leafA));
     }
+
+    // ── Ownable2Step tests ──────────────────────────────────────────────────
+
+    function testTransferOwnershipStartsPending() public {
+        address newOwner = address(0xAE01);
+        reg.transferOwnership(newOwner);
+        assertEq(reg.pendingOwner(), newOwner);
+        assertEq(reg.owner(), address(this)); // still old owner
+    }
+
+    function testAcceptOwnershipCompletes() public {
+        address newOwner = address(0xAE01);
+        reg.transferOwnership(newOwner);
+
+        vm.prank(newOwner);
+        reg.acceptOwnership();
+
+        assertEq(reg.owner(), newOwner);
+        assertEq(reg.pendingOwner(), address(0));
+    }
+
+    function testAcceptOwnershipRevertsIfNotPending() public {
+        reg.transferOwnership(address(0xAE01));
+
+        vm.prank(outsider);
+        vm.expectRevert(DiplomaRegistry.OnlyPendingOwner.selector);
+        reg.acceptOwnership();
+    }
+
+    function testTransferOwnershipRevertsIfNotOwner() public {
+        vm.prank(outsider);
+        vm.expectRevert(DiplomaRegistry.OnlyOwner.selector);
+        reg.transferOwnership(address(0xAE01));
+    }
+
+    function testTransferOwnershipRevertsZeroAddress() public {
+        vm.expectRevert(DiplomaRegistry.NewOwnerIsZero.selector);
+        reg.transferOwnership(address(0));
+    }
+
+    function testNewOwnerCanUseOnlyOwnerFunctions() public {
+        address newOwner = address(0xAE01);
+        reg.transferOwnership(newOwner);
+        vm.prank(newOwner);
+        reg.acceptOwnership();
+
+        // Old owner can no longer call onlyOwner functions
+        vm.expectRevert(DiplomaRegistry.OnlyOwner.selector);
+        reg.removeIssuer(issuer1);
+
+        // New owner can
+        vm.prank(newOwner);
+        reg.removeIssuer(issuer1);
+    }
 }

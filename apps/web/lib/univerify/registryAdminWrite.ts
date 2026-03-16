@@ -25,13 +25,15 @@ type UniversityFields = {
 type RemoveIssuerTx = AdminTxCommon & { fn: "removeIssuer"; issuer: Address };
 type SetUniversityTx = AdminTxCommon & { fn: "setUniversity"; status: number } & UniversityFields;
 type OnboardTx = AdminTxCommon & { fn: "onboardIssuerAndUniversity"; issuer: Address } & UniversityFields;
+type TransferOwnershipTx = AdminTxCommon & { fn: "transferOwnership"; newOwner: Address };
+type AcceptOwnershipTx = AdminTxCommon & { fn: "acceptOwnership" };
 
-type AdminTxParams = RemoveIssuerTx | SetUniversityTx | OnboardTx;
+type AdminTxParams = RemoveIssuerTx | SetUniversityTx | OnboardTx | TransferOwnershipTx | AcceptOwnershipTx;
 
 export async function writeIssuerAdminTx(params: AdminTxParams) {
   params.setTxState("submitting");
   try {
-    type FnName = "removeIssuer" | "setUniversity" | "onboardIssuerAndUniversity";
+    type FnName = "removeIssuer" | "setUniversity" | "onboardIssuerAndUniversity" | "transferOwnership" | "acceptOwnership";
     let args: any[];
     let functionName: FnName;
 
@@ -41,6 +43,12 @@ export async function writeIssuerAdminTx(params: AdminTxParams) {
     } else if (params.fn === "setUniversity") {
       functionName = "setUniversity";
       args = [params.universityId, params.status, params.name, params.country, params.website, params.accreditationId];
+    } else if (params.fn === "transferOwnership") {
+      functionName = "transferOwnership";
+      args = [params.newOwner];
+    } else if (params.fn === "acceptOwnership") {
+      functionName = "acceptOwnership";
+      args = [];
     } else {
       functionName = "onboardIssuerAndUniversity";
       args = [params.issuer, params.universityId, params.name, params.country, params.website, params.accreditationId];
