@@ -183,6 +183,62 @@ contract BaselineGasTest is MerkleHelper {
         assertEq(uint256(s), uint256(DiplomaRegistry.Status.Valid));
     }
 
+    // ── revokeFromBatch (extended depths) ───────────────────────────────────
+
+    function testRevokeFromBatch_Depth10() public {
+        bytes32[] memory leaves = _makeLeaves(1024);
+        (bytes32 root, bytes32[][] memory levels) = _buildTree(leaves);
+
+        vm.prank(issuer);
+        reg.issueBatchRoot(BATCH, root);
+
+        bytes32 doc0 = keccak256(abi.encodePacked("doc", uint256(0)));
+        bytes32[] memory proof = _getProof(levels, 0);
+        vm.prank(issuer);
+        reg.revokeFromBatch(doc0, BATCH, proof);
+    }
+
+    function testRevokeFromBatch_Depth12() public {
+        bytes32[] memory leaves = _makeLeaves(4096);
+        (bytes32 root, bytes32[][] memory levels) = _buildTree(leaves);
+
+        vm.prank(issuer);
+        reg.issueBatchRoot(BATCH, root);
+
+        bytes32 doc0 = keccak256(abi.encodePacked("doc", uint256(0)));
+        bytes32[] memory proof = _getProof(levels, 0);
+        vm.prank(issuer);
+        reg.revokeFromBatch(doc0, BATCH, proof);
+    }
+
+    // ── statusWithProof (extended depths) ────────────────────────────────────
+
+    function testStatusWithProof_Depth10() public {
+        bytes32[] memory leaves = _makeLeaves(1024);
+        (bytes32 root, bytes32[][] memory levels) = _buildTree(leaves);
+
+        vm.prank(issuer);
+        reg.issueBatchRoot(BATCH, root);
+
+        bytes32 doc0 = keccak256(abi.encodePacked("doc", uint256(0)));
+        bytes32[] memory proof = _getProof(levels, 0);
+        DiplomaRegistry.Status s = reg.statusWithProof(doc0, issuer, BATCH, proof);
+        assertEq(uint256(s), uint256(DiplomaRegistry.Status.Valid));
+    }
+
+    function testStatusWithProof_Depth12() public {
+        bytes32[] memory leaves = _makeLeaves(4096);
+        (bytes32 root, bytes32[][] memory levels) = _buildTree(leaves);
+
+        vm.prank(issuer);
+        reg.issueBatchRoot(BATCH, root);
+
+        bytes32 doc0 = keccak256(abi.encodePacked("doc", uint256(0)));
+        bytes32[] memory proof = _getProof(levels, 0);
+        DiplomaRegistry.Status s = reg.statusWithProof(doc0, issuer, BATCH, proof);
+        assertEq(uint256(s), uint256(DiplomaRegistry.Status.Valid));
+    }
+
     // ── helper ──────────────────────────────────────────────────────────────
 
     function _makeLeaves(uint256 n) internal view returns (bytes32[] memory leaves) {
@@ -312,6 +368,62 @@ contract OptimisedGasTest is MerkleHelper {
 
     function testStatusWithProof_Depth8() public {
         bytes32[] memory leaves = _makeLeaves(256);
+        (bytes32 root, bytes32[][] memory levels) = _buildTree(leaves);
+
+        vm.prank(issuer);
+        reg.issueBatchRoot(BATCH, root);
+
+        bytes32 doc0 = keccak256(abi.encodePacked("doc", uint256(0)));
+        bytes32[] memory proof = _getProof(levels, 0);
+        DiplomaRegistryG.Status s = reg.statusWithProof(doc0, issuer, BATCH, proof);
+        assertEq(uint256(s), uint256(DiplomaRegistryG.Status.Valid));
+    }
+
+    // ── revokeFromBatch (extended depths) ───────────────────────────────────
+
+    function testRevokeFromBatch_Depth10() public {
+        bytes32[] memory leaves = _makeLeaves(1024);
+        (bytes32 root, bytes32[][] memory levels) = _buildTree(leaves);
+
+        vm.prank(issuer);
+        reg.issueBatchRoot(BATCH, root);
+
+        bytes32 doc0 = keccak256(abi.encodePacked("doc", uint256(0)));
+        bytes32[] memory proof = _getProof(levels, 0);
+        vm.prank(issuer);
+        reg.revokeFromBatch(doc0, BATCH, proof);
+    }
+
+    function testRevokeFromBatch_Depth12() public {
+        bytes32[] memory leaves = _makeLeaves(4096);
+        (bytes32 root, bytes32[][] memory levels) = _buildTree(leaves);
+
+        vm.prank(issuer);
+        reg.issueBatchRoot(BATCH, root);
+
+        bytes32 doc0 = keccak256(abi.encodePacked("doc", uint256(0)));
+        bytes32[] memory proof = _getProof(levels, 0);
+        vm.prank(issuer);
+        reg.revokeFromBatch(doc0, BATCH, proof);
+    }
+
+    // ── statusWithProof (extended depths) ────────────────────────────────────
+
+    function testStatusWithProof_Depth10() public {
+        bytes32[] memory leaves = _makeLeaves(1024);
+        (bytes32 root, bytes32[][] memory levels) = _buildTree(leaves);
+
+        vm.prank(issuer);
+        reg.issueBatchRoot(BATCH, root);
+
+        bytes32 doc0 = keccak256(abi.encodePacked("doc", uint256(0)));
+        bytes32[] memory proof = _getProof(levels, 0);
+        DiplomaRegistryG.Status s = reg.statusWithProof(doc0, issuer, BATCH, proof);
+        assertEq(uint256(s), uint256(DiplomaRegistryG.Status.Valid));
+    }
+
+    function testStatusWithProof_Depth12() public {
+        bytes32[] memory leaves = _makeLeaves(4096);
         (bytes32 root, bytes32[][] memory levels) = _buildTree(leaves);
 
         vm.prank(issuer);
