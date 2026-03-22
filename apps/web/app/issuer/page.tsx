@@ -106,7 +106,7 @@ export default function IssuerPage() {
     if (!/^\d+$/.test(input.trim())) throw new Error("Batch ID must be a non-negative integer.");
     const v = BigInt(input.trim());
     if (v > UINT64_MAX) throw new Error("Batch ID exceeds uint64 range.");
-    if (v > BigInt(Number.MAX_SAFE_INTEGER)) throw new Error(`Batch ID must be ≤ ${Number.MAX_SAFE_INTEGER}.`);
+    if (v > BigInt(Number.MAX_SAFE_INTEGER)) throw new Error(`Batch ID must be \u2264 ${Number.MAX_SAFE_INTEGER}.`);
     return { batchIdBigint: v, batchIdNumber: Number(v) };
   }
 
@@ -223,45 +223,50 @@ export default function IssuerPage() {
 
   return (
     <main className="uv-page">
-      <h1 className="uv-title">UniVerify — Issuer</h1>
+      <h1 className="uv-title"><span className="uv-title-gradient">Issuer</span></h1>
       <p className="uv-subtitle">Build a Merkle batch, publish the root on-chain, and export diploma files.</p>
 
       {/* Wallet */}
-      <div className="uv-card" style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
+      <div className="uv-card uv-wallet-bar">
         <button onClick={() => void connect()} disabled={isBusy} className="uv-btn uv-btn-primary">
           {account ? "Reconnect" : "Connect MetaMask"}
         </button>
-        <div className="uv-kv" style={{ flex: 1, minWidth: 260, gap: "4px 16px" }}>
+        <div className="uv-kv" style={{ flex: 1, minWidth: 260, gap: "4px 16px", marginTop: 0 }}>
           <b>Account</b>
-          <code style={{ fontSize: 12 }}>{account || "—"}</code>
+          <code>{account || "\u2014"}</code>
           <b>University</b>
           <span>{accountUniversityName ?? (accountUniversityId ? `ID ${accountUniversityId}` : "Not registered")}</span>
           <b>Network</b>
-          <span style={{ color: chainState === "ok" ? "green" : chainState === "wrong" ? "red" : undefined }}>
-            {chainState === "ok" ? "Sepolia ✓" : chainState === "wrong" ? "Wrong network" : "—"}
+          <span style={{ color: chainState === "ok" ? "var(--success)" : chainState === "wrong" ? "var(--danger)" : undefined }}>
+            {chainState === "ok" ? "Sepolia \u2713" : chainState === "wrong" ? "Wrong network" : "\u2014"}
           </span>
         </div>
       </div>
 
       {/* Step 1 */}
       <div className="uv-card">
-        <h2 className="uv-card-title">Step 1 — Prepare & publish batch</h2>
+        <h2 className="uv-card-title">Step 1 &mdash; Prepare & publish batch</h2>
 
-        <label className="uv-label">Batch ID</label>
-        <input
-          className="uv-input"
-          value={batchIdInput}
-          onChange={(e) => { setBatchIdInput(e.target.value.trim()); setComputedBatch(null); localStorage.removeItem(BATCH_STORAGE_KEY); resetMessages(); }}
-          style={{ width: 160 }}
-        />
+        <div style={{ marginTop: 14 }}>
+          <label className="uv-label">Batch ID</label>
+          <input
+            className="uv-input uv-mono"
+            value={batchIdInput}
+            onChange={(e) => { setBatchIdInput(e.target.value.trim()); setComputedBatch(null); localStorage.removeItem(BATCH_STORAGE_KEY); resetMessages(); }}
+            style={{ width: 160 }}
+          />
+        </div>
 
-        <label className="uv-label" style={{ marginTop: 14 }}>Payloads JSON (array)</label>
-        <textarea
-          value={batchPayloadsText}
-          onChange={(e) => { setBatchPayloadsText(e.target.value); setComputedBatch(null); localStorage.removeItem(BATCH_STORAGE_KEY); resetMessages(); }}
-          rows={10}
-          style={{ width: "100%", fontFamily: "monospace", padding: 12 }}
-        />
+        <div style={{ marginTop: 14 }}>
+          <label className="uv-label">Payloads JSON (array)</label>
+          <textarea
+            value={batchPayloadsText}
+            onChange={(e) => { setBatchPayloadsText(e.target.value); setComputedBatch(null); localStorage.removeItem(BATCH_STORAGE_KEY); resetMessages(); }}
+            className="uv-input"
+            rows={10}
+            style={{ fontFamily: "var(--font-mono)", fontSize: 13 }}
+          />
+        </div>
 
         <div className="uv-actions">
           <button onClick={computeBatch} disabled={isBusy || !account} className="uv-btn">
@@ -272,17 +277,17 @@ export default function IssuerPage() {
             disabled={isBusy || !account || !computedBatch}
             className="uv-btn uv-btn-primary"
           >
-            {txState === "submitting" ? "Submitting…" : txState === "confirming" ? "Confirming…" : "Publish root on-chain"}
+            {txState === "submitting" ? "Submitting\u2026" : txState === "confirming" ? "Confirming\u2026" : "Publish root on-chain"}
           </button>
         </div>
 
-        {txHash && <p style={{ marginTop: 8, fontSize: 13 }}>Tx: <code>{txHash}</code></p>}
+        {txHash && <p className="uv-hint">Tx: <code>{txHash}</code></p>}
 
         {computedBatch && (
-          <div className="uv-kv" style={{ marginTop: 12 }}>
+          <div className="uv-kv" style={{ marginTop: 14 }}>
             <b>Batch ID</b><span>{computedBatch.batchIdBigint.toString()}</span>
             <b>Diplomas</b><span>{computedBatch.items.length}</span>
-            <b>Merkle root</b><code style={{ fontSize: 12 }}>{computedBatch.merkleRoot}</code>
+            <b>Merkle root</b><code>{computedBatch.merkleRoot}</code>
           </div>
         )}
       </div>
@@ -290,7 +295,7 @@ export default function IssuerPage() {
       {/* Step 2 */}
       {computedBatch && (
         <div className="uv-card">
-          <h2 className="uv-card-title">Step 2 — Export diploma files</h2>
+          <h2 className="uv-card-title">Step 2 &mdash; Export diploma files</h2>
           {typeof window !== "undefined" && localStorage.getItem(BATCH_STORAGE_KEY) && !isBusy && (
             <p className="uv-hint" style={{ marginBottom: 8 }}>
               Batch restored from previous session.{" "}
@@ -303,51 +308,50 @@ export default function IssuerPage() {
               </button>
             </p>
           )}
-          <p className="uv-hint" style={{ marginBottom: 14 }}>
-            Each file contains the payload and Merkle proof. No signing required — the issuer identity is proven by the on-chain transaction.
+          <p className="uv-hint" style={{ marginBottom: 16 }}>
+            Each file contains the payload and Merkle proof. No signing required &mdash; the issuer identity is proven by the on-chain transaction.
           </p>
 
-          <div className="uv-actions" style={{ marginBottom: 16 }}>
+          <div className="uv-actions" style={{ marginBottom: 16, marginTop: 0 }}>
             <button onClick={exportAll} disabled={isBusy} className="uv-btn uv-btn-primary">
               Export all ({computedBatch.items.length})
             </button>
           </div>
 
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
-            <thead>
-              <tr style={{ borderBottom: "2px solid #eee", textAlign: "left" }}>
-                <th style={{ padding: "6px 8px" }}>#</th>
-                <th style={{ padding: "6px 8px" }}>Name / ID</th>
-                <th style={{ padding: "6px 8px" }}>docHash</th>
-                <th style={{ padding: "6px 8px" }}>Proof nodes</th>
-                <th style={{ padding: "6px 8px" }}></th>
-              </tr>
-            </thead>
-            <tbody>
-              {computedBatch.items.map((item) => (
-                <tr key={item.index} style={{ borderBottom: "1px solid #f0f0f0" }}>
-                  <td style={{ padding: "6px 8px" }}>{item.index}</td>
-                  <td style={{ padding: "6px 8px" }}>{payloadLabel(item.payload, item.index)}</td>
-                  <td style={{ padding: "6px 8px" }}><code style={{ fontSize: 11 }}>{item.docHash.slice(0, 12)}…</code></td>
-                  <td style={{ padding: "6px 8px" }}>{item.proof.length}</td>
-                  <td style={{ padding: "6px 8px" }}>
-                    <button onClick={() => exportSingle(item)} disabled={isBusy} className="uv-btn" style={{ padding: "3px 10px", fontSize: 12 }}>
-                      Export
-                    </button>
-                  </td>
+          <div className="uv-table-wrap">
+            <table style={{ width: "100%" }}>
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>Name / ID</th>
+                  <th>docHash</th>
+                  <th>Proof nodes</th>
+                  <th></th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {computedBatch.items.map((item) => (
+                  <tr key={item.index}>
+                    <td>{item.index}</td>
+                    <td style={{ fontWeight: 500 }}>{payloadLabel(item.payload, item.index)}</td>
+                    <td><code style={{ fontSize: 11 }}>{item.docHash.slice(0, 12)}&hellip;</code></td>
+                    <td>{item.proof.length}</td>
+                    <td>
+                      <button onClick={() => exportSingle(item)} disabled={isBusy} className="uv-btn" style={{ padding: "4px 12px", fontSize: 12 }}>
+                        Export
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
       {/* Publish confirmation modal */}
       {pendingPublish && computedBatch && (
-        <div style={{
-          position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
-          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100,
-        }}>
+        <div className="uv-modal-overlay">
           <div className="uv-card" style={{ maxWidth: 480, width: "100%", margin: 16 }}>
             <h2 className="uv-card-title" style={{ marginBottom: 12 }}>Confirm publish</h2>
             <p style={{ fontSize: 14, marginBottom: 12, color: "var(--muted)" }}>
@@ -356,8 +360,8 @@ export default function IssuerPage() {
             <div className="uv-kv" style={{ marginTop: 0 }}>
               <b>Batch ID</b><span>{computedBatch.batchIdBigint.toString()}</span>
               <b>Diplomas</b><span>{computedBatch.items.length}</span>
-              <b>Registry</b><code style={{ fontSize: 12, wordBreak: "break-all" }}>{REGISTRY}</code>
-              <b>Merkle root</b><code style={{ fontSize: 11, wordBreak: "break-all" }}>{computedBatch.merkleRoot}</code>
+              <b>Registry</b><code>{REGISTRY}</code>
+              <b>Merkle root</b><code style={{ fontSize: 11 }}>{computedBatch.merkleRoot}</code>
             </div>
             <div className="uv-actions" style={{ marginTop: 16 }}>
               <button onClick={() => void publishBatchRoot()} className="uv-btn uv-btn-primary">
@@ -374,12 +378,12 @@ export default function IssuerPage() {
       {error && <div className="uv-status-banner uv-status-fail" style={{ marginTop: 12 }}><b>Error:</b> {error}</div>}
 
       {logs.length > 0 && (
-        <div className="uv-card" style={{ maxHeight: 240, overflowY: "auto", marginTop: 12 }}>
+        <div className="uv-card uv-logs" style={{ marginTop: 12 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <h3 style={{ margin: 0 }}>Logs</h3>
-            <button onClick={log.clear} className="uv-btn">Clear</button>
+            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>Logs</h3>
+            <button onClick={log.clear} className="uv-btn" style={{ padding: "4px 12px", fontSize: 12 }}>Clear</button>
           </div>
-          <pre style={{ fontFamily: "monospace", fontSize: 12, marginTop: 8 }}>
+          <pre>
             {logs.map((line, idx) => <div key={idx}>{line}</div>)}
           </pre>
         </div>

@@ -5,7 +5,7 @@ import { TopNav } from "./components/TopNav";
 
 export const metadata: Metadata = {
   title: "UniVerify",
-  description: "UniVerify diploma registry",
+  description: "Tamper-proof diploma registry on Ethereum. Verify academic credentials instantly with cryptographic Merkle proofs.",
 };
 
 const fontSans = Space_Grotesk({

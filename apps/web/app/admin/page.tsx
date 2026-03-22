@@ -34,7 +34,7 @@ const STATUS_BADGE: Record<number, { label: string; color: string; bg: string }>
 function StatusBadge({ status }: { status: number }) {
   const s = STATUS_BADGE[status] ?? { label: "Unknown", color: "#6b7280", bg: "#f3f4f6" };
   return (
-    <span style={{ fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 20, color: s.color, background: s.bg }}>
+    <span className="uv-badge" style={{ color: s.color, background: s.bg }}>
       {s.label}
     </span>
   );
@@ -189,7 +189,7 @@ export default function AdminPage() {
       const universityId = BigInt(assignUniversityId.trim());
       const meta = await readUniversityMeta({ publicClient, registry: REGISTRY, universityId, fromBlock: DEPLOY_BLOCK });
       if (!meta) return setError(`University ${universityId} not found. Onboard it first.`);
-      log.push(`Assign issuer=${issuerOpsAddress} → universityId=${universityId} (${meta.name})`);
+      log.push(`Assign issuer=${issuerOpsAddress} \u2192 universityId=${universityId} (${meta.name})`);
       await writeIssuerAdminTx({
         fn: "onboardIssuerAndUniversity",
         issuer: issuerOpsAddress as Address, universityId,
@@ -221,7 +221,7 @@ export default function AdminPage() {
     const eth = getEthereum()!;
     await runTx(async () => {
       const walletClient = makeWalletClient({ eth, account: account as Address, chainId: TARGET_CHAIN_ID });
-      log.push(`Transfer ownership → ${transferTarget}`);
+      log.push(`Transfer ownership \u2192 ${transferTarget}`);
       await writeIssuerAdminTx({
         fn: "transferOwnership", newOwner: transferTarget as Address,
         registry: REGISTRY, account: account as Address, publicClient, walletClient, setTxState, onTxHash: setTxHash,
@@ -262,7 +262,7 @@ export default function AdminPage() {
 
   function uniFields(f: UniversityForm, onChange: (f: UniversityForm) => void, showId = true) {
     return (
-      <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
+      <div style={{ display: "grid", gap: 12, marginTop: 14 }}>
         {showId && (
           <div>
             <label className="uv-label">University ID</label>
@@ -273,7 +273,7 @@ export default function AdminPage() {
           <label className="uv-label">Name <span className="uv-muted">(required)</span></label>
           <input value={f.name} onChange={(e) => onChange({ ...f, name: e.target.value })} placeholder="Politechnika Warszawska" className="uv-input" />
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
           <div>
             <label className="uv-label">Country</label>
             <input value={f.country} onChange={(e) => onChange({ ...f, country: e.target.value })} placeholder="PL" className="uv-input" />
@@ -301,52 +301,44 @@ export default function AdminPage() {
 
   return (
     <main className="uv-page">
-      <h1 className="uv-title">UniVerify — Admin</h1>
+      <h1 className="uv-title"><span className="uv-title-gradient">Admin</span></h1>
       <p className="uv-subtitle">Manage issuers and universities on-chain. Requires contract owner wallet.</p>
 
       {/* Wallet bar */}
-      <div className="uv-card" style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
+      <div className="uv-card uv-wallet-bar">
         <button onClick={() => void connect()} disabled={isBusy} className="uv-btn uv-btn-primary">
           {account ? "Reconnect" : "Connect MetaMask"}
         </button>
         <div className="uv-kv" style={{ flex: 1, marginTop: 0, gap: "4px 16px" }}>
-          <b>Account</b><code style={{ fontSize: 12 }}>{account || "—"}</code>
-          <b>Owner</b><code style={{ fontSize: 12 }}>{owner ?? "—"}</code>
+          <b>Account</b><code>{account || "\u2014"}</code>
+          <b>Owner</b><code>{owner ?? "\u2014"}</code>
           <b>Access</b>
-          <span style={{ fontWeight: 700, color: account ? (isAdmin ? "#166534" : "#b45309") : undefined }}>
-            {account ? (isAdmin ? "✓ Owner" : "✗ Not owner") : "—"}
+          <span style={{ fontWeight: 700, color: account ? (isAdmin ? "var(--success)" : "var(--warn)") : undefined }}>
+            {account ? (isAdmin ? "\u2713 Owner" : "\u2717 Not owner") : "\u2014"}
           </span>
         </div>
       </div>
 
       {/* Tabs */}
-      <div style={{ display: "flex", gap: 4, marginTop: 20, borderBottom: "1px solid var(--surface-border)" }}>
+      <div className="uv-tabs">
         {tabs.map((t) => (
           <button
             key={t.id}
             onClick={() => setTab(t.id)}
-            style={{
-              padding: "8px 16px", fontSize: 14, fontWeight: tab === t.id ? 700 : 500,
-              borderRadius: "8px 8px 0 0", border: "1px solid",
-              borderBottom: tab === t.id ? "1px solid var(--surface)" : "1px solid var(--surface-border)",
-              marginBottom: tab === t.id ? -1 : 0,
-              background: tab === t.id ? "var(--surface)" : "transparent",
-              borderColor: tab === t.id ? "var(--surface-border)" : "transparent",
-              cursor: "pointer", color: "inherit",
-            }}
+            className={`uv-tab ${tab === t.id ? "uv-tab-active" : ""}`}
           >
             {t.label}
           </button>
         ))}
       </div>
 
-      {/* ── OVERVIEW ── */}
+      {/* OVERVIEW */}
       {tab === "overview" && (
-        <div className="uv-card" style={{ marginTop: 0, borderTopLeftRadius: 0 }}>
+        <div className="uv-card" style={{ marginTop: 0, borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <h2 className="uv-card-title">Registry state</h2>
-            <button onClick={() => void loadOverview()} disabled={overviewLoading} className="uv-btn" style={{ fontSize: 13 }}>
-              {overviewLoading ? "Loading…" : "↺ Refresh"}
+            <button onClick={() => void loadOverview()} disabled={overviewLoading} className="uv-btn" style={{ fontSize: 13, padding: "6px 14px" }}>
+              {overviewLoading ? "Loading\u2026" : "\u21ba Refresh"}
             </button>
           </div>
 
@@ -358,32 +350,32 @@ export default function AdminPage() {
 
           {universities.length > 0 && (
             <>
-              <h3 style={{ fontSize: 14, fontWeight: 700, marginTop: 20, marginBottom: 8 }}>
-                Universities <span className="uv-muted" style={{ fontWeight: 400 }}>({universities.length})</span>
+              <h3 className="uv-section-heading">
+                Universities <span className="uv-muted" style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>({universities.length})</span>
               </h3>
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+              <div className="uv-table-wrap">
+                <table style={{ width: "100%" }}>
                   <thead>
-                    <tr style={{ borderBottom: "2px solid var(--surface-border)", textAlign: "left" }}>
-                      <th style={{ padding: "6px 10px" }}>ID</th>
-                      <th style={{ padding: "6px 10px" }}>Name</th>
-                      <th style={{ padding: "6px 10px" }}>Country</th>
-                      <th style={{ padding: "6px 10px" }}>Status</th>
-                      <th style={{ padding: "6px 10px" }}>Accreditation</th>
-                      <th style={{ padding: "6px 10px" }}></th>
+                    <tr>
+                      <th>ID</th>
+                      <th>Name</th>
+                      <th>Country</th>
+                      <th>Status</th>
+                      <th>Accreditation</th>
+                      <th></th>
                     </tr>
                   </thead>
                   <tbody>
                     {universities.map((u) => (
-                      <tr key={u.universityId.toString()} style={{ borderBottom: "1px solid var(--surface-border)" }}>
-                        <td style={{ padding: "8px 10px" }}><code>{u.universityId.toString()}</code></td>
-                        <td style={{ padding: "8px 10px", fontWeight: 600 }}>{u.name}</td>
-                        <td style={{ padding: "8px 10px" }}>{u.country || <span className="uv-muted">—</span>}</td>
-                        <td style={{ padding: "8px 10px" }}><StatusBadge status={u.status} /></td>
-                        <td style={{ padding: "8px 10px" }}>{u.accreditationId || <span className="uv-muted">—</span>}</td>
-                        <td style={{ padding: "8px 10px" }}>
+                      <tr key={u.universityId.toString()}>
+                        <td><code>{u.universityId.toString()}</code></td>
+                        <td style={{ fontWeight: 600 }}>{u.name}</td>
+                        <td>{u.country || <span className="uv-muted">\u2014</span>}</td>
+                        <td><StatusBadge status={u.status} /></td>
+                        <td>{u.accreditationId || <span className="uv-muted">\u2014</span>}</td>
+                        <td>
                           {isAdmin && (
-                            <button onClick={() => prefillUniForm(u)} className="uv-btn" style={{ fontSize: 12, padding: "3px 10px" }}>
+                            <button onClick={() => prefillUniForm(u)} className="uv-btn" style={{ fontSize: 12, padding: "4px 12px" }}>
                               Edit
                             </button>
                           )}
@@ -398,40 +390,39 @@ export default function AdminPage() {
 
           {issuers.length > 0 && (
             <>
-              <h3 style={{ fontSize: 14, fontWeight: 700, marginTop: 24, marginBottom: 8 }}>
-                Issuers <span className="uv-muted" style={{ fontWeight: 400 }}>({issuers.filter(i => i.active).length} active / {issuers.length} total)</span>
+              <h3 className="uv-section-heading">
+                Issuers <span className="uv-muted" style={{ fontWeight: 400, textTransform: "none", letterSpacing: 0 }}>({issuers.filter(i => i.active).length} active / {issuers.length} total)</span>
               </h3>
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 13 }}>
+              <div className="uv-table-wrap">
+                <table style={{ width: "100%" }}>
                   <thead>
-                    <tr style={{ borderBottom: "2px solid var(--surface-border)", textAlign: "left" }}>
-                      <th style={{ padding: "6px 10px" }}>Address</th>
-                      <th style={{ padding: "6px 10px" }}>University</th>
-                      <th style={{ padding: "6px 10px" }}>Status</th>
-                      <th style={{ padding: "6px 10px" }}></th>
+                    <tr>
+                      <th>Address</th>
+                      <th>University</th>
+                      <th>Status</th>
+                      <th></th>
                     </tr>
                   </thead>
                   <tbody>
                     {issuers.map((iss) => (
-                      <tr key={iss.issuer} style={{ borderBottom: "1px solid var(--surface-border)", opacity: iss.active ? 1 : 0.5 }}>
-                        <td style={{ padding: "8px 10px" }}><code style={{ fontSize: 11 }}>{iss.issuer}</code></td>
-                        <td style={{ padding: "8px 10px" }}>
+                      <tr key={iss.issuer} style={{ opacity: iss.active ? 1 : 0.5 }}>
+                        <td><code style={{ fontSize: 11 }}>{iss.issuer}</code></td>
+                        <td>
                           {iss.universityName
                             ? <span><span className="uv-muted" style={{ fontSize: 11 }}>#{iss.universityId.toString()} </span>{iss.universityName}</span>
-                            : <span className="uv-muted">—</span>}
+                            : <span className="uv-muted">\u2014</span>}
                         </td>
-                        <td style={{ padding: "8px 10px" }}>
-                          <span style={{
-                            fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 20,
+                        <td>
+                          <span className="uv-badge" style={{
                             color: iss.active ? "#166534" : "#6b7280",
                             background: iss.active ? "#dcfce7" : "#f3f4f6",
                           }}>
                             {iss.active ? "Active" : "Removed"}
                           </span>
                         </td>
-                        <td style={{ padding: "8px 10px" }}>
+                        <td>
                           {isAdmin && (
-                            <button onClick={() => prefillIssuerForm(iss)} className="uv-btn" style={{ fontSize: 12, padding: "3px 10px" }}>
+                            <button onClick={() => prefillIssuerForm(iss)} className="uv-btn" style={{ fontSize: 12, padding: "4px 12px" }}>
                               Manage
                             </button>
                           )}
@@ -446,9 +437,9 @@ export default function AdminPage() {
         </div>
       )}
 
-      {/* ── ONBOARD ── */}
+      {/* ONBOARD */}
       {tab === "onboard" && (
-        <div className="uv-card" style={{ marginTop: 0, borderTopLeftRadius: 0 }}>
+        <div className="uv-card" style={{ marginTop: 0, borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
           <h2 className="uv-card-title">Onboard university + issuer</h2>
           <p className="uv-hint">Registers the university on-chain and assigns the issuer address in a single transaction.</p>
           <div style={{ marginTop: 14 }}>
@@ -458,19 +449,19 @@ export default function AdminPage() {
           {uniFields(onboardUni, setOnboardUni)}
           <div className="uv-actions">
             <button onClick={() => void onboard()} disabled={isBusy} className="uv-btn uv-btn-primary">
-              {txState !== "idle" ? `${txState}…` : "Onboard (1 transaction)"}
+              {txState !== "idle" ? `${txState}\u2026` : "Onboard (1 transaction)"}
             </button>
           </div>
         </div>
       )}
 
-      {/* ── UPDATE UNIVERSITY ── */}
+      {/* UPDATE UNIVERSITY */}
       {tab === "university" && (
-        <div className="uv-card" style={{ marginTop: 0, borderTopLeftRadius: 0 }}>
+        <div className="uv-card" style={{ marginTop: 0, borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
           <h2 className="uv-card-title">Update university</h2>
           <p className="uv-hint">Change university metadata or status. Metadata is stored in events; only status is in storage.</p>
           {uniFields(manageUni, setManageUni)}
-          <div style={{ marginTop: 12 }}>
+          <div style={{ marginTop: 14 }}>
             <label className="uv-label">Status</label>
             <select value={manageStatus} onChange={(e) => setManageStatus(e.target.value)} className="uv-input" style={{ width: 200 }}>
               <option value="1">Active</option>
@@ -480,17 +471,17 @@ export default function AdminPage() {
           </div>
           <div className="uv-actions">
             <button onClick={() => void setUniversity()} disabled={isBusy} className="uv-btn uv-btn-primary">
-              {txState !== "idle" ? `${txState}…` : "Update university"}
+              {txState !== "idle" ? `${txState}\u2026` : "Update university"}
             </button>
           </div>
         </div>
       )}
 
-      {/* ── MANAGE ISSUER ── */}
+      {/* MANAGE ISSUER */}
       {tab === "issuer" && (
-        <div className="uv-card" style={{ marginTop: 0, borderTopLeftRadius: 0 }}>
+        <div className="uv-card" style={{ marginTop: 0, borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
           <h2 className="uv-card-title">Manage issuer</h2>
-          <div style={{ display: "grid", gap: 12, marginTop: 12 }}>
+          <div style={{ display: "grid", gap: 12, marginTop: 14 }}>
             <div>
               <label className="uv-label">Issuer wallet address</label>
               <input value={issuerOpsAddress} onChange={(e) => setIssuerOpsAddress(e.target.value.trim())} placeholder="0x..." className="uv-input uv-mono" />
@@ -502,52 +493,52 @@ export default function AdminPage() {
           </div>
           <div className="uv-actions">
             <button onClick={() => void assignIssuer()} disabled={isBusy} className="uv-btn uv-btn-primary">
-              {txState !== "idle" ? `${txState}…` : "Assign to university"}
+              {txState !== "idle" ? `${txState}\u2026` : "Assign to university"}
             </button>
             <button onClick={() => void removeIssuer()} disabled={isBusy} className="uv-btn uv-btn-danger">
               Remove issuer
             </button>
           </div>
-          <p className="uv-hint">Assigning re-runs onboardIssuerAndUniversity — safe to use for existing universities.</p>
+          <p className="uv-hint">Assigning re-runs onboardIssuerAndUniversity \u2014 safe to use for existing universities.</p>
         </div>
       )}
 
-      {/* ── OWNERSHIP ── */}
+      {/* OWNERSHIP */}
       {tab === "ownership" && (
-        <div className="uv-card" style={{ marginTop: 0, borderTopLeftRadius: 0 }}>
+        <div className="uv-card" style={{ marginTop: 0, borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
           <h2 className="uv-card-title">Ownership transfer (2-step)</h2>
           <p className="uv-hint">Transfer contract ownership safely. The new owner must accept before the transfer completes.</p>
 
           <div className="uv-kv" style={{ marginTop: 16, gap: "6px 16px" }}>
-            <b>Current owner</b><code style={{ fontSize: 12 }}>{owner ?? "—"}</code>
+            <b>Current owner</b><code>{owner ?? "\u2014"}</code>
             <b>Pending owner</b>
-            <code style={{ fontSize: 12 }}>
+            <code>
               {pendingOwner ?? <span className="uv-muted">None</span>}
             </code>
           </div>
 
-          {/* Accept panel — shown to pending owner */}
+          {/* Accept panel */}
           {isPendingOwner && (
-            <div style={{ marginTop: 20, padding: 16, background: "#dcfce7", borderRadius: 8 }}>
-              <p style={{ margin: 0, fontWeight: 700, color: "#166534" }}>
+            <div style={{ marginTop: 20, padding: 16, background: "var(--success-bg)", border: "1px solid var(--success)", borderRadius: 10 }}>
+              <p style={{ margin: 0, fontWeight: 700, color: "var(--success)" }}>
                 You are the pending owner. Accept to complete the transfer.
               </p>
               <div className="uv-actions" style={{ marginTop: 12 }}>
                 <button onClick={() => void acceptOwnership()} disabled={isBusy} className="uv-btn uv-btn-primary">
-                  {txState !== "idle" ? `${txState}…` : "Accept ownership"}
+                  {txState !== "idle" ? `${txState}\u2026` : "Accept ownership"}
                 </button>
               </div>
             </div>
           )}
 
-          {/* Transfer panel — shown to current owner */}
+          {/* Transfer panel */}
           {isAdmin && (
             <div style={{ marginTop: 20 }}>
               <label className="uv-label">New owner address</label>
               <input value={transferTarget} onChange={(e) => setTransferTarget(e.target.value.trim())} placeholder="0x..." className="uv-input uv-mono" />
               <div className="uv-actions">
                 <button onClick={() => void transferOwnership()} disabled={isBusy} className="uv-btn uv-btn-danger">
-                  {txState !== "idle" ? `${txState}…` : "Initiate transfer"}
+                  {txState !== "idle" ? `${txState}\u2026` : "Initiate transfer"}
                 </button>
               </div>
               <p className="uv-hint" style={{ marginTop: 8 }}>
@@ -574,12 +565,12 @@ export default function AdminPage() {
       {error && <div className="uv-status-banner uv-status-fail" style={{ marginTop: 12 }}><b>Error:</b> {error}</div>}
 
       {logs.length > 0 && (
-        <div className="uv-card" style={{ maxHeight: 220, overflowY: "auto", marginTop: 12 }}>
+        <div className="uv-card uv-logs" style={{ marginTop: 12 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <h3 style={{ margin: 0, fontSize: 14 }}>Logs</h3>
-            <button onClick={log.clear} className="uv-btn" style={{ fontSize: 12, padding: "4px 10px" }}>Clear</button>
+            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>Logs</h3>
+            <button onClick={log.clear} className="uv-btn" style={{ fontSize: 12, padding: "4px 12px" }}>Clear</button>
           </div>
-          <pre style={{ fontFamily: "monospace", fontSize: 12, marginTop: 8 }}>
+          <pre>
             {logs.map((line, idx) => <div key={idx}>{line}</div>)}
           </pre>
         </div>

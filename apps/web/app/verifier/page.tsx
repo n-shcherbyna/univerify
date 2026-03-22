@@ -18,7 +18,7 @@ import {
   statusLabel,
   universityStatusLabel,
 } from "@/lib/univerify/registry";
-import { normalizeAddress, parseJson, validateDiplomaEnvelope } from "@/lib/univerify/json";
+import { parseJson, validateDiplomaEnvelope } from "@/lib/univerify/json";
 import { readFileAsText } from "@/lib/univerify/file";
 import { makeStateLogger } from "@/lib/univerify/logs";
 import { computeMerkleLeaf, computeRootFromProof } from "@/lib/univerify/merkle";
@@ -138,7 +138,7 @@ export default function VerifyPage() {
 
       log.push(`status=${statusCode} (${status}) | merkle=${merkleRootMatches ? "OK" : "FAIL"}`);
       log.push(`university=${university?.name ?? "N/A"} status=${university?.status ?? "N/A"}`);
-      log.push(`RESULT=${verifyOk ? "VERIFIED ✅" : "NOT VERIFIED ❌"}`);
+      log.push(`RESULT=${verifyOk ? "VERIFIED" : "NOT VERIFIED"}`);
 
       setState({
         docHash,
@@ -171,20 +171,21 @@ export default function VerifyPage() {
 
   return (
     <main className="uv-page">
-      <h1 className="uv-title">UniVerify — Verifier</h1>
+      <h1 className="uv-title"><span className="uv-title-gradient">Verifier</span></h1>
       <p className="uv-subtitle">Verify a diploma envelope against the on-chain registry.</p>
 
       <div className="uv-card">
-        <div className="uv-actions" style={{ marginTop: 0 }}>
+        <div className="uv-file-zone" style={{ marginBottom: 14 }}>
           <input type="file" accept="application/json" onChange={(e) => { const f = e.target.files?.[0]; if (f) void loadFile(f); }} />
         </div>
         <label className="uv-label">Diploma envelope JSON</label>
         <textarea
           value={envelopeText}
           onChange={(e) => setEnvelopeText(e.target.value)}
+          className="uv-input"
           rows={12}
           placeholder='{ "payload": { ... }, "proof": { "type": "MERKLE_BATCH", "batchId": 1, "issuer": "0x...", "proof": [...] } }'
-          style={{ width: "100%", fontFamily: "monospace", padding: 12 }}
+          style={{ fontFamily: "var(--font-mono)", fontSize: 13 }}
         />
         <div className="uv-actions">
           <button onClick={() => void verify()} className="uv-btn uv-btn-primary">Verify diploma</button>
@@ -193,11 +194,20 @@ export default function VerifyPage() {
       </div>
 
       {state.verifyOk !== null && (
-        <div className={`uv-status-banner ${state.verifyOk ? "uv-status-ok" : "uv-status-fail"}`}>
-          <b style={{ fontSize: 16 }}>{state.verifyOk ? "✓ VERIFIED" : "✗ NOT VERIFIED"}</b>
-          {!state.verifyOk && failReasons.length > 0 && (
-            <ul className="uv-list">{failReasons.map((r) => <li key={r}>{r}</li>)}</ul>
-          )}
+        <div className={`uv-verify-result ${state.verifyOk ? "uv-verify-ok" : "uv-verify-fail"}`}>
+          <div className="uv-verify-icon">
+            {state.verifyOk ? "\u2713" : "\u2717"}
+          </div>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 18 }}>
+              {state.verifyOk ? "VERIFIED" : "NOT VERIFIED"}
+            </div>
+            {!state.verifyOk && failReasons.length > 0 && (
+              <ul className="uv-list" style={{ marginTop: 6, fontSize: 13, color: "var(--muted)" }}>
+                {failReasons.map((r) => <li key={r}>{r}</li>)}
+              </ul>
+            )}
+          </div>
         </div>
       )}
 
@@ -223,14 +233,14 @@ export default function VerifyPage() {
           <h2 className="uv-card-title">Summary</h2>
           <div className="uv-kv">
             <b>Status</b><span>{state.statusLabel} ({state.statusCode})</span>
-            <b>University</b><span>{state.universityName ?? "—"}</span>
+            <b>University</b><span>{state.universityName ?? "\u2014"}</span>
             <b>University status</b><span>{universityStatusLabel(state.universityStatus ?? 0)}</span>
             {state.universityCountry && <><b>Country</b><span>{state.universityCountry}</span></>}
             {state.universityWebsite && <><b>Website</b><a href={state.universityWebsite} target="_blank" rel="noopener noreferrer">{state.universityWebsite}</a></>}
-            <b>Issuer</b><code>{state.issuer ?? "—"}</code>
-            <b>Issuer trusted</b><span>{state.issuerTrustedNow === null ? "—" : state.issuerTrustedNow ? "Yes" : "No"}</span>
-            <b>Batch ID</b><span>{state.batchId ?? "—"}</span>
-            <b>Revoked</b><span>{state.recordRevoked === null ? "—" : String(state.recordRevoked)}</span>
+            <b>Issuer</b><code>{state.issuer ?? "\u2014"}</code>
+            <b>Issuer trusted</b><span>{state.issuerTrustedNow === null ? "\u2014" : state.issuerTrustedNow ? "Yes" : "No"}</span>
+            <b>Batch ID</b><span>{state.batchId ?? "\u2014"}</span>
+            <b>Revoked</b><span>{state.recordRevoked === null ? "\u2014" : String(state.recordRevoked)}</span>
           </div>
         </div>
       )}
@@ -238,24 +248,24 @@ export default function VerifyPage() {
       {state.verifyOk !== null && (
         <details className="uv-details">
           <summary>Technical details</summary>
-          <div className="uv-kv" style={{ marginTop: 8 }}>
-            <b>docHash</b><code>{state.docHash ?? "—"}</code>
-            <b>Batch root (on-chain)</b><code>{state.onChainBatchRoot ?? "—"}</code>
-            <b>Merkle leaf</b><code>{state.merkleLeaf ?? "—"}</code>
-            <b>Merkle root (local)</b><code>{state.merkleComputedRoot ?? "—"}</code>
-            <b>Merkle root match</b><span>{state.merkleRootMatches === null ? "—" : state.merkleRootMatches ? "Yes" : "No"}</span>
-            <b>Issuer university ID</b><span>{state.issuerUniversityId?.toString() ?? "—"}</span>
+          <div className="uv-kv" style={{ marginTop: 10 }}>
+            <b>docHash</b><code>{state.docHash ?? "\u2014"}</code>
+            <b>Batch root (on-chain)</b><code>{state.onChainBatchRoot ?? "\u2014"}</code>
+            <b>Merkle leaf</b><code>{state.merkleLeaf ?? "\u2014"}</code>
+            <b>Merkle root (local)</b><code>{state.merkleComputedRoot ?? "\u2014"}</code>
+            <b>Merkle root match</b><span>{state.merkleRootMatches === null ? "\u2014" : state.merkleRootMatches ? "Yes" : "No"}</span>
+            <b>Issuer university ID</b><span>{state.issuerUniversityId?.toString() ?? "\u2014"}</span>
           </div>
         </details>
       )}
 
       {logs.length > 0 && (
-        <div className="uv-card" style={{ maxHeight: 280, overflowY: "auto" }}>
+        <div className="uv-card uv-logs">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <h3 style={{ margin: 0 }}>Logs</h3>
-            <button onClick={log.clear} className="uv-btn">Clear</button>
+            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>Logs</h3>
+            <button onClick={log.clear} className="uv-btn" style={{ padding: "4px 12px", fontSize: 12 }}>Clear</button>
           </div>
-          <pre style={{ fontFamily: "monospace", fontSize: 12, marginTop: 8 }}>
+          <pre>
             {logs.map((line, idx) => <div key={idx}>{line}</div>)}
           </pre>
         </div>
