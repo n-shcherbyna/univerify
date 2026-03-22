@@ -17,6 +17,9 @@ export function TopNav() {
   return (
     <header className="uv-nav-wrap">
       <nav className="uv-nav">
+        <Link href="/" className="uv-nav-brand">
+          UV
+        </Link>
         {NAV_ITEMS.map((item) => {
           const active = pathname === item.href;
           return (
@@ -33,4 +36,3 @@ export function TopNav() {
     </header>
   );
 }
-

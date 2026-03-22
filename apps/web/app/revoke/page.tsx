@@ -151,20 +151,20 @@ export default function RevokePage() {
 
   return (
     <main className="uv-page">
-      <h1 className="uv-title">UniVerify — Revoke</h1>
+      <h1 className="uv-title"><span className="uv-title-gradient">Revoke</span></h1>
       <p className="uv-subtitle">Load a diploma envelope and revoke it on-chain.</p>
 
       {/* Wallet */}
-      <div className="uv-card" style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
+      <div className="uv-card uv-wallet-bar">
         <button onClick={() => void connect()} disabled={isBusy} className="uv-btn uv-btn-primary">
           {account ? "Reconnect" : "Connect MetaMask"}
         </button>
-        <div className="uv-kv" style={{ flex: 1, minWidth: 260, gap: "4px 16px" }}>
+        <div className="uv-kv" style={{ flex: 1, minWidth: 260, gap: "4px 16px", marginTop: 0 }}>
           <b>Account</b>
-          <code style={{ fontSize: 12 }}>{account || "—"}</code>
+          <code>{account || "\u2014"}</code>
           <b>Network</b>
-          <span style={{ color: chainState === "ok" ? "green" : chainState === "wrong" ? "red" : undefined }}>
-            {chainState === "ok" ? "OK ✓" : chainState === "wrong" ? "Wrong network" : "—"}
+          <span style={{ color: chainState === "ok" ? "var(--success)" : chainState === "wrong" ? "var(--danger)" : undefined }}>
+            {chainState === "ok" ? "OK \u2713" : chainState === "wrong" ? "Wrong network" : "\u2014"}
           </span>
         </div>
       </div>
@@ -172,7 +172,7 @@ export default function RevokePage() {
       {/* Load envelope */}
       <div className="uv-card">
         <h2 className="uv-card-title">Load diploma envelope</h2>
-        <div className="uv-actions" style={{ marginTop: 0 }}>
+        <div className="uv-file-zone" style={{ marginTop: 12 }}>
           <input
             type="file"
             accept="application/json"
@@ -182,17 +182,20 @@ export default function RevokePage() {
             }}
           />
         </div>
-        <label className="uv-label">Or paste envelope JSON</label>
-        <textarea
-          value={envelopeText}
-          onChange={(e) => {
-            setEnvelopeText(e.target.value);
-            void parseAndLoad(e.target.value);
-          }}
-          rows={8}
-          placeholder='{ "payload": { ... }, "proof": { "type": "MERKLE_BATCH", ... } }'
-          style={{ width: "100%", fontFamily: "monospace", padding: 12 }}
-        />
+        <div style={{ marginTop: 14 }}>
+          <label className="uv-label">Or paste envelope JSON</label>
+          <textarea
+            value={envelopeText}
+            onChange={(e) => {
+              setEnvelopeText(e.target.value);
+              void parseAndLoad(e.target.value);
+            }}
+            className="uv-input"
+            rows={8}
+            placeholder='{ "payload": { ... }, "proof": { "type": "MERKLE_BATCH", ... } }'
+            style={{ fontFamily: "var(--font-mono)", fontSize: 13 }}
+          />
+        </div>
       </div>
 
       {/* Diploma preview */}
@@ -207,10 +210,10 @@ export default function RevokePage() {
             <b>Issued</b><span>{payload.issuedAt}</span>
             <b>Diploma No.</b><span>{payload.diplomaNumber}</span>
             <b>Batch ID</b><span>{envelope.proof.batchId}</span>
-            <b>Issuer</b><code style={{ fontSize: 12 }}>{envelope.proof.issuer}</code>
+            <b>Issuer</b><code>{envelope.proof.issuer}</code>
             <b>On-chain status</b>
             <span>
-              {previewStatus === "loading" ? "Loading…" : previewStatus === "error" ? "Failed to fetch" : onChainStatus ?? "—"}
+              {previewStatus === "loading" ? "Loading\u2026" : previewStatus === "error" ? "Failed to fetch" : onChainStatus ?? "\u2014"}
             </span>
           </div>
           <div className="uv-actions" style={{ marginTop: 16 }}>
@@ -229,8 +232,8 @@ export default function RevokePage() {
       {/* Status / tx feedback */}
       {(txHash || txState !== "idle") && (
         <div className="uv-status-banner uv-status-warn">
-          {txHash && <p><b>Tx:</b> <code>{txHash}</code></p>}
-          {txState !== "idle" && <p><b>State:</b> {txState}</p>}
+          {txHash && <p style={{ margin: 0 }}><b>Tx:</b> <code>{txHash}</code></p>}
+          {txState !== "idle" && <p style={{ margin: txHash ? "6px 0 0" : 0 }}><b>State:</b> {txState}</p>}
         </div>
       )}
       {error && (
@@ -241,10 +244,7 @@ export default function RevokePage() {
 
       {/* Confirmation modal */}
       {confirmRevoke && envelope && payload && (
-        <div style={{
-          position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)",
-          display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100,
-        }}>
+        <div className="uv-modal-overlay">
           <div className="uv-card" style={{ maxWidth: 480, width: "100%", margin: 16 }}>
             <h2 className="uv-card-title" style={{ marginBottom: 12 }}>Confirm revocation</h2>
             <p style={{ fontSize: 14, marginBottom: 12, color: "var(--muted)" }}>
@@ -253,7 +253,7 @@ export default function RevokePage() {
             <div className="uv-kv" style={{ marginTop: 0 }}>
               <b>Diploma No.</b><span>{payload.diplomaNumber}</span>
               <b>Student</b><span>{payload.student.firstName} {payload.student.lastName}</span>
-              <b>Issuer</b><code style={{ fontSize: 12, wordBreak: "break-all" }}>{envelope.proof.issuer}</code>
+              <b>Issuer</b><code>{envelope.proof.issuer}</code>
               <b>Batch ID</b><span>{envelope.proof.batchId}</span>
             </div>
             <div className="uv-actions" style={{ marginTop: 16 }}>
@@ -273,12 +273,12 @@ export default function RevokePage() {
       )}
 
       {logs.length > 0 && (
-        <div className="uv-card" style={{ maxHeight: 320, overflowY: "auto" }}>
+        <div className="uv-card uv-logs">
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <h3 style={{ margin: 0 }}>Logs</h3>
-            <button onClick={log.clear} className="uv-btn">Clear logs</button>
+            <h3 style={{ margin: 0, fontSize: 14, fontWeight: 600 }}>Logs</h3>
+            <button onClick={log.clear} className="uv-btn" style={{ padding: "4px 12px", fontSize: 12 }}>Clear</button>
           </div>
-          <pre style={{ fontFamily: "monospace", fontSize: 12 }}>
+          <pre>
             {logs.map((line, idx) => (
               <div key={idx}>{line}</div>
             ))}
