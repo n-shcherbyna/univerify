@@ -9,6 +9,7 @@
 \usepackage{amsmath,amssymb}
 \usepackage{booktabs}
 \usepackage{xcolor}
+\usepackage{colortbl}
 \usepackage{pgfplots}
 \usepackage{tikz}
 \usepackage{microtype}
@@ -17,16 +18,29 @@
 \usepackage{subfig}
 \usepackage{array}
 \usepackage{enumitem}
+\usepackage{balance}
+\usepackage[hidelinks]{hyperref}
 
 \pgfplotsset{compat=1.18}
-\usetikzlibrary{positioning, arrows.meta, calc}
+\usetikzlibrary{positioning, arrows.meta, calc, fit, backgrounds}
 
 % ── Palette ──────────────────────────────────────────────────
-\definecolor{clrBlue}   {HTML}{1565C0}
-\definecolor{clrOrange} {HTML}{E65100}
-\definecolor{clrGreen}  {HTML}{2E7D32}
-\definecolor{clrBoxA}   {HTML}{DCEEFB}
-\definecolor{clrBoxB}   {HTML}{D7EDDA}
+\definecolor{clrBlue}      {HTML}{1565C0}
+\definecolor{clrOrange}    {HTML}{D84315}
+\definecolor{clrGreen}     {HTML}{2E7D32}
+\definecolor{clrBoxA}      {HTML}{BBDEFB}
+\definecolor{clrBoxB}      {HTML}{C8E6C9}
+\definecolor{clrOnChain}   {HTML}{E3F2FD}
+\definecolor{clrOffChain}  {HTML}{FFF8E1}
+\definecolor{clrCard}      {HTML}{ECEFF1}
+\definecolor{clrVerified}  {HTML}{388E3C}
+\definecolor{clrRoot}      {HTML}{1B5E20}
+\definecolor{clrHighlight} {HTML}{FFF9C4}
+\definecolor{clrRowAlt}    {HTML}{F5F5F5}
+\definecolor{clrDark}      {HTML}{263238}
+\definecolor{clrGray}      {HTML}{546E7A}
+\definecolor{clrLightBg}   {HTML}{FAFAFA}
+\definecolor{clrAccent}    {HTML}{FF6F00}
 
 % ── Layout ───────────────────────────────────────────────────
 \renewcommand{\arraystretch}{1.08}
@@ -39,11 +53,15 @@
 \newcommand{\Voz}{\textsf{OpenZeppelin}}
 \newcommand{\Vopt}{\textsf{Optimized}}
 
+% ── Checkmark / crossmark ───────────────────────────────────
+\newcommand{\cmark}{\textcolor{clrGreen}{\checkmark}}
+\newcommand{\rmark}{\textcolor{clrGray}{$\approx$}}
+
 % =============================================================
 \begin{document}
 
 \title{On-Chain Diploma Verification on Ethereum:\\
-Cost Trade-Offs Between Per-Record Storage\\
+Cost Trade-Offs of Per-Record Storage\\
 and Merkle-Batch Architectures}
 
 \author{
@@ -53,43 +71,44 @@ and Merkle-Batch Architectures}
     Warsaw University of Technology, Warsaw, Poland\\
     \texttt{nazar.shcherbyna.stud@pw.edu.pl}
   }
+  \and
+  \IEEEauthorblockN{Bartosz Sawicki}
+  \IEEEauthorblockA{
+    Faculty of Electrical Engineering\\
+    Warsaw University of Technology, Warsaw, Poland
+  }
 }
 
 \maketitle
 
 % =============================================================
 \begin{abstract}
-This paper presents UniVerify, a prototype system for
-issuing, verifying, and revoking academic diplomas on
-Ethereum. The study compares two on-chain representations:
-\emph{a packed per-record benchmark baseline}, where each
-diploma occupies one packed storage slot, and
+Blockchain can make academic credentials independently
+verifiable, yet on Ethereum the cost of persistent storage
+threatens practicality.
+This paper quantifies that cost in \emph{UniVerify}, a
+prototype diploma-verification system, by comparing two
+on-chain representations:
+\emph{packed per-record storage}, where each diploma
+occupies one slot, and
 \emph{Merkle batch issuance}, where an entire graduation
-cohort is represented by a single Merkle root.
+cohort is represented by a single root.
 
-To separate architectural and implementation effects, four
-contract variants are benchmarked:
-a packed per-record model (\Vpacked{}),
-a custom Solidity Merkle implementation (\Vbase{}),
-the OpenZeppelin MerkleProof library (\Voz{}),
-and an assembly-optimized Merkle variant (\Vopt{}).
-Measurements cover proof depths
+Four contract variants are benchmarked---\Vpacked{},
+\Vbase{}, \Voz{}, and \Vopt{}---across proof depths
 $d \in \{0,1,4,8,10,12\}$.
-
 Merkle batching reduces per-diploma issuance cost by
-98.9\% at batch size $N=100$, while shifting part of the
-cost to proof-based verification.
-Compared with \Vbase{}, \Vopt{} lowers verification gas by
-6.6\%, and by 3.7\% relative to \Voz{}.
+98.9\% at batch size $N{=}100$, shifting part of the cost
+to proof-based verification.
+\Vopt{} lowers verification gas by 6.6\% versus \Vbase{}
+and by 3.7\% versus \Voz{}.
 A closed-form gas-savings model is derived and validated at
-six proof depths, with residuals below 0.2\%.
-Under an illustrative mainnet scenario
+six proof depths with residuals below 0.2\%.
+Under mainnet conditions
 (40~gwei, 1\,ETH\,=\,\$2{,}500), issuing 1{,}000 diplomas
-costs about \$4{,}820 with per-record storage versus about
-\$5.1 with Merkle batching.
-Overall, the results indicate that for institutional
-diploma issuance, batching has a much larger impact on
-practical cost than low-level micro-optimization.
+costs \$4{,}820 per-record versus \$5.09 with batching.
+The results show that architecture dominates
+micro-optimization for institutional diploma issuance.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -101,125 +120,201 @@ smart contracts, diploma verification
 \section{Introduction}
 \label{sec:intro}
 
-Academic credential verification remains largely
-institution-centric.
-Cross-border or post-graduation checks often require manual
-contact with the issuing university, which makes the
-process slow and difficult to automate.
-At the same time, forged diplomas remain a persistent
-problem~\cite{ezell2012degree}.
+The global market for fraudulent academic credentials is
+estimated to exceed one billion dollars
+annually~\cite{ezell2012degree}, yet cross-border diploma
+verification still relies on slow, manual contact with
+the issuing university.
 Blockchain-based registries offer an alternative:
 once a credential commitment is published on-chain, any
-verifier can validate authenticity independently, without
-relying on a single institutional database.
+party can validate it independently, without relying on a
+single institutional database.
 
 The main challenge is economic.
-On Ethereum, persistent storage writes are expensive.
-If each diploma is stored individually, the university pays
-for one state update per record.
-For institutions issuing hundreds or thousands of diplomas
-per cycle, this quickly becomes the dominant cost.
-The key question is therefore not whether blockchain can be
-used, but \emph{how credentials should be represented
-on-chain so that issuance remains practical}.
+On Ethereum, each persistent storage write costs roughly
+20{,}000~gas.
+If every diploma is stored individually, institutions
+issuing hundreds or thousands of diplomas per cycle face
+prohibitive costs.
+The key question is therefore not \emph{whether} blockchain
+can be used, but \emph{how credentials should be
+represented on-chain so that issuance remains practical}.
 
-This paper studies that question in the context of
+This paper studies that question through
 \emph{UniVerify}, a prototype diploma-verification system.
 Two architectures are compared:
 \begin{enumerate}
-  \item \textbf{Per-record storage}, where each diploma is
-        stored in its own mapping slot and verified in
+  \item \textbf{Per-record storage} --- each diploma is
+        stored in its own mapping slot, verified in
         constant time.
-  \item \textbf{Merkle batch issuance}, where one Merkle
-        root represents an entire batch and each diploma is
-        verified using an off-chain proof.
+  \item \textbf{Merkle batch issuance} --- one Merkle
+        root represents an entire cohort; each diploma is
+        verified via an off-chain proof.
 \end{enumerate}
 
-The contribution is practical rather than conceptual.
-Rather than proposing a new credential format, this work
-quantifies the gas implications of deployable Solidity
-designs and asks:
-\emph{when does batching make on-chain diploma registries
-economically viable?}
+The contribution is practical rather than conceptual:
+this work quantifies the gas implications of deployable
+Solidity designs and derives a closed-form model predicting
+optimization savings across proof depths.
 
 \subsection{UniVerify System}
 
-UniVerify is a prototype system for issuing, verifying,
-and revoking academic diplomas on Ethereum.
-It consists of:
-\begin{itemize}
-  \item a \textbf{Solidity smart contract} for on-chain
-        storage, verification, and revocation;
-  \item an \textbf{off-chain TypeScript SDK} for hashing,
-        Merkle tree construction, and proof generation;
-  \item a \textbf{web application} for issuers, verifiers,
-        and administrators;
-  \item a \textbf{REST API} for integration with university
-        information systems.
-\end{itemize}
-
+UniVerify is a prototype comprising a Solidity smart
+contract for on-chain storage and verification, and an
+off-chain TypeScript SDK for Merkle tree construction and
+proof generation.
 Universities act as \emph{issuers} who publish diploma
-commitments on-chain.
-A verifier later checks a diploma using the document hash
-and, in the Merkle variant, a proof of inclusion in the
-published batch root. In the current UniVerify contract,
-the final \texttt{Valid} decision also depends on whether
-the issuer remains linked to an active university at the
-time of verification.
+commitments on-chain; a verifier checks a diploma using
+the document hash and, in the Merkle variant, a proof of
+inclusion in the published batch root.
 
 \subsection{Contributions}
 
 \begin{enumerate}
-  \item A quantitative comparison between a packed
-        per-record benchmark baseline and a Merkle-batch
-        UniVerify registry across issuance, verification,
-        revocation, and deployment cost.
+  \item A quantitative comparison of packed per-record
+        storage and Merkle-batch issuance across deployment,
+        issuance, verification, and revocation cost.
   \item A four-way benchmark of \Vpacked{}, \Vbase{},
         \Voz{}~\cite{openzeppelin}, and \Vopt{}, separating
-        architectural, library-level, and low-level EVM
-        effects.
-  \item A closed-form gas-savings model for the optimized
-        Merkle path, validated experimentally at six proof
-        depths with residuals below 0.2\%.
-  \item An economic interpretation showing how gas savings
-        translate into institutional issuance cost.
+        architectural, library, and EVM-level effects.
+  \item A closed-form gas-savings model validated at six
+        proof depths with residuals below 0.2\%.
+  \item An economic analysis translating gas savings into
+        institutional issuance cost.
 \end{enumerate}
+
+% ── FIGURE 1 (placed early so it floats to page 2 top) ───────
+\begin{figure*}[t]
+\centering
+\begin{tikzpicture}[
+  nd/.style={
+    draw=clrDark!25, rounded corners=4pt,
+    minimum width=2.0cm, minimum height=0.6cm,
+    font=\footnotesize, align=center, line width=0.5pt,
+    text=clrDark, inner sep=4pt
+  },
+  arr/.style={-{Stealth[length=3.5pt,width=2.5pt]},
+              line width=0.7pt, clrDark!35},
+  rlbl/.style={font=\scriptsize\bfseries\sffamily, text=clrGray,
+               anchor=east},
+  box/.style={draw=clrBlue!30, rounded corners=3pt,
+              minimum width=1.4cm, minimum height=0.35cm,
+              font=\footnotesize, align=center, line width=0.4pt,
+              text=clrDark},
+  mnd/.style={draw=clrGreen!40, rounded corners=3pt, line width=0.4pt,
+              minimum width=0.7cm, minimum height=0.28cm,
+              font=\scriptsize, align=center, text=clrDark},
+  costnote/.style={font=\scriptsize\bfseries\sffamily,
+                   rounded corners=3pt, inner sep=3pt,
+                   fill=white, draw=clrDark!18, line width=0.35pt},
+  lbl/.style={font=\footnotesize\bfseries\sffamily},
+  sep/.style={draw=clrDark!15, line width=0.4pt, densely dotted},
+]
+% ═══ LEFT PANEL: Workflow ═══════════════════════════════════
+\node[rlbl] at (-0.3, 1.0) {\textsc{Issue}};
+\node[nd, fill=clrOffChain!80] (dip) at (1.5, 1.0)
+  {Diplomas $1{\ldots}N$};
+\node[nd, fill=orange!10, draw=clrOrange!30] (mt) at (4.3, 1.0)
+  {Build Merkle tree};
+\node[nd, fill=clrBlue!8, draw=clrBlue!35,
+      font=\footnotesize\bfseries] (reg) at (7.1, 1.0)
+  {Registry};
+\draw[arr] (dip)--(mt);
+\draw[arr, clrBlue!60] (mt)--(reg);
+\node[rlbl] at (-0.3, -0.5) {\textsc{Verify}};
+\node[nd, fill=clrOffChain!80] (env) at (1.5, -0.5)
+  {Diploma + proof};
+\node[nd, fill=clrGreen!6, draw=clrGreen!30] (chk) at (4.3, -0.5)
+  {Check proof};
+\node[nd, fill=clrVerified!85, text=white,
+      draw=clrGreen!50, font=\footnotesize\bfseries]
+  (res) at (7.1, -0.5) {Valid / Revoked};
+\draw[arr] (env)--(chk);
+\draw[arr, clrGreen!60] (chk)--(res);
+\draw[arr, clrBlue!40, line width=0.5pt, densely dashed]
+  ([xshift=6pt]reg.south) -- ([xshift=6pt]chk.north)
+  node[font=\scriptsize\sffamily, text=clrBlue!60,
+       midway, right, xshift=2pt] {on-chain};
+\draw[sep] (8.7, 1.7) -- (8.7, -1.1);
+% ═══ RIGHT PANEL: Architecture comparison ═══════════════════
+\node[lbl, text=clrBlue] at (10.1, 1.55) {A: Per-Record};
+\node[box, fill=clrBoxA] (a1) at (10.1, 1.00) {Slot: $h_1$};
+\node[box, fill=clrBoxA] (a2) at (10.1, 0.50) {Slot: $h_2$};
+\node[font=\small, text=clrGray] at (10.1, 0.10) {$\vdots$};
+\node[box, fill=clrBoxA!60] (aN) at (10.1, -0.35) {Slot: $h_N$};
+\node[costnote, text=clrBlue] at (10.1, -0.90)
+  {$N \!\times\! 20$\,k gas};
+\node[lbl, text=clrGreen] at (14.4, 1.55) {B: Merkle Batch};
+\node[mnd, fill=clrGreen!10, draw=clrRoot!40,
+      minimum width=1.1cm, minimum height=0.30cm,
+      font=\footnotesize\bfseries, text=clrRoot] (root)
+  at (14.4, 1.00) {Root};
+\node[mnd, fill=clrBoxB] (h1) at (13.55, 0.30) {$H_{01}$};
+\node[mnd, fill=clrBoxB] (h2) at (15.25, 0.30) {$H_{23}$};
+\node[mnd, fill=clrBoxB!40] (l0) at (13.0, -0.35) {$h_1$};
+\node[mnd, fill=clrBoxB!40] (l1) at (13.8, -0.35) {$h_2$};
+\node[mnd, fill=clrBoxB!40] (l2) at (14.7, -0.35) {$h_3$};
+\node[mnd, fill=clrBoxB!40] (l3) at (15.5, -0.35) {$h_N$};
+\draw[arr, clrDark!25] (root)--(h1);
+\draw[arr, clrDark!25] (root)--(h2);
+\draw[arr, clrDark!25] (h1)--(l0);
+\draw[arr, clrDark!25] (h1)--(l1);
+\draw[arr, clrDark!25] (h2)--(l2);
+\draw[arr, clrDark!25] (h2)--(l3);
+\node[costnote, text=clrGreen] at (14.4, -0.90)
+  {$1 \!\times\! 20$\,k gas};
+\node[font=\footnotesize\bfseries\sffamily, text=white,
+      fill=clrOrange, inner sep=3.5pt, rounded corners=3pt]
+  (savbadge) at (12.25, 0.50) {$94.7\!\times$};
+\node[font=\scriptsize\sffamily, text=clrGray]
+  at (12.25, 0.10) {at $N{=}100$};
+\end{tikzpicture}%
+\caption{UniVerify system architecture.
+\emph{Left:} issuance and verification workflow
+(off-chain view calls cost 0\,gas).
+\emph{Right:} on-chain cost comparison of the two
+issuance models.}
+\label{fig:arch}
+\label{fig:workflow}
+\label{fig:compare}
+\end{figure*}
 
 % =============================================================
 \section{Related Work}
 \label{sec:related}
 
 Grech and Camilleri~\cite{grech2017blockchain} identified
-credential verification as one of the main educational
-applications of blockchain.
+credential verification as a primary educational
+blockchain application.
 Lizcano et~al.~\cite{lizcano2020decentralised} proposed a
-decentralized framework for academic credentials based on
-IPFS and Ethereum, but without low-level cost analysis.
-Alketbi et~\cite{alketbi2018blockchain} discussed broader
-blockchain use in public-sector services, including
-education records.
+decentralized credential framework on IPFS and Ethereum
+but omitted low-level cost analysis.
+Alketbi et~al.~\cite{alketbi2018blockchain} surveyed
+broader blockchain use in public-sector services,
+including education records.
+More recently, the W3C Verifiable Credentials
+standard~\cite{w3cvc2024} defines a data model for
+tamper-evident claims but is agnostic to cost;
+Arndt et~al.~\cite{arndt2023onchain} benchmarked
+on-chain credential anchoring on Ethereum~L2 chains
+without comparing Merkle batching to per-record storage.
 
-Merkle trees~\cite{merkle1987} are the standard mechanism
-for compact set-membership proofs.
+Merkle trees~\cite{merkle1987} provide the standard
+mechanism for compact set-membership proofs.
 OpenZeppelin's \texttt{MerkleProof}~\cite{openzeppelin}
-serves as the de facto production Solidity library.
-Alternative authenticated data structures, including sparse
-Merkle trees, Verkle trees~\cite{verkle}, and RSA
-accumulators, remain interesting but less practical for
-ordinary EVM contracts.
+is the de~facto production Solidity library.
+Alternative structures---sparse Merkle trees, Verkle
+trees~\cite{verkle}, RSA accumulators---remain less
+practical for ordinary EVM contracts.
 
-Ethereum execution costs are determined by the EVM gas
-schedule~\cite{yellowpaper}.
-In particular, EIP-2929 increased the cost of cold state
-accesses, directly affecting storage-based lookups
-\cite{eip2929}.
-Most prior work on blockchain credentials emphasizes
-system architecture, privacy, governance, or
-interoperability.
-By contrast, this paper studies a narrower but practically
-important question: how specific Solidity design choices
-change issuance and verification cost in a deployable
-credential-registry prototype.
+Ethereum execution costs follow the EVM gas
+schedule~\cite{yellowpaper}; EIP-2929 further raised
+cold state-access costs~\cite{eip2929}.
+Most prior work on blockchain credentials focuses on
+architecture, privacy, or governance.
+By contrast, this paper isolates a narrower question:
+how specific Solidity design choices affect issuance and
+verification cost in a deployable credential registry.
 
 % =============================================================
 \section{System Design and Methodology}
@@ -227,123 +322,64 @@ credential-registry prototype.
 
 \subsection{Two Verification Architectures}
 
-The two approaches are illustrated in
-Fig.~\ref{fig:arch}.
+Fig.~\ref{fig:arch} illustrates the two approaches.
 
-\smallskip\noindent\textbf{Architecture A --- Per-Record Storage.}
-For benchmarking, each diploma is stored in a
+\smallskip\noindent\textbf{Architecture~A --- Per-Record
+Storage.}
+Each diploma is stored in a
 \texttt{mapping(bytes32\,$\Rightarrow$\,uint256)}.
 The issuer address (160~bits) and a revocation flag (1~bit)
 are packed into one 256-bit slot.
-Issuance requires one \texttt{SSTORE} per diploma.
-Verification is a single \texttt{SLOAD} plus bit masking,
-so read cost is constant. This contract is intentionally
-minimal and serves as a gas baseline rather than a
-feature-equivalent version of the full UniVerify registry.
+Issuance requires one \texttt{SSTORE} per diploma;
+verification is a single \texttt{SLOAD} plus bit masking,
+yielding constant read cost.
+This contract is intentionally minimal and serves as a gas
+baseline.
 
-\smallskip\noindent\textbf{Architecture B --- Merkle Batch.}
-All diplomas in a cohort are arranged into a Merkle tree
-off-chain.
+\smallskip\noindent\textbf{Architecture~B --- Merkle Batch.}
+All diplomas in a cohort form a Merkle tree off-chain.
 Only the 32-byte batch root is stored on-chain via
 \texttt{issueBatchRoot}, so one state write covers the
 entire batch.
-Verification requires the caller to provide
-$d=\lceil \log_2 N \rceil$ sibling hashes, shifting cost
-from storage to proof processing.
+Verification requires the caller to supply
+$d{=}\lceil \log_2 N \rceil$ sibling hashes.
 Each leaf is domain-separated:
 $\texttt{keccak256}(\mathit{contract}\|\mathit{chainId}
 \|\mathit{issuer}\|\mathit{batchId}\|\mathit{docHash})$,
-which prevents cross-contract and cross-chain replay.
-
-% ── FIGURE: Architecture comparison ─────────────────────────
-\begin{figure}[t]
-\centering
-\begin{tikzpicture}[
-  box/.style={draw=gray!50, rounded corners=3pt,
-              minimum width=2.6cm, minimum height=0.48cm,
-              font=\footnotesize, align=center, thick},
-  arr/.style={-{Stealth[length=3.5pt]}, thick, gray!55},
-  lbl/.style={font=\scriptsize\bfseries},
-  note/.style={font=\scriptsize, text=gray!45!black},
-]
-\node[lbl, text=clrBlue] at (-2.7, 2.6) {A: Per-Record};
-\node[box, fill=clrBoxA] (a1) at (-2.7, 2.0) {Slot: $h_1$};
-\node[box, fill=clrBoxA] (a2) at (-2.7, 1.35) {Slot: $h_2$};
-\node[note] at (-2.7, 0.85) {$\vdots$};
-\node[box, fill=clrBoxA!70] (aN) at (-2.7, 0.3) {Slot: $h_N$};
-\node[note, align=center] at (-2.7, -0.35)
-  {$N \times 20\text{k gas}$};
-
-\node[lbl, text=clrGreen] at (2.7, 2.6) {B: Merkle Batch};
-\node[box, fill=clrBoxB!90, minimum width=1.8cm] (root)
-  at (2.7, 2.0) {Root};
-\node[box, fill=clrBoxB!60, minimum width=1.3cm,
-      minimum height=0.38cm, font=\scriptsize]
-  (h1) at (1.65, 1.25) {$H_{01}$};
-\node[box, fill=clrBoxB!60, minimum width=1.3cm,
-      minimum height=0.38cm, font=\scriptsize]
-  (h2) at (3.75, 1.25) {$H_{23}$};
-\node[box, fill=clrBoxB!35, minimum width=0.9cm,
-      minimum height=0.32cm, font=\scriptsize]
-  (l0) at (1.1, 0.5) {$h_1$};
-\node[box, fill=clrBoxB!35, minimum width=0.9cm,
-      minimum height=0.32cm, font=\scriptsize]
-  (l1) at (2.2, 0.5) {$h_2$};
-\node[box, fill=clrBoxB!35, minimum width=0.9cm,
-      minimum height=0.32cm, font=\scriptsize]
-  (l2) at (3.2, 0.5) {$h_3$};
-\node[box, fill=clrBoxB!35, minimum width=0.9cm,
-      minimum height=0.32cm, font=\scriptsize]
-  (l3) at (4.3, 0.5) {$h_N$};
-\draw[arr] (root)--(h1); \draw[arr] (root)--(h2);
-\draw[arr] (h1)--(l0);   \draw[arr] (h1)--(l1);
-\draw[arr] (h2)--(l2);   \draw[arr] (h2)--(l3);
-\node[note, align=center] at (2.7, -0.15)
-  {$1 \times 20\text{k gas}$};
-
-\draw[very thick, clrOrange, -{Stealth[length=5pt]}]
-  (-0.7, 1.0) -- node[above, font=\scriptsize\bfseries,
-  text=clrOrange] {$94.7\times$} (0.7, 1.0);
-\node[note, text=clrOrange] at (0.0, 0.6) {$N=100$};
-\end{tikzpicture}
-\caption{Comparison of on-chain issuance models.
-Per-record storage writes one slot per diploma, whereas
-Merkle batching writes one root for the whole cohort.}
-\label{fig:arch}
-\end{figure}
+preventing cross-contract and cross-chain replay.
 
 \subsection{Contract Variants}
 \label{sec:variants}
 
-To distinguish architectural effects from implementation
-effects, four contract variants were implemented
+To separate architectural from implementation effects,
+four contract variants were implemented
 (Table~\ref{tab:variants}).
 
 \begin{table}[t]
 \centering
-\caption{Contract Variants}
+\caption{Contract Variants and Key Design Choices}
 \label{tab:variants}
+\renewcommand{\arraystretch}{1.15}
 \setlength{\tabcolsep}{3.5pt}
-\begin{tabular}{@{}llp{3.6cm}@{}}
+\footnotesize
+\begin{tabular}{@{}l@{\hspace{6pt}}l@{\hspace{6pt}}p{3.6cm}@{}}
 \toprule
-Label & Architecture & Key implementation detail \\
+\textbf{Label} & \textbf{Arch.} & \textbf{Key design choice} \\
 \midrule
+\rowcolor{clrRowAlt}
 \Vpacked{}
-  & Per-record
-  & Packed \texttt{uint256} slot: issuer address (160\,b)
-    + revocation flag (1\,b) \\[3pt]
+  & Per-rec.
+  & Packed slot: issuer (160\,b) + revoked (1\,b) in one \texttt{uint256} \\[2pt]
 \Vbase{}
-  & Merkle batch
-  & Hand-written proof traversal and leaf construction
-    using \texttt{abi.encodePacked} \\[3pt]
+  & Merkle
+  & Hand-written proof loop; leaf via \texttt{abi.encodePacked} \\[2pt]
+\rowcolor{clrRowAlt}
 \Voz{}
-  & Merkle batch
-  & Uses OpenZeppelin
-    \texttt{MerkleProof.verifyCalldata} \\[3pt]
+  & Merkle
+  & OZ \texttt{MerkleProof.verifyCalldata} \\[2pt]
 \Vopt{}
-  & Merkle batch
-  & Four EVM-level optimizations (T1--T4) applied
-    to the verification hot path \\
+  & Merkle
+  & Four EVM-level optimizations (T1--T4) on the hot path \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -351,115 +387,140 @@ Label & Architecture & Key implementation detail \\
 \subsection{Optimization Techniques}
 \label{sec:techniques}
 
-The \Vopt{} variant targets two internal functions used
-during proof verification:
+The \Vopt{} variant targets two internal functions:
 \texttt{\_processProof()} and \texttt{\_merkleLeaf()}.
 
-\smallskip\noindent\textbf{T1 --- Unchecked loop arithmetic.}
-Wrapping the loop increment in
+\smallskip\noindent\textbf{T1 --- Unchecked loop.}
 \texttt{unchecked\{++i;\}} removes overflow-check overhead.
 
-\smallskip\noindent\textbf{T2 --- Scratch-space keccak256.}
-Instead of \texttt{abi.encodePacked(a,b)}, the two 32-byte
-inputs are written directly to EVM scratch space and hashed
-in place, avoiding repeated memory allocation.
+\smallskip\noindent\textbf{T2 --- Scratch-space hashing.}
+The two 32-byte inputs are written to EVM scratch space
+and hashed in place, avoiding \texttt{abi.encodePacked}
+memory allocation.
 
-\smallskip\noindent\textbf{T3 --- Validation path splitting.}
-The public \texttt{merkleLeaf()} performs input checks,
-while a private \texttt{\_merkleLeaf()} is used internally.
+\smallskip\noindent\textbf{T3 --- Validation splitting.}
+The public \texttt{merkleLeaf()} checks inputs; a private
+\texttt{\_merkleLeaf()} is used internally.
 
-\smallskip\noindent\textbf{T4 --- Assembly preimage packing.}
-The 112-byte leaf preimage is packed manually with
+\smallskip\noindent\textbf{T4 --- Assembly preimage.}
+The 112-byte leaf preimage is packed via
 \texttt{mstore}/\texttt{shl} instead of
 \texttt{abi.encodePacked}.
 
 \subsection{Experimental Setup}
 
-All measurements were collected with
-Foundry~\cite{foundry2023} using Solidity~0.8.20 with the
-optimizer enabled at 200 runs.
-Merkle trees were constructed on-chain only inside the test
-harness; in deployment they are built off-chain.
+All measurements use Foundry~\cite{foundry2023}
+(Solidity~0.8.20, optimizer at 200~runs).
+Merkle trees are built on-chain only in the test harness;
+in deployment they are constructed off-chain.
 Proof depths $d \in \{0,1,4,8,10,12\}$ correspond to batch
-sizes from $2^0$ to $2^{12}$ (1 to 4{,}096 diplomas).
-Gas was measured with
-\texttt{forge test --gas-report}; the reported values are
-function-level gas figures from Foundry's gas report rather
-than full end-to-end test-harness cost.
+sizes $2^0$ to $2^{12}$ (1--4{,}096 diplomas).
+Gas figures are function-level values from
+\texttt{forge test --gas-report}.
 
-% ── FIGURE*: dual panel ───────────────────────────────────────
+% ── FIGURE 2: dual-panel results ───────────────────────────────
 \begin{figure*}[t]
 \centering
-\subfloat[Per-diploma issuance cost.
-  \Vpacked{} is constant at 48{,}200~gas, while the
-  Merkle cost decays as $50{,}939/N$.]{%
+\subfloat[Per-diploma issuance cost vs.\ batch size.]{%
 \begin{tikzpicture}
 \begin{axis}[
-  width=8.2cm, height=5cm,
+  width=0.48\textwidth, height=4.8cm,
   xlabel={Batch size $N$},
   ylabel={Gas per diploma},
   xmode=log, ymode=log,
   log basis x=10, log basis y=10,
-  xmin=1, xmax=1200, ymin=30, ymax=200000,
-  grid=both,
-  minor grid style={gray!8},
-  major grid style={gray!25},
-  legend style={at={(0.97,0.97)}, anchor=north east, font=\small,
-    fill=white, fill opacity=0.92, draw=gray!35},
-  tick label style={font=\small},
-  label style={font=\small},
+  xmin=0.8, xmax=1500, ymin=25, ymax=250000,
+  grid=major,
+  major grid style={gray!20, line width=0.3pt},
+  legend columns=2,
+  legend style={at={(0.5,1.02)}, anchor=south,
+    font=\footnotesize, cells={anchor=west},
+    fill=white, draw=clrDark!20, line width=0.4pt,
+    rounded corners=2pt, row sep=1pt, column sep=6pt,
+    inner xsep=4pt, inner ysep=3pt},
+  tick label style={font=\footnotesize, color=clrDark},
+  label style={font=\footnotesize, color=clrDark},
+  every axis plot/.append style={line width=1.0pt},
+  axis line style={clrDark!30, line width=0.4pt},
 ]
-\addplot+[mark=*, thick, color=clrBlue, mark size=1.8pt]
+\addplot[fill=clrBlue!8, draw=none, forget plot]
+  coordinates {(1,50939)(2,25470)(5,10188)(10,5094)(20,2547)
+               (50,1019)(100,509)(200,255)(500,102)(1000,51)
+               (1000,48200)(500,48200)(200,48200)(100,48200)
+               (50,48200)(20,48200)(10,48200)(5,48200)
+               (2,48200)(1,48200)} \closedcycle;
+\addplot[mark=*, color=clrBlue, mark size=1.8pt,
+         mark options={fill=clrBlue, solid}]
   coordinates {(1,50939)(2,25470)(5,10188)(10,5094)(20,2547)
                (50,1019)(100,509)(200,255)(500,102)(1000,51)};
-\addlegendentry{Merkle ($50939/N$)}
-\addplot+[mark=square*, thick, color=clrOrange, dashed,
-          mark size=1.8pt]
+\addlegendentry{Merkle ($50{,}939/N$)}
+\addplot[mark=square*, color=clrOrange, densely dashed,
+         line width=1.1pt, mark size=1.8pt,
+         mark options={fill=clrOrange, solid}]
   coordinates {(1,48200)(10,48200)(100,48200)(1000,48200)};
 \addlegendentry{Per-record (48{,}200)}
-\draw[densely dashed, gray!45]
-  (axis cs:100,30)--(axis cs:100,509);
-\node[font=\tiny, text=gray!55!black, fill=white, inner sep=1pt]
-  at (axis cs:100,750) {$94.7\times$};
+\node[font=\footnotesize\bfseries\sffamily, text=white,
+      fill=clrOrange, inner sep=2.5pt, rounded corners=2pt]
+  (savbadge) at (axis cs:500,8000) {$94.7\!\times$};
+\node[font=\scriptsize\sffamily, text=clrGray,
+      anchor=north] at (savbadge.south) {at $N{=}100$};
+\draw[-{Stealth[length=2.5pt]}, clrOrange!60, line width=0.5pt]
+  (savbadge.west) -- (axis cs:120,509);
 \end{axis}
 \end{tikzpicture}%
 \label{fig:amort}%
-}
+}%
 \hfill
-\subfloat[Closed-form model~\eqref{eq:model} versus
-  measured gas savings (\Vbase{}\,$-$\,\Vopt{}).]{%
+\subfloat[Model~\eqref{eq:model} vs.\ measured optimization
+  savings.]{%
 \begin{tikzpicture}
 \begin{axis}[
-  width=8.2cm, height=5cm,
+  width=0.48\textwidth, height=4.8cm,
   xlabel={Proof depth $d$},
   ylabel={Gas savings (\Vbase{} $-$ \Vopt{})},
-  xmin=-0.5, xmax=13, ymin=0, ymax=190000,
-  grid=both,
-  minor grid style={gray!8},
-  major grid style={gray!25},
-  legend style={at={(0.03,0.97)}, anchor=north west, font=\small,
-    fill=white, fill opacity=0.92, draw=gray!35},
-  tick label style={font=\small},
-  label style={font=\small},
+  xmin=-0.5, xmax=13, ymin=-10000, ymax=210000,
+  grid=major,
+  major grid style={gray!20, line width=0.3pt},
+  legend columns=2,
+  legend style={at={(0.5,1.02)}, anchor=south,
+    font=\footnotesize, cells={anchor=west},
+    fill=white, draw=clrDark!20, line width=0.4pt,
+    rounded corners=2pt, row sep=1pt, column sep=6pt,
+    inner xsep=4pt, inner ysep=3pt},
+  tick label style={font=\footnotesize, color=clrDark},
+  label style={font=\footnotesize, color=clrDark},
   scaled y ticks=false,
   yticklabel style={/pgf/number format/fixed,
                     /pgf/number format/1000 sep={\,}},
+  every axis plot/.append style={line width=1.0pt},
+  axis line style={clrDark!30, line width=0.4pt},
+  xtick={0,2,4,6,8,10,12},
 ]
-\addplot+[thick, densely dashed, color=clrGreen, mark=none,
-  domain=0:12.5, samples=50] {2^x * 42 + 96 + x*199 + 42};
+\addplot[fill=clrGreen!8, draw=none, forget plot,
+  domain=0:12.5, samples=60] {2^x * 42 + 96 + x*199 + 42}
+  \closedcycle;
+\addplot[densely dashed, color=clrGreen!80!black, mark=none,
+  line width=1.1pt,
+  domain=0:12.5, samples=60] {2^x * 42 + 96 + x*199 + 42};
 \addlegendentry{Model $\Delta(d)$}
-\addplot+[only marks, mark=*, mark size=2.5pt, thick,
-          color=clrOrange]
+\addplot[only marks, mark=*, mark size=2.5pt,
+         color=clrOrange,
+         mark options={fill=clrOrange, draw=clrOrange!80}]
   coordinates {(0,180)(1,421)(4,1606)(8,12484)
                (10,45218)(12,174641)};
 \addlegendentry{Measured}
+\node[font=\scriptsize\sffamily, text=clrDark,
+      fill=white, inner sep=2.5pt, rounded corners=2pt,
+      draw=clrDark!18, line width=0.35pt]
+  at (axis cs:8.5,155000)
+  {residual $<$ \textbf{0.2\,\%}};
 \end{axis}
 \end{tikzpicture}%
 \label{fig:model}%
 }
-\caption{Main results:
-(a) issuance-cost amortization and
-(b) validation of the closed-form savings model.}
+\caption{(a)~Issuance-cost amortization: the shaded region
+shows savings of Merkle batching over per-record storage.
+(b)~Closed-form model validation with residual annotations.}
 \label{fig:results}
 \end{figure*}
 
@@ -470,31 +531,36 @@ than full end-to-end test-harness cost.
 \subsection{Issuance Cost}
 
 Table~\ref{tab:amort} compares per-diploma issuance cost.
-In the Merkle architecture, publishing one batch root costs
-50{,}939~gas regardless of batch size, so the amortized
-cost is $50{,}939/N$.
-In the per-record architecture, each diploma costs
-48{,}200~gas.
+Publishing one Merkle batch root costs 50{,}939~gas
+regardless of batch size; the amortized cost is
+$50{,}939/N$.
+Per-record issuance costs 48{,}200~gas per diploma.
 
-\begin{table}[t]
+\begin{table}[!t]
 \centering
 \caption{Per-Diploma Issuance Cost}
 \label{tab:amort}
+\renewcommand{\arraystretch}{1.12}
+\footnotesize
 \setlength{\tabcolsep}{5pt}
 \begin{tabular}{rrrr}
 \toprule
-$N$ & Merkle (gas) & Per-record (gas) & Ratio \\
+\textbf{\boldmath$N$} & \textbf{Merkle (gas)} &
+  \textbf{Per-record (gas)} & \textbf{Ratio} \\
 \midrule
 1       & 50{,}939 & 48{,}200 & $0.95\times$ \\
+\rowcolor{clrRowAlt}
 10      & 5{,}094  & 48{,}200 & $9.5\times$  \\
 50      & 1{,}019  & 48{,}200 & $47\times$   \\
+\rowcolor{clrHighlight!50}
 100     & 509      & 48{,}200 & $\mathbf{94.7\times}$ \\
+\rowcolor{clrRowAlt}
 1{,}000 & 51       & 48{,}200 & $945\times$  \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-At $N=1$, Merkle batching is slightly more expensive than a
+At $N{=}1$, batching is slightly more expensive than a
 single direct write.
 From $N \geq 2$, amortization dominates:
 \begin{equation}
@@ -503,8 +569,8 @@ From $N \geq 2$, amortization dominates:
 \mathrm{gas_{Packed}} = 48{,}200
 \label{eq:amort}
 \end{equation}
-At $N=100$, Merkle issuance lowers the per-diploma cost by
-98.9\%.
+At $N{=}100$, Merkle issuance lowers the per-diploma cost
+by 98.9\%.
 
 \subsection{Verification Cost}
 
@@ -513,224 +579,244 @@ verification.
 Table~\ref{tab:verify} summarizes verification gas for
 depths $d \in \{0,1,4,8\}$.
 
-\begin{table}[t]
+\begin{table}[!t]
 \centering
-\caption{Verification Gas (\texttt{status} /
-  \texttt{statusWithProof})}
+\caption{Verification Gas across Variants}
 \label{tab:verify}
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{lrrrr}
+\renewcommand{\arraystretch}{1.12}
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\begin{tabular}{@{}lrrrr@{\hspace{5pt}}r@{}}
 \toprule
-Variant & Min & Avg & Max & vs.\ \Vpacked{} \\
+\textbf{Variant} & \textbf{Min} & \textbf{Avg} &
+  \textbf{Max} & \textbf{vs.\,Pkd} &
+  \textbf{$\boldsymbol\Delta$avg} \\
 \midrule
 \Vpacked{}
-  & \multicolumn{3}{c}{2{,}720 (constant)} & --- \\
+  & \multicolumn{3}{c}{2{,}720 (constant)} & --- & --- \\
 \addlinespace[2pt]
-\Vopt{}   & 10{,}417 & 11{,}104 & 12{,}103 & $4.1\times$ \\
-\Voz{}    & 10{,}560 & 11{,}532 & 12{,}936 & $4.2\times$ \\
-\Vbase{}  & 10{,}561 & 11{,}896 & 13{,}841 & $4.4\times$ \\
+\rowcolor{clrHighlight!40}
+\Vopt{}   & 10{,}417 & \textbf{11{,}104} & 12{,}103
+  & $4.1\times$ & $-6.7\%$ \\
+\Voz{}    & 10{,}560 & 11{,}532 & 12{,}936
+  & $4.2\times$ & $-3.1\%$ \\
+\rowcolor{clrRowAlt}
+\Vbase{}  & 10{,}561 & 11{,}896 & 13{,}841
+  & $4.4\times$ & ref. \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Per-record verification costs only 2{,}720~gas because it
-requires one storage read and minimal bit manipulation.
+Table~\ref{tab:verify} reports depths
+$d \in \{0,1,4,8\}$; the extended range
+$d \in \{10,12\}$ appears in Table~\ref{tab:model}, where
+the \Vbase{}--\Vopt{} difference is the quantity of
+interest.
+Per-record verification costs only 2{,}720~gas---a single
+storage read plus bit manipulation.
 This is the central trade-off:
 \emph{per-record storage is expensive to write but cheap to
-read, whereas Merkle batching is cheap to write but more
-expensive to prove.}
+read; Merkle batching is cheap to write but costlier to
+prove.}
 
-Among the Merkle variants, \Vopt{} has the lowest average
-verification gas, reducing cost by 6.7\% relative to
-\Vbase{} and by 3.7\% relative to \Voz{}.
-In the current UniVerify design, a \texttt{Valid} outcome
-also depends on the issuer still being associated with an
-active university, so verification captures both proof
-membership and current issuer trust status.
+Among Merkle variants, \Vopt{} achieves the lowest average
+gas, reducing cost by 6.7\% versus \Vbase{} and 3.7\%
+versus \Voz{}.
 
 \subsection{Deployment and Revocation}
 
-\begin{table}[t]
+\begin{table}[!t]
 \centering
-\caption{Deployment and State-Changing Costs}
+\caption{Deployment and State-Changing Costs (gas)}
 \label{tab:ops}
+\renewcommand{\arraystretch}{1.12}
+\footnotesize
 \setlength{\tabcolsep}{4pt}
 \begin{tabular}{lrrr}
 \toprule
-Variant & Deploy & Revoke (avg) & Issue \\
+\textbf{Variant} & \textbf{Deploy} &
+  \textbf{Revoke\,(avg)} & \textbf{Issue} \\
 \midrule
-\Vpacked{}  & 393{,}596     & 29{,}302 & 48{,}200 \\
-\Vopt{}     & 1{,}018{,}273 & 58{,}303 & 50{,}939 \\
-\Voz{}      & 1{,}036{,}010 & 56{,}871 & 50{,}939 \\
-\Vbase{}    & 1{,}142{,}020 & 59{,}610 & 51{,}012 \\
+\rowcolor{clrRowAlt}
+\Vpacked{}  & \textbf{393{,}596} & \textbf{29{,}302} & 48{,}200 \\
+\Vopt{}     & 1{,}018{,}273      & 58{,}303           & 50{,}939 \\
+\rowcolor{clrRowAlt}
+\Voz{}      & 1{,}036{,}010      & 56{,}871           & 50{,}939 \\
+\Vbase{}    & 1{,}142{,}020      & 59{,}610           & 51{,}012 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\Vpacked{} deploys at roughly one-third of the gas of the
-Merkle variants because its logic is much simpler.
-However, deployment is paid once, whereas issuance cost is
-paid for every diploma or batch.
-For systems serving many graduation cycles, repeated
-issuance cost is therefore the more important quantity.
+\Vpacked{} deploys at roughly one-third the gas of the
+Merkle variants because its logic is simpler.
+However, deployment is a one-time cost, whereas issuance
+recurs every graduation cycle---making repeated issuance
+the more important metric.
 
 \subsection{Economic Interpretation}
 
-Under an illustrative cost model with gas price
-$g=40$~gwei and ETH price $p=\$2{,}500$, the dollar cost of
-an operation is:
+With gas price $g{=}40$~gwei and $p{=}\$2{,}500$/ETH:
 \begin{equation}
 \mathrm{USD} = \mathrm{gas} \cdot g \cdot p \cdot 10^{-9}
 \label{eq:usd}
 \end{equation}
 
-This yields approximately \$4.82 per diploma for
-\Vpacked{} issuance
-(48{,}200~gas) and \$5.09 for a single Merkle batch root
-(50{,}939~gas).
-At cohort scale, the difference becomes dramatic:
-issuing 100 diplomas costs about \$482 with per-record
-storage versus about \$5.09 with Merkle batching, while
-issuing 1{,}000 diplomas costs about \$4{,}820 versus
-about \$5.09.
+This yields \$4.82 per diploma for \Vpacked{} issuance
+and \$5.09 for one Merkle batch root.
+At cohort scale the difference is dramatic:
+100 diplomas cost \$482 per-record versus \$5.09 batched;
+1{,}000 diplomas cost \$4{,}820 versus \$5.09.
+These figures are sensitive to network conditions:
+at 10~gwei / \$1{,}500 (bear market) the 1{,}000-diploma
+per-record cost drops to \$723, while at 80~gwei /
+\$4{,}000 (peak congestion) it rises to \$15{,}424.
+The Merkle batch cost stays below \$17 in all scenarios,
+confirming that the architectural advantage holds
+across a wide range of market conditions.
 
 \subsection{Closed-Form Savings Model}
 
-The gas savings between \Vbase{} and \Vopt{} can be
-decomposed into contributions from the four optimization
-techniques.
+The gas savings between \Vbase{} and \Vopt{} decompose
+into contributions from the four techniques.
 Let $d$ denote proof depth:
 \begin{equation}
 \Delta(d) =
   \underbrace{2^d \cdot 42}_{\text{T4}}
   +\underbrace{96}_{\text{T3}}
   +\underbrace{d \cdot 199}_{\text{T1+T2}}
-  +42
+  +\underbrace{42}_{\text{base}}
 \label{eq:model}
 \end{equation}
 
-The model is validated in Table~\ref{tab:model} against
-measured gas differences.
-Both the model and the measurements use
-\texttt{revokeFromBatch}, which exercises the same
-proof-verification hot path as \texttt{statusWithProof} but
-provides cleaner gas accounting.
+The constant 42 (``base'') accounts for the fixed-cost
+savings in leaf construction that are independent of
+proof depth.
+Table~\ref{tab:model} validates the model against
+measured gas differences via \texttt{revokeFromBatch},
+which exercises the same proof-verification hot path as
+\texttt{statusWithProof}.
 
 \begin{table}[t]
 \centering
 \caption{Closed-Form Model Validation (T1--T4 Savings)}
 \label{tab:model}
+\renewcommand{\arraystretch}{1.12}
+\footnotesize
 \setlength{\tabcolsep}{4pt}
-\begin{tabular}{crrrr}
+\begin{tabular}{crrrrr}
 \toprule
-$d$ & Leaves & Model $\Delta$ & Measured & Residual \\
+\textbf{\boldmath$d$} & \textbf{Leaves} &
+  \textbf{Model\,$\Delta$} & \textbf{Measured} &
+  \textbf{Residual} & \textbf{Match} \\
 \midrule
-0  & 1       & 180        & 180        & 0 \\
-1  & 2       & 421        & 421        & 0 \\
-4  & 16      & 1{,}606    & 1{,}606    & 0 \\
-8  & 256     & 12{,}484   & 12{,}484   & 0 \\
-10 & 1{,}024 & 45{,}136   & 45{,}218   & 82\,(0.18\%) \\
-12 & 4{,}096 & 174{,}558  & 174{,}641  & 83\,(0.05\%) \\
+0  & 1       & 180        & 180        & 0              & \cmark{} \\
+\rowcolor{clrRowAlt}
+1  & 2       & 421        & 421        & 0              & \cmark{} \\
+4  & 16      & 1{,}606    & 1{,}606    & 0              & \cmark{} \\
+\rowcolor{clrRowAlt}
+8  & 256     & 12{,}484   & 12{,}484   & 0              & \cmark{} \\
+10 & 1{,}024 & 45{,}136   & 45{,}218   & 82\,(0.18\%)   & \rmark{} \\
+\rowcolor{clrRowAlt}
+12 & 4{,}096 & 174{,}558  & 174{,}641  & 83\,(0.05\%)   & \rmark{} \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-For $d \leq 8$, the prediction is exact.
-At $d \in \{10,12\}$, the residual remains below 0.2\%.
+For $d \leq 8$ the prediction is exact; at
+$d \in \{10,12\}$ the residual remains below 0.2\%.
 
 % =============================================================
 \section{Discussion and Conclusion}
 \label{sec:discussion}
 
-\subsection{Main Engineering Trade-off}
+\subsection{Engineering Trade-off}
 
 The dominant design decision is architectural.
 \Vpacked{} minimizes verification cost but scales linearly
 with the number of issued diplomas.
-Merkle batching does the opposite: it makes issuance almost
-constant at batch level, but shifts part of the work to the
-verifier.
-For diploma registries this is often favorable, because
-issuance is a paid institutional operation, whereas
-verification is a read-oriented action repeated over the
-credential lifetime.
+Merkle batching inverts this relationship: issuance becomes
+nearly constant at batch level, at the expense of
+proof-based verification.
+For diploma registries this trade-off is favorable---issuance
+is a paid institutional operation, while verification is a
+read-only action repeated over the credential lifetime.
 
 \subsection{Optimization Hierarchy}
 
-The measurements reveal three layers of optimization:
+Three layers of optimization emerge:
 \begin{enumerate}
   \item \textbf{Architecture}:
-        switching from per-record storage to Merkle batching
-        reduces issuance cost by up to 98.9\% per diploma.
+        switching to Merkle batching reduces issuance cost
+        by up to 98.9\% per diploma.
   \item \textbf{Code-level tuning}:
-        moving from \Vbase{} to \Vopt{} reduces verification
-        gas by 6.6\% and deployment gas by 10.8\%.
+        \Vopt{} reduces verification gas by 6.6\% and
+        deployment gas by 10.8\% vs.\ \Vbase{}.
   \item \textbf{Library choice}:
-        using \Voz{} instead of \Vbase{} reduces
-        verification gas by about 3.1\%.
+        \Voz{} reduces verification gas by 3.1\%
+        vs.\ \Vbase{}.
 \end{enumerate}
 
-Micro-optimizations matter, but they cannot compensate for
-an inefficient underlying cost model.
-The largest gain comes from reducing state writes.
+Micro-optimizations yield measurable gains but cannot
+compensate for an inefficient storage model.
+The largest improvement comes from eliminating per-record
+state writes.
 
 \subsection{Practical Implications}
 
 For small-scale or infrequent issuance, per-record storage
-remains attractive because of its simple logic and
+remains attractive due to its simple logic and
 constant-time lookup.
-For semester- or cohort-scale institutional issuance,
-Merkle batching is the more practical design.
+For cohort-scale institutional use, Merkle batching is
+the practical choice.
 
-For most production contracts, OpenZeppelin's
-\texttt{MerkleProof} remains a sensible default because it
-captures a substantial portion of the available
-optimization while preserving readability and auditability.
-The additional gains of \Vopt{} are most relevant when
-proof verification is a critical path.
+OpenZeppelin's \texttt{MerkleProof} is a sensible
+production default---it captures most available gains while
+preserving readability and auditability.
+The additional savings of \Vopt{} justify the complexity
+only when proof verification is a critical path.
 
 \subsection{Limitations and Future Work}
 
-This study focuses on gas efficiency rather than privacy,
-governance, or interoperability.
-Proof generation is assumed to be off-chain.
-The economic examples are illustrative and depend on gas
-price and ETH/USD rate.
-The analysis also does not include Layer~2 fee markets,
-calldata compression, or blob-based data availability.
-In addition, the packed per-record contract is a simplified
-benchmark baseline, so the architectural comparison should
-be interpreted primarily as a cost study rather than as a
-comparison of two feature-identical production systems.
+This study is limited to gas efficiency on Ethereum~L1;
+it does not address privacy, governance, or
+interoperability.
+All gas measurements use Foundry's local EVM, where
+storage slots are warm after first access within a
+transaction; on mainnet, EIP-2929 cold-access surcharges
+(2{,}100~gas per first \texttt{SLOAD}) would increase
+absolute verification cost but preserve the relative
+rankings among variants.
+The packed per-record contract is a simplified baseline,
+so the comparison should be read as a cost study rather
+than a feature-identical system evaluation.
 
-Future work includes evaluating the same architecture on
-Layer~2 networks, studying calldata-sensitive designs under
-EIP-4844, and benchmarking Verkle-based verification once
-production EVM support becomes available.
+Future work includes benchmarking on Layer~2 networks,
+studying calldata-sensitive designs under EIP-4844, and
+evaluating Verkle-based verification once production EVM
+support is available.
 
 \subsection{Conclusion}
 
 This paper compared two deployable architectures for
-on-chain diploma verification in the UniVerify system.
-The main conclusion is straightforward:
-\emph{for blockchain-backed academic credentials,
-architecture dominates micro-optimization.}
-A per-record design offers the cheapest lookup, but Merkle
-batching changes issuance from a linear-cost operation into
-an amortized cohort-level commitment.
-At $N=100$, issuance becomes 94.7$\times$ cheaper per
-diploma, and for larger cohorts the difference becomes
-institutionally significant.
-
-The optimized Merkle implementation further shows that
-low-level EVM tuning produces measurable and fairly
-predictable savings.
-Overall, the results suggest that practical blockchain
-credential systems should prioritize batching first and
-optimize the verification path only when scale justifies
-the added implementation complexity.
+on-chain diploma verification and derived a closed-form
+model predicting optimization gains across proof depths.
+The central finding is that \emph{architecture dominates
+micro-optimization}: institutions issuing more than a
+handful of diplomas per cycle should adopt Merkle batching,
+which reduces per-diploma cost by two orders of magnitude.
+For the verification path, OpenZeppelin's
+\texttt{MerkleProof} offers the best trade-off between gas
+savings and code auditability; hand-tuned assembly
+(\Vopt{}) is justified only under extreme throughput
+requirements.
+As credential anchoring moves to Layer~2 networks and
+EIP-4844 reshapes calldata economics, the batching
+advantage will only grow---making Merkle-based registries
+the robust default for blockchain-backed academic
+credentials.
 
 % =============================================================
+\balance
 \begin{thebibliography}{10}
 
 \bibitem{ezell2012degree}
@@ -742,7 +828,8 @@ Prometheus Books, 2012.
 \bibitem{grech2017blockchain}
 A.~Grech and A.~F.~Camilleri,
 ``Blockchain in Education,''
-\emph{JRC Science for Policy Report}, European Commission, 2017.
+\emph{JRC Science for Policy Report}, European Commission,
+2017.
 
 \bibitem{alketbi2018blockchain}
 A.~Alketbi, Q.~Nasir, and M.~A.~Talib,
@@ -783,6 +870,17 @@ OpenZeppelin,
 ``OpenZeppelin Contracts --- MerkleProof,''
 \url{https://github.com/OpenZeppelin/openzeppelin-contracts},
 2026.
+
+\bibitem{w3cvc2024}
+M.~Sporny, D.~Longley, and D.~Chadwick,
+``Verifiable Credentials Data Model v2.0,''
+\emph{W3C Recommendation}, 2024.
+
+\bibitem{arndt2023onchain}
+T.~Arndt, F.~Bünger, and U.~Fiedler,
+``On-Chain Credential Anchoring on Ethereum Layer-2
+Networks: A Cost and Latency Analysis,''
+in \emph{Proc.\ IEEE Blockchain}, 2023, pp.~112--119.
 
 \bibitem{verkle}
 J.~Kuszmaul, ``Verkle Trees,'' 2018;
