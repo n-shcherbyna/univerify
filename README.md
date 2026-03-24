@@ -1,9 +1,6 @@
 # UniVerify
 
-On-chain diploma verification system built on Ethereum. Accompanies the paper:
-
-> **Gas-Efficient On-Chain Diploma Verification: Merkle Batching vs. Per-Record Storage on Ethereum**
-> Nazar Shcherbyna, Bartosz Sawicki — Warsaw University of Technology, SITEE 2026
+On-chain diploma verification system built on Ethereum.
 
 ## Architecture
 
