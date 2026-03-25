@@ -100,12 +100,14 @@ contract VerifyBaselineTest is MerkleHelperV {
     }
 
     function testVerify_Baseline_Depth0() public {
+        vm.pauseGasMetering();
         bytes32 doc = keccak256(abi.encodePacked("doc", uint256(0)));
         bytes32 leaf = reg.merkleLeaf(doc, BATCH, issuer);
         vm.prank(issuer);
         reg.issueBatchRoot(BATCH, leaf);
 
         bytes32[] memory proof = new bytes32[](0);
+        vm.resumeGasMetering();
         DiplomaRegistry.Status s = reg.statusWithProof(doc, issuer, BATCH, proof);
         assertEq(uint256(s), uint256(DiplomaRegistry.Status.Valid));
     }
@@ -123,6 +125,7 @@ contract VerifyBaselineTest is MerkleHelperV {
     }
 
     function _verifyAtDepth(uint256 n) internal {
+        vm.pauseGasMetering();
         bytes32[] memory leaves = new bytes32[](n);
         for (uint256 i = 0; i < n; i++) {
             leaves[i] = reg.merkleLeaf(keccak256(abi.encodePacked("doc", i)), BATCH, issuer);
@@ -134,6 +137,7 @@ contract VerifyBaselineTest is MerkleHelperV {
 
         bytes32 doc0 = keccak256(abi.encodePacked("doc", uint256(0)));
         bytes32[] memory proof = _getProof(levels, 0);
+        vm.resumeGasMetering();
         DiplomaRegistry.Status s = reg.statusWithProof(doc0, issuer, BATCH, proof);
         assertEq(uint256(s), uint256(DiplomaRegistry.Status.Valid));
     }
@@ -155,12 +159,14 @@ contract VerifyGTest is MerkleHelperV {
     }
 
     function testVerify_G_Depth0() public {
+        vm.pauseGasMetering();
         bytes32 doc = keccak256(abi.encodePacked("doc", uint256(0)));
         bytes32 leaf = reg.merkleLeaf(doc, BATCH, issuer);
         vm.prank(issuer);
         reg.issueBatchRoot(BATCH, leaf);
 
         bytes32[] memory proof = new bytes32[](0);
+        vm.resumeGasMetering();
         DiplomaRegistryG.Status s = reg.statusWithProof(doc, issuer, BATCH, proof);
         assertEq(uint256(s), uint256(DiplomaRegistryG.Status.Valid));
     }
@@ -178,6 +184,7 @@ contract VerifyGTest is MerkleHelperV {
     }
 
     function _verifyAtDepth(uint256 n) internal {
+        vm.pauseGasMetering();
         bytes32[] memory leaves = new bytes32[](n);
         for (uint256 i = 0; i < n; i++) {
             leaves[i] = reg.merkleLeaf(keccak256(abi.encodePacked("doc", i)), BATCH, issuer);
@@ -189,6 +196,7 @@ contract VerifyGTest is MerkleHelperV {
 
         bytes32 doc0 = keccak256(abi.encodePacked("doc", uint256(0)));
         bytes32[] memory proof = _getProof(levels, 0);
+        vm.resumeGasMetering();
         DiplomaRegistryG.Status s = reg.statusWithProof(doc0, issuer, BATCH, proof);
         assertEq(uint256(s), uint256(DiplomaRegistryG.Status.Valid));
     }
@@ -210,12 +218,14 @@ contract VerifyOZTest is MerkleHelperV {
     }
 
     function testVerify_OZ_Depth0() public {
+        vm.pauseGasMetering();
         bytes32 doc = keccak256(abi.encodePacked("doc", uint256(0)));
         bytes32 leaf = reg.merkleLeaf(doc, BATCH, issuer);
         vm.prank(issuer);
         reg.issueBatchRoot(BATCH, leaf);
 
         bytes32[] memory proof = new bytes32[](0);
+        vm.resumeGasMetering();
         DiplomaRegistryOZ.Status s = reg.statusWithProof(doc, issuer, BATCH, proof);
         assertEq(uint256(s), uint256(DiplomaRegistryOZ.Status.Valid));
     }
@@ -233,6 +243,7 @@ contract VerifyOZTest is MerkleHelperV {
     }
 
     function _verifyAtDepth(uint256 n) internal {
+        vm.pauseGasMetering();
         bytes32[] memory leaves = new bytes32[](n);
         for (uint256 i = 0; i < n; i++) {
             leaves[i] = reg.merkleLeaf(keccak256(abi.encodePacked("doc", i)), BATCH, issuer);
@@ -244,6 +255,7 @@ contract VerifyOZTest is MerkleHelperV {
 
         bytes32 doc0 = keccak256(abi.encodePacked("doc", uint256(0)));
         bytes32[] memory proof = _getProof(levels, 0);
+        vm.resumeGasMetering();
         DiplomaRegistryOZ.Status s = reg.statusWithProof(doc0, issuer, BATCH, proof);
         assertEq(uint256(s), uint256(DiplomaRegistryOZ.Status.Valid));
     }
