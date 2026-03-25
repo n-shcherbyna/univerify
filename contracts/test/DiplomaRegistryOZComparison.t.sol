@@ -76,6 +76,7 @@ contract OZGasTest is MerkleHelperOZ {
     // ── revokeFromBatch ─────────────────────────────────────────────────────
 
     function testRevokeFromBatch_Depth0() public {
+        vm.pauseGasMetering();
         bytes32 doc = keccak256(abi.encodePacked("doc", uint256(0)));
         bytes32 leaf = reg.merkleLeaf(doc, BATCH, issuer);
 
@@ -83,11 +84,13 @@ contract OZGasTest is MerkleHelperOZ {
         reg.issueBatchRoot(BATCH, leaf);
 
         bytes32[] memory proof = new bytes32[](0);
+        vm.resumeGasMetering();
         vm.prank(issuer);
         reg.revokeFromBatch(doc, BATCH, proof);
     }
 
     function testRevokeFromBatch_Depth1() public {
+        vm.pauseGasMetering();
         bytes32[] memory leaves = _makeLeaves(2);
         (bytes32 root, bytes32[][] memory levels) = _buildTree(leaves);
 
@@ -96,11 +99,13 @@ contract OZGasTest is MerkleHelperOZ {
 
         bytes32 doc0 = keccak256(abi.encodePacked("doc", uint256(0)));
         bytes32[] memory proof = _getProof(levels, 0);
+        vm.resumeGasMetering();
         vm.prank(issuer);
         reg.revokeFromBatch(doc0, BATCH, proof);
     }
 
     function testRevokeFromBatch_Depth4() public {
+        vm.pauseGasMetering();
         bytes32[] memory leaves = _makeLeaves(16);
         (bytes32 root, bytes32[][] memory levels) = _buildTree(leaves);
 
@@ -109,11 +114,13 @@ contract OZGasTest is MerkleHelperOZ {
 
         bytes32 doc0 = keccak256(abi.encodePacked("doc", uint256(0)));
         bytes32[] memory proof = _getProof(levels, 0);
+        vm.resumeGasMetering();
         vm.prank(issuer);
         reg.revokeFromBatch(doc0, BATCH, proof);
     }
 
     function testRevokeFromBatch_Depth8() public {
+        vm.pauseGasMetering();
         bytes32[] memory leaves = _makeLeaves(256);
         (bytes32 root, bytes32[][] memory levels) = _buildTree(leaves);
 
@@ -122,6 +129,7 @@ contract OZGasTest is MerkleHelperOZ {
 
         bytes32 doc0 = keccak256(abi.encodePacked("doc", uint256(0)));
         bytes32[] memory proof = _getProof(levels, 0);
+        vm.resumeGasMetering();
         vm.prank(issuer);
         reg.revokeFromBatch(doc0, BATCH, proof);
     }
@@ -129,6 +137,7 @@ contract OZGasTest is MerkleHelperOZ {
     // ── statusWithProof ─────────────────────────────────────────────────────
 
     function testStatusWithProof_Depth0() public {
+        vm.pauseGasMetering();
         bytes32 doc = keccak256(abi.encodePacked("doc", uint256(0)));
         bytes32 leaf = reg.merkleLeaf(doc, BATCH, issuer);
 
@@ -136,11 +145,13 @@ contract OZGasTest is MerkleHelperOZ {
         reg.issueBatchRoot(BATCH, leaf);
 
         bytes32[] memory proof = new bytes32[](0);
+        vm.resumeGasMetering();
         DiplomaRegistryOZ.Status s = reg.statusWithProof(doc, issuer, BATCH, proof);
         assertEq(uint256(s), uint256(DiplomaRegistryOZ.Status.Valid));
     }
 
     function testStatusWithProof_Depth1() public {
+        vm.pauseGasMetering();
         bytes32[] memory leaves = _makeLeaves(2);
         (bytes32 root, bytes32[][] memory levels) = _buildTree(leaves);
 
@@ -149,11 +160,13 @@ contract OZGasTest is MerkleHelperOZ {
 
         bytes32 doc0 = keccak256(abi.encodePacked("doc", uint256(0)));
         bytes32[] memory proof = _getProof(levels, 0);
+        vm.resumeGasMetering();
         DiplomaRegistryOZ.Status s = reg.statusWithProof(doc0, issuer, BATCH, proof);
         assertEq(uint256(s), uint256(DiplomaRegistryOZ.Status.Valid));
     }
 
     function testStatusWithProof_Depth4() public {
+        vm.pauseGasMetering();
         bytes32[] memory leaves = _makeLeaves(16);
         (bytes32 root, bytes32[][] memory levels) = _buildTree(leaves);
 
@@ -162,11 +175,13 @@ contract OZGasTest is MerkleHelperOZ {
 
         bytes32 doc0 = keccak256(abi.encodePacked("doc", uint256(0)));
         bytes32[] memory proof = _getProof(levels, 0);
+        vm.resumeGasMetering();
         DiplomaRegistryOZ.Status s = reg.statusWithProof(doc0, issuer, BATCH, proof);
         assertEq(uint256(s), uint256(DiplomaRegistryOZ.Status.Valid));
     }
 
     function testStatusWithProof_Depth8() public {
+        vm.pauseGasMetering();
         bytes32[] memory leaves = _makeLeaves(256);
         (bytes32 root, bytes32[][] memory levels) = _buildTree(leaves);
 
@@ -175,6 +190,7 @@ contract OZGasTest is MerkleHelperOZ {
 
         bytes32 doc0 = keccak256(abi.encodePacked("doc", uint256(0)));
         bytes32[] memory proof = _getProof(levels, 0);
+        vm.resumeGasMetering();
         DiplomaRegistryOZ.Status s = reg.statusWithProof(doc0, issuer, BATCH, proof);
         assertEq(uint256(s), uint256(DiplomaRegistryOZ.Status.Valid));
     }

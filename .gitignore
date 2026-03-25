@@ -1,9 +1,36 @@
 node_modules
 .env
 .env.*
+!.env.example
 dist
 .next
 out
+
+# Foundry
 broadcast
 cache
+
+# Lockfile
 package-lock.json
+
+# LaTeX build artifacts
+*.aux
+*.log
+*.out
+*.synctex.gz
+*.fls
+*.fdb_latexmk
+*.bbl
+*.blg
+texput.log
+
+# IDE
+.vscode/
+.idea/
+
+# Claude Code (local config)
+.claude/settings.local.json
+.claude/todos/
+
+# MCP config (may contain local paths)
+.mcp.json
