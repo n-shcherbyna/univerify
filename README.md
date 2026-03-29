@@ -14,9 +14,6 @@
 
 ---
 
-> **Gas-Efficient On-Chain Diploma Verification: Merkle Batching vs. Per-Record Storage on Ethereum**
-> Nazar Shcherbyna, Bartosz Sawicki — Warsaw University of Technology, SITEE 2026
-
 ## Features
 
 - **Merkle-batched issuance** — register hundreds of diplomas under a single on-chain root hash, reducing per-diploma gas cost by up to 98.9%
@@ -58,7 +55,7 @@ packages/
   verifier-core/         Shared library: hashing, Merkle utilities, ABI, schema
   sdk/                   Client SDK wrapping contract reads + verification
   verifier-cli/          CLI tools for issuance and verification
-docs/                    SITEE 2026 paper (LaTeX source + PDF)
+docs/                    Research paper (LaTeX source + PDF)
 payloads/                Sample diploma JSON envelopes
 scripts/                 Environment sync utilities
 ```
@@ -83,7 +80,7 @@ Verification cost comparison at proof depth 8 (256 diplomas per batch):
 | OpenZeppelin (OZ) | 7,267 | Library Merkle proof |
 | Baseline | 7,498 | Solidity Merkle proof |
 
-> Merkle batching reduces **issuance cost by up to 98.9%** compared to per-record storage. See the [paper](docs/sitee-paper.pdf) for full benchmark tables and analysis.
+> Merkle batching reduces **issuance cost by up to 98.9%** compared to per-record storage.
 
 ## Prerequisites
 
@@ -188,13 +185,6 @@ Contributions are welcome! Please read the [Contributing Guide](CONTRIBUTING.md)
 ## Security
 
 If you discover a security vulnerability, please follow the [Security Policy](SECURITY.md) for responsible disclosure. **Do not open a public issue.**
-
-## Paper
-
-The full research paper is available in the [`docs/`](docs/) directory:
-
-- [PDF](docs/sitee-paper.pdf) — compiled paper
-- [LaTeX source](docs/sitee-paper.tex) — source code
 
 ## License
 
