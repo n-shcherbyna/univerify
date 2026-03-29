@@ -51,19 +51,19 @@ describe("validateDiplomaEnvelope — top-level structure", () => {
   });
 
   it("rejects missing payload", () => {
-    const { payload: _, ...bad } = VALID_ENVELOPE;
+    const { payload: _payload, ...bad } = VALID_ENVELOPE;
     expect(() => validateDiplomaEnvelope(bad)).toThrow(/payload/i);
   });
 
   it("rejects missing proof", () => {
-    const { proof: _, ...bad } = VALID_ENVELOPE;
+    const { proof: _proof, ...bad } = VALID_ENVELOPE;
     expect(() => validateDiplomaEnvelope(bad)).toThrow(/proof/i);
   });
 });
 
 describe("validateDiplomaEnvelope — proof validation", () => {
   it("rejects unsupported proof type EIP712", () => {
-    const bad = { ...VALID_ENVELOPE, proof: { ...VALID_ENVELOPE.proof, type: "EIP712" as any } };
+    const bad = { ...VALID_ENVELOPE, proof: { ...VALID_ENVELOPE.proof, type: "EIP712" as const } };
     expect(() => validateDiplomaEnvelope(bad)).toThrow(/MERKLE_BATCH/i);
   });
 
@@ -72,7 +72,7 @@ describe("validateDiplomaEnvelope — proof validation", () => {
   });
 
   it("rejects invalid issuer address", () => {
-    const bad = { ...VALID_ENVELOPE, proof: { ...VALID_ENVELOPE.proof, issuer: "not-an-address" as any } };
+    const bad = { ...VALID_ENVELOPE, proof: { ...VALID_ENVELOPE.proof, issuer: "not-an-address" } };
     expect(() => validateDiplomaEnvelope(bad)).toThrow(/issuer/i);
   });
 
@@ -98,7 +98,7 @@ describe("validateDiplomaEnvelope — proof validation", () => {
   });
 
   it("rejects proof entry that is not hex", () => {
-    const bad = { ...VALID_ENVELOPE, proof: { ...VALID_ENVELOPE.proof, proof: ["not-hex" as any] } };
+    const bad = { ...VALID_ENVELOPE, proof: { ...VALID_ENVELOPE.proof, proof: ["not-hex" as Hex] } };
     expect(() => validateDiplomaEnvelope(bad)).toThrow();
   });
 });
@@ -127,8 +127,8 @@ describe("validateDiplomaEnvelope — payload Zod validation", () => {
     try {
       validateDiplomaEnvelope(bad);
       expect.fail("should have thrown");
-    } catch (e: any) {
-      expect(e.message).toContain("diplomaNumber");
+    } catch (e: unknown) {
+      expect((e as Error).message).toContain("diplomaNumber");
     }
   });
 });

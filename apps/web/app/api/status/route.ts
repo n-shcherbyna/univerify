@@ -137,9 +137,9 @@ export async function GET(request: NextRequest) {
         registry,
       },
     });
-  } catch (e: any) {
+  } catch (e: unknown) {
     return NextResponse.json(
-      { error: `Status lookup failed: ${e.message}` },
+      { error: `Status lookup failed: ${e instanceof Error ? e.message : String(e)}` },
       { status: 502 }
     );
   }

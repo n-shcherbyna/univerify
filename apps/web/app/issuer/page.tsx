@@ -130,9 +130,9 @@ export default function IssuerPage() {
         setAccountUniversityName(null);
         log.push(`connected: ${addr} | not registered as issuer`);
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       setChainState("wrong");
-      setError(e?.message ?? String(e));
+      setError(e instanceof Error ? e.message : String(e));
     }
   }
 
@@ -166,8 +166,8 @@ export default function IssuerPage() {
       setComputedBatch(batch);
       localStorage.setItem(BATCH_STORAGE_KEY, serializeBatch(batch));
       log.push(`batch computed | id=${batchIdBigint} items=${items.length} root=${root}`);
-    } catch (e: any) {
-      setError(e?.message ?? String(e));
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e));
     }
   }
 
@@ -191,9 +191,9 @@ export default function IssuerPage() {
         onTxHash: setTxHash,
       });
       log.push(`root published | batchId=${computedBatch.batchIdBigint} root=${computedBatch.merkleRoot}`);
-    } catch (e: any) {
+    } catch (e: unknown) {
       setTxState("idle");
-      setError(e?.shortMessage ?? e?.message ?? String(e));
+      setError(e instanceof Error ? e.message : String(e));
     }
   }
 

@@ -1,13 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState, useMemo } from "react";
 import { isAddress, type Address, type Hex } from "viem";
 
 import { readPublicEnv } from "@/lib/univerify/env";
 import {
   makePublicClient,
-  readIsIssuer,
-  readIssuerUniversityId,
   readOwner,
   readPendingOwner,
   readRegistryOverview,
@@ -49,7 +47,7 @@ export default function AdminPage() {
   const publicClient = useMemo(() => makePublicClient(RPC_URL, TARGET_CHAIN_ID), [RPC_URL, TARGET_CHAIN_ID]);
 
   const [account, setAccount] = useState<Address | "">("");
-  const [chainState, setChainState] = useState<ChainState>("unknown");
+  const [, setChainState] = useState<ChainState>("unknown");
   const [owner, setOwner] = useState<Address | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [pendingOwner, setPendingOwner] = useState<Address | null>(null);
@@ -89,8 +87,8 @@ export default function AdminPage() {
       });
       setUniversities(unis);
       setIssuers(iss);
-    } catch (e: any) {
-      setOverviewError(e?.message ?? String(e));
+    } catch (e: unknown) {
+      setOverviewError(e instanceof Error ? e.message : String(e));
     } finally {
       setOverviewLoading(false);
     }
@@ -117,9 +115,9 @@ export default function AdminPage() {
       setPendingOwner(hasPending ? po : null);
       setIsPendingOwner(hasPending && a.toLowerCase() === po.toLowerCase());
       await loadOverview();
-    } catch (e: any) {
+    } catch (e: unknown) {
       setChainState("wrong");
-      setError(e?.message ?? String(e));
+      setError(e instanceof Error ? e.message : String(e));
     }
   }
 
@@ -131,12 +129,12 @@ export default function AdminPage() {
     if (!eth) return setError("MetaMask not found.");
     try {
       await ensureChain({ eth, targetChainId: TARGET_CHAIN_ID });
-      const walletClient = makeWalletClient({ eth, account, chainId: TARGET_CHAIN_ID });
       await fn();
       await loadOverview();
-    } catch (e: any) {
+    } catch (e: unknown) {
       setTxState("idle");
-      setError(e?.shortMessage ?? e?.message ?? String(e));
+      const err = e instanceof Error ? e : null;
+      setError((err as { shortMessage?: string } | null)?.shortMessage ?? err?.message ?? String(e));
     }
   }
 

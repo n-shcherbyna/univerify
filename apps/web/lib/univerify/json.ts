@@ -24,6 +24,7 @@ function isBytes32Hex(v: unknown): v is `0x${string}` {
   return typeof v === "string" && /^0x[0-9a-fA-F]{64}$/.test(v);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any -- validation function accepting arbitrary input
 export function validateDiplomaEnvelope(obj: any): DiplomaEnvelope {
   if (!obj || typeof obj !== "object") throw new Error("Envelope must be an object.");
   if (!("payload" in obj)) throw new Error('Envelope missing "payload".');

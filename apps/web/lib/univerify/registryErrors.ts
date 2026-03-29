@@ -1,7 +1,7 @@
 // registryErrors.ts
 import { BaseError, ContractFunctionRevertedError, type Abi } from "viem";
 
-export function decodeRegistryRevert(err: unknown, abi: Abi): string | null {
+export function decodeRegistryRevert(err: unknown, _abi: Abi): string | null {
   const base = err as BaseError;
 
   const reverted = base?.walk?.(

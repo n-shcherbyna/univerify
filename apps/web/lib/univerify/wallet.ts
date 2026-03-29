@@ -1,9 +1,14 @@
 import { createWalletClient, custom, defineChain, type Address, type Chain } from "viem";
 import { sepolia, mainnet } from "viem/chains";
 
+// EIP-1193 provider shape used by MetaMask / injected wallets
+export type EIP1193Provider = {
+  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
+};
+
 declare global {
   interface Window {
-    ethereum?: any;
+    ethereum?: EIP1193Provider;
   }
 }
 
@@ -21,12 +26,12 @@ function resolveChain(chainId: number): Chain {
   });
 }
 
-export function getEthereum(): any | null {
+export function getEthereum(): EIP1193Provider | null {
   if (typeof window === "undefined") return null;
   return window.ethereum ?? null;
 }
 
-export async function ensureChain(params: { eth: any; targetChainId: number }) {
+export async function ensureChain(params: { eth: EIP1193Provider; targetChainId: number }) {
   const currentChainIdHex = (await params.eth.request({ method: "eth_chainId" })) as string;
   const currentChainId = Number.parseInt(currentChainIdHex, 16);
   if (currentChainId === params.targetChainId) return;
@@ -40,7 +45,7 @@ export async function ensureChain(params: { eth: any; targetChainId: number }) {
   }
 }
 
-export function makeWalletClient(params: { eth: any; account: Address; chainId: number }) {
+export function makeWalletClient(params: { eth: EIP1193Provider; account: Address; chainId: number }) {
   return createWalletClient({
     chain: resolveChain(params.chainId),
     transport: custom(params.eth),

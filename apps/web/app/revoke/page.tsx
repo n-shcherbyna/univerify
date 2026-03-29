@@ -55,9 +55,9 @@ export default function RevokePage() {
       setOnChainStatus(statusLabel(code));
       setPreviewStatus("loaded");
       log.push(`on-chain status: ${statusLabel(code)}`);
-    } catch (e: any) {
+    } catch (e: unknown) {
       setPreviewStatus("error");
-      log.push(`status fetch error: ${e?.message ?? String(e)}`);
+      log.push(`status fetch error: ${e instanceof Error ? e.message : String(e)}`);
     }
   }
 
@@ -75,9 +75,10 @@ export default function RevokePage() {
       setEnvelope(env);
       log.push(`envelope parsed: batchId=${env.proof.batchId}, issuer=${env.proof.issuer}`);
       await fetchStatus(env);
-    } catch (e: any) {
-      setError(e?.message ?? String(e));
-      log.push(`parse error: ${e?.message ?? String(e)}`);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setError(msg);
+      log.push(`parse error: ${msg}`);
     }
   }
 
@@ -100,10 +101,11 @@ export default function RevokePage() {
       setChainState("ok");
       log.push(`wallet connected: ${addr}`);
       log.push(`network ok (chainId=${TARGET_CHAIN_ID})`);
-    } catch (e: any) {
+    } catch (e: unknown) {
       setChainState("wrong");
-      setError(e?.message ?? String(e));
-      log.push(`connect error: ${e?.message ?? String(e)}`);
+      const msg = e instanceof Error ? e.message : String(e);
+      setError(msg);
+      log.push(`connect error: ${msg}`);
     }
   }
 
@@ -140,10 +142,11 @@ export default function RevokePage() {
       });
 
       log.push(`revokeFromBatch sent: docHash=${docHash}, batchId=${batchId.toString()}`);
-    } catch (e: any) {
+    } catch (e: unknown) {
       setTxState("idle");
-      setError(e?.shortMessage ?? e?.message ?? String(e));
-      log.push(`revoke error: ${e?.shortMessage ?? e?.message ?? String(e)}`);
+      const msg = e instanceof Error ? e.message : String(e);
+      setError(msg);
+      log.push(`revoke error: ${msg}`);
     }
   }
 
