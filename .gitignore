@@ -14,10 +14,11 @@ cache
 package-lock.json
 
 # LaTeX build artifacts
-*.aux
-*.log
-*.out
-*.synctex.gz
+docs/*.aux
+docs/*.log
+docs/*.out
+docs/*.synctex.gz
+docs/%OUTDIR%
 *.fls
 *.fdb_latexmk
 *.bbl
