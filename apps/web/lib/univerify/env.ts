@@ -12,11 +12,11 @@ export function requireAddress(value: string | undefined, name: string): Address
 }
 
 export function readPublicEnv() {
-  // During static page generation (next build) env vars may not be set.
-  // Client pages guard actions behind wallet connection, so empty defaults are safe.
-  const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL ?? "";
-  const rawRegistry = process.env.NEXT_PUBLIC_REGISTRY_ADDRESS ?? "";
-  const registry = (isAddress(rawRegistry) ? rawRegistry : "0x0000000000000000000000000000000000000000") as Address;
+  const rpcUrl = requireDefined(process.env.NEXT_PUBLIC_RPC_URL, "NEXT_PUBLIC_RPC_URL");
+  const registry = requireAddress(
+    process.env.NEXT_PUBLIC_REGISTRY_ADDRESS,
+    "NEXT_PUBLIC_REGISTRY_ADDRESS"
+  );
   const chainId = Number(process.env.NEXT_PUBLIC_CHAIN_ID ?? "11155111");
   const deployBlock = BigInt(process.env.NEXT_PUBLIC_DEPLOY_BLOCK ?? "0");
 

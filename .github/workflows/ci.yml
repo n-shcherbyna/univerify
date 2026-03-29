@@ -21,6 +21,11 @@ jobs:
 
       - run: npm install
       - run: npm run build
+        env:
+          NEXT_PUBLIC_RPC_URL: ${{ secrets.NEXT_PUBLIC_RPC_URL }}
+          NEXT_PUBLIC_REGISTRY_ADDRESS: ${{ secrets.NEXT_PUBLIC_REGISTRY_ADDRESS }}
+          NEXT_PUBLIC_CHAIN_ID: ${{ secrets.NEXT_PUBLIC_CHAIN_ID }}
+          NEXT_PUBLIC_DEPLOY_BLOCK: ${{ secrets.NEXT_PUBLIC_DEPLOY_BLOCK }}
       - run: npm test
 
   lint:
