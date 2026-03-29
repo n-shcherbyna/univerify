@@ -160,9 +160,10 @@ export default function VerifyPage() {
         verifyOk,
         diplomaPayload: parsedPayload.success ? parsedPayload.data : null,
       });
-    } catch (e: any) {
-      setError(e?.message ?? String(e));
-      log.push(`ERROR=${e?.message ?? String(e)}`);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      setError(msg);
+      log.push(`ERROR=${msg}`);
       setState((prev) => ({ ...prev, verifyOk: false }));
     }
   }

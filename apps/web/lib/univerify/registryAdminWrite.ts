@@ -8,6 +8,7 @@ type AdminTxCommon = {
   registry: Address;
   account: Address;
   publicClient: ReturnType<typeof makePublicClient>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- viem WalletClient.writeContract has complex generics
   walletClient: { writeContract: (args: any) => Promise<Hex> };
   setTxState: (s: TxState) => void;
   onTxHash?: (h: Hex) => void;
@@ -34,6 +35,7 @@ export async function writeIssuerAdminTx(params: AdminTxParams) {
   params.setTxState("submitting");
   try {
     type FnName = "removeIssuer" | "setUniversity" | "onboardIssuerAndUniversity" | "transferOwnership" | "acceptOwnership";
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic args for multiple contract functions
     let args: any[];
     let functionName: FnName;
 
@@ -58,6 +60,7 @@ export async function writeIssuerAdminTx(params: AdminTxParams) {
       address: params.registry,
       abi: DiplomaRegistryAbi,
       functionName,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic args tuple
       args: args as any,
       account: params.account,
     });
@@ -66,6 +69,7 @@ export async function writeIssuerAdminTx(params: AdminTxParams) {
       address: params.registry,
       abi: DiplomaRegistryAbi,
       functionName,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- dynamic args tuple
       args: args as any,
       gas: (gas * 120n) / 100n,
     });
@@ -78,6 +82,6 @@ export async function writeIssuerAdminTx(params: AdminTxParams) {
   } catch (e) {
     const msg = decodeRegistryRevert(e, DiplomaRegistryAbi);
     params.setTxState("idle");
-    throw new Error(msg ?? (e as any)?.shortMessage ?? (e as any)?.message ?? "Transaction failed.");
+    throw new Error(msg ?? (e instanceof Error ? e.message : undefined) ?? "Transaction failed.");
   }
 }

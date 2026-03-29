@@ -12,6 +12,7 @@ export async function writeIssueBatchRootTx(params: {
   account: Address;
   publicClient: ReturnType<typeof makePublicClient>;
   walletClient: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- viem WalletClient.writeContract has complex generics
     writeContract: (args: any) => Promise<Hex>;
   };
   setTxState: (s: TxState) => void;
@@ -46,7 +47,7 @@ export async function writeIssueBatchRootTx(params: {
   } catch (e) {
     const msg = decodeRegistryRevert(e, DiplomaRegistryAbi);
     params.setTxState("idle");
-    throw new Error(msg ?? (e as any)?.shortMessage ?? (e as any)?.message ?? "Transaction failed.");
+    throw new Error(msg ?? (e instanceof Error ? e.message : undefined) ?? "Transaction failed.");
   }
 }
 
@@ -58,6 +59,7 @@ export async function writeRevokeFromBatchTx(params: {
   account: Address;
   publicClient: ReturnType<typeof makePublicClient>;
   walletClient: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- viem WalletClient.writeContract has complex generics
     writeContract: (args: any) => Promise<Hex>;
   };
   setTxState: (s: TxState) => void;
@@ -92,6 +94,6 @@ export async function writeRevokeFromBatchTx(params: {
   } catch (e) {
     const msg = decodeRegistryRevert(e, DiplomaRegistryAbi);
     params.setTxState("idle");
-    throw new Error(msg ?? (e as any)?.shortMessage ?? (e as any)?.message ?? "Transaction failed.");
+    throw new Error(msg ?? (e instanceof Error ? e.message : undefined) ?? "Transaction failed.");
   }
 }

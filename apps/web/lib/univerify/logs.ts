@@ -7,7 +7,6 @@ export function makeStateLogger(setLogs: React.Dispatch<React.SetStateAction<str
   return {
     push: (msg: string) => {
       setLogs((prev) => [...prev, msg]);
-      // eslint-disable-next-line no-console
       console.log(msg);
     },
     clear: () => setLogs([]),

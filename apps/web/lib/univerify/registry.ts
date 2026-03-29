@@ -202,6 +202,7 @@ export async function readRegistryOverview(params: {
   // Latest UniversitySet event per universityId
   const uniMap = new Map<string, UniversityOverview>();
   for (const l of uniLogs) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- viem event log args lack precise typing
     const a = l.args as any;
     const id: bigint = a.universityId;
     uniMap.set(id.toString(), {
@@ -219,6 +220,7 @@ export async function readRegistryOverview(params: {
 
   // Unique issuer addresses ever added
   const uniqueIssuers = [
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- viem event log args
     ...new Set(issuerAddedLogs.map((l) => ((l.args as any).issuer as Address).toLowerCase())),
   ] as Address[];
 
@@ -266,6 +268,7 @@ export async function readUniversityMeta(params: {
   });
 
   if (logs.length === 0) return null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- viem event log args
   const latest = logs[logs.length - 1].args as any;
   return {
     name: latest.name ?? "",

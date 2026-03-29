@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { isAddress, type Address, type Hex } from "viem";
+import { type Address, type Hex } from "viem";
 import {
   hashPayload,
   DiplomaPayloadSchema,
@@ -46,8 +46,8 @@ export async function POST(request: NextRequest) {
   let envelope;
   try {
     envelope = validateDiplomaEnvelope(body);
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 400 });
+  } catch (e: unknown) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 400 });
   }
 
   const { rpcUrl, registry, chainId, deployBlock } = readPublicEnv();
@@ -129,9 +129,9 @@ export async function POST(request: NextRequest) {
         registry,
       },
     });
-  } catch (e: any) {
+  } catch (e: unknown) {
     return NextResponse.json(
-      { error: `Verification failed: ${e.message}` },
+      { error: `Verification failed: ${e instanceof Error ? e.message : String(e)}` },
       { status: 502 }
     );
   }
