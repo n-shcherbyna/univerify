@@ -11,7 +11,6 @@ import {
 } from "@univerify/verifier-core";
 
 import { readPublicEnv } from "@/lib/univerify/env";
-import type { DiplomaEnvelope } from "@/lib/univerify/types";
 import { DiplomaPayloadSchema, type DiplomaPayload } from "@/lib/univerify/schema";
 import {
   makePublicClient,
