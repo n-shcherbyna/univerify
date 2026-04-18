@@ -2,7 +2,13 @@
 
 import { useMemo, useState } from "react";
 import type { Address, Hex } from "viem";
-import { hashPayload } from "@univerify/verifier-core";
+import {
+  hashPayload,
+  computePrivateDocHash,
+  verifyDisclosedFields,
+  type FieldCommitments,
+  type DisclosedFields,
+} from "@univerify/verifier-core";
 
 import { readPublicEnv } from "@/lib/univerify/env";
 import type { DiplomaEnvelope } from "@/lib/univerify/types";
@@ -18,7 +24,7 @@ import {
   statusLabel,
   universityStatusLabel,
 } from "@/lib/univerify/registry";
-import { parseJson, validateDiplomaEnvelope } from "@/lib/univerify/json";
+import { parseJson, validateDiplomaEnvelope, isPrivateEnvelope, validatePrivateEnvelope } from "@/lib/univerify/json";
 import { readFileAsText } from "@/lib/univerify/file";
 import { makeStateLogger } from "@/lib/univerify/logs";
 import { computeMerkleLeaf, computeRootFromProof } from "@/lib/univerify/merkle";
@@ -42,6 +48,10 @@ type VerifyState = {
   universityStatus: number | null;
   verifyOk: boolean | null;
   diplomaPayload: DiplomaPayload | null;
+  isPrivate: boolean;
+  disclosedFieldsValid: boolean | null;
+  disclosedFields: DisclosedFields | null;
+  commitments: FieldCommitments | null;
 };
 
 function emptyState(): VerifyState {
@@ -64,6 +74,10 @@ function emptyState(): VerifyState {
     universityStatus: null,
     verifyOk: null,
     diplomaPayload: null,
+    isPrivate: false,
+    disclosedFieldsValid: null,
+    disclosedFields: null,
+    commitments: null,
   };
 }
 
@@ -74,6 +88,7 @@ function verificationFailures(state: VerifyState): string[] {
   if (state.merkleRootMatches === false) reasons.push("Merkle proof does not match on-chain batch root.");
   if (state.issuerTrustedNow === false) reasons.push("Issuer is not currently trusted on-chain.");
   if (state.universityStatus !== null && state.universityStatus !== 1) reasons.push("University is not active on-chain.");
+  if (state.isPrivate && state.disclosedFieldsValid === false) reasons.push("Disclosed field commitments do not match.");
   if (reasons.length === 0) reasons.push("Validation failed due to an internal consistency check.");
   return reasons;
 }
@@ -103,13 +118,38 @@ export default function VerifyPage() {
 
       const parsed = parseJson(text);
       if (!parsed.ok) throw new Error(parsed.error);
-      const env: DiplomaEnvelope = validateDiplomaEnvelope(parsed.value);
-      const parsedPayload = DiplomaPayloadSchema.safeParse(env.payload);
 
-      const docHash = hashPayload(env.payload);
-      const issuer = env.proof.issuer;
-      const batchId = BigInt(env.proof.batchId);
-      const proof = env.proof.proof;
+      const isPrivate = isPrivateEnvelope(parsed.value);
+
+      let docHash: Hex;
+      let disclosedFieldsValid: boolean | null = null;
+      let disclosedFields: DisclosedFields | null = null;
+      let envelopeCommitments: FieldCommitments | null = null;
+      let diplomaPayloadResult: DiplomaPayload | null = null;
+      let issuer: Address;
+      let batchId: bigint;
+      let proof: Hex[];
+
+      if (isPrivate) {
+        const privEnv = validatePrivateEnvelope(parsed.value);
+        envelopeCommitments = privEnv.commitments;
+        disclosedFields = privEnv.disclosed;
+        disclosedFieldsValid = verifyDisclosedFields(privEnv.disclosed, privEnv.commitments);
+        docHash = computePrivateDocHash(privEnv.commitments);
+        issuer = privEnv.proof.issuer;
+        batchId = BigInt(privEnv.proof.batchId);
+        proof = privEnv.proof.proof;
+        log.push(`mode=PRIVATE | disclosed=${Object.keys(privEnv.disclosed).join(",") || "none"}`);
+        log.push(`disclosed fields valid=${disclosedFieldsValid}`);
+      } else {
+        const env = validateDiplomaEnvelope(parsed.value);
+        const parsedPayload = DiplomaPayloadSchema.safeParse(env.payload);
+        diplomaPayloadResult = parsedPayload.success ? parsedPayload.data : null;
+        docHash = hashPayload(env.payload);
+        issuer = env.proof.issuer;
+        batchId = BigInt(env.proof.batchId);
+        proof = env.proof.proof;
+      }
 
       log.push(`docHash=${docHash}`);
       log.push(`issuer=${issuer} batchId=${batchId}`);
@@ -134,7 +174,8 @@ export default function VerifyPage() {
         : null;
 
       const universityActive = university?.status === 1;
-      const verifyOk = statusCode === 1 && merkleRootMatches && universityActive;
+      const verifyOk = statusCode === 1 && merkleRootMatches && universityActive
+        && (isPrivate ? disclosedFieldsValid === true : true);
 
       log.push(`status=${statusCode} (${status}) | merkle=${merkleRootMatches ? "OK" : "FAIL"}`);
       log.push(`university=${university?.name ?? "N/A"} status=${university?.status ?? "N/A"}`);
@@ -158,7 +199,11 @@ export default function VerifyPage() {
         universityWebsite: university?.website ?? null,
         universityStatus: university?.status ?? null,
         verifyOk,
-        diplomaPayload: parsedPayload.success ? parsedPayload.data : null,
+        diplomaPayload: diplomaPayloadResult,
+        isPrivate,
+        disclosedFieldsValid,
+        disclosedFields,
+        commitments: envelopeCommitments,
       });
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : String(e);
@@ -214,7 +259,7 @@ export default function VerifyPage() {
 
       {error && <div className="uv-status-banner uv-status-fail"><b>Error:</b> {error}</div>}
 
-      {state.verifyOk !== null && state.diplomaPayload !== null && (
+      {state.verifyOk !== null && !state.isPrivate && state.diplomaPayload !== null && (
         <div className="uv-card">
           <h2 className="uv-card-title">Diploma</h2>
           <div className="uv-kv">
@@ -224,6 +269,37 @@ export default function VerifyPage() {
             <b>Level</b><span>{state.diplomaPayload.degree.level}</span>
             <b>Issued</b><span>{state.diplomaPayload.issuedAt}</span>
             <b>Diploma No.</b><span>{state.diplomaPayload.diplomaNumber}</span>
+            {state.universityName && <><b>University</b><span>{state.universityName}</span></>}
+          </div>
+        </div>
+      )}
+
+      {state.verifyOk !== null && state.isPrivate && (
+        <div className="uv-card">
+          <h2 className="uv-card-title">Diploma (Private — Selective Disclosure)</h2>
+          <div className="uv-kv">
+            <b>Disclosed fields valid</b>
+            <span style={{ color: state.disclosedFieldsValid ? "var(--success)" : "var(--danger)" }}>
+              {state.disclosedFieldsValid ? "Yes" : "No — tampered data"}
+            </span>
+            {state.disclosedFields?.student && (
+              <>
+                <b>Student</b><span>{state.disclosedFields.student.value.firstName} {state.disclosedFields.student.value.lastName}</span>
+                <b>Student ID</b><span>{state.disclosedFields.student.value.studentId}</span>
+              </>
+            )}
+            {!state.disclosedFields?.student && <><b>Student</b><span style={{ color: "var(--muted)" }}>[hidden]</span></>}
+            {state.disclosedFields?.degree && (
+              <>
+                <b>Degree</b><span>{state.disclosedFields.degree.value.name}</span>
+                <b>Level</b><span>{state.disclosedFields.degree.value.level}</span>
+              </>
+            )}
+            {!state.disclosedFields?.degree && <><b>Degree</b><span style={{ color: "var(--muted)" }}>[hidden]</span></>}
+            {state.disclosedFields?.issuedAt && <><b>Issued</b><span>{state.disclosedFields.issuedAt.value}</span></>}
+            {!state.disclosedFields?.issuedAt && <><b>Issued</b><span style={{ color: "var(--muted)" }}>[hidden]</span></>}
+            {state.disclosedFields?.diplomaNumber && <><b>Diploma No.</b><span>{state.disclosedFields.diplomaNumber.value}</span></>}
+            {!state.disclosedFields?.diplomaNumber && <><b>Diploma No.</b><span style={{ color: "var(--muted)" }}>[hidden]</span></>}
             {state.universityName && <><b>University</b><span>{state.universityName}</span></>}
           </div>
         </div>
