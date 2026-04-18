@@ -2,10 +2,17 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { isAddress, type Address, type Hex } from "viem";
-import { hashPayload } from "@univerify/verifier-core";
+import {
+  hashPayload,
+  generateFieldSalts,
+  computeFieldCommitments,
+  computePrivateDocHash,
+  type FieldSalts,
+  type FieldCommitments,
+} from "@univerify/verifier-core";
 
 import { readPublicEnv } from "@/lib/univerify/env";
-import type { ChainState, TxState, DiplomaEnvelope } from "@/lib/univerify/types";
+import type { ChainState, TxState, DiplomaEnvelope, PrivateDiplomaEnvelope } from "@/lib/univerify/types";
 import { DiplomaPayloadSchema, formatZodError, type DiplomaPayload } from "@/lib/univerify/schema";
 import { makePublicClient, readIssuerUniversityId, readUniversityMeta } from "@/lib/univerify/registry";
 import { downloadJson, parseJson } from "@/lib/univerify/json";
@@ -22,6 +29,8 @@ type BatchItem = {
   docHash: Hex;
   leaf: Hex;
   proof: Hex[];
+  salts?: FieldSalts;
+  commitments?: FieldCommitments;
 };
 
 type ComputedBatch = {
@@ -82,6 +91,7 @@ export default function IssuerPage() {
 ]`.trim()
   );
 
+  const [privateMode, setPrivateMode] = useState(false);
   const [computedBatch, setComputedBatch] = useState<ComputedBatch | null>(null);
   const [pendingPublish, setPendingPublish] = useState(false);
   const [txHash, setTxHash] = useState<Hex | null>(null);
@@ -108,6 +118,26 @@ export default function IssuerPage() {
     if (v > UINT64_MAX) throw new Error("Batch ID exceeds uint64 range.");
     if (v > BigInt(Number.MAX_SAFE_INTEGER)) throw new Error(`Batch ID must be \u2264 ${Number.MAX_SAFE_INTEGER}.`);
     return { batchIdBigint: v, batchIdNumber: Number(v) };
+  }
+
+  function buildEnvelope(item: BatchItem): DiplomaEnvelope | PrivateDiplomaEnvelope {
+    if (!computedBatch || !account) throw new Error("No batch or account");
+    const proofBlock = { type: "MERKLE_BATCH" as const, batchId: computedBatch.batchIdNumber, proof: item.proof, issuer: account };
+
+    if (item.salts && item.commitments) {
+      return {
+        commitments: item.commitments,
+        disclosed: {
+          student: { value: item.payload.student, salt: item.salts.student },
+          degree: { value: item.payload.degree, salt: item.salts.degree },
+          issuedAt: { value: item.payload.issuedAt, salt: item.salts.issuedAt },
+          diplomaNumber: { value: item.payload.diplomaNumber, salt: item.salts.diplomaNumber },
+        },
+        proof: proofBlock,
+      };
+    }
+
+    return { payload: item.payload, proof: proofBlock };
   }
 
   async function connect() {
@@ -154,13 +184,20 @@ export default function IssuerPage() {
         }
       });
       const chainId = BigInt(TARGET_CHAIN_ID);
-      const docHashes = payloads.map((p) => hashPayload(p));
+      const allSalts = privateMode ? payloads.map(() => generateFieldSalts()) : [];
+      const allCommitments = privateMode
+        ? payloads.map((p, i) => computeFieldCommitments(p, allSalts[i]))
+        : [];
+      const docHashes = privateMode
+        ? allCommitments.map((c) => computePrivateDocHash(c))
+        : payloads.map((p) => hashPayload(p));
       const leaves = docHashes.map((docHash) =>
         computeMerkleLeaf({ registry: REGISTRY, chainId, issuer: account, batchId: batchIdBigint, docHash })
       );
       const { root, proofs } = buildMerkleFromLeaves(leaves);
       const items: BatchItem[] = payloads.map((payload, i) => ({
         index: i, payload, docHash: docHashes[i], leaf: leaves[i], proof: proofs[i],
+        ...(privateMode ? { salts: allSalts[i], commitments: allCommitments[i] } : {}),
       }));
       const batch: ComputedBatch = { batchIdBigint, batchIdNumber, merkleRoot: root, items };
       setComputedBatch(batch);
@@ -201,24 +238,16 @@ export default function IssuerPage() {
     resetMessages();
     if (!computedBatch || !account) return;
     for (const item of computedBatch.items) {
-      const envelope: DiplomaEnvelope = {
-        payload: item.payload,
-        proof: { type: "MERKLE_BATCH", batchId: computedBatch.batchIdNumber, proof: item.proof, issuer: account },
-      };
-      downloadJson(`diploma-${computedBatch.batchIdNumber}-${item.index}.json`, envelope);
+      downloadJson(`diploma-${computedBatch.batchIdNumber}-${item.index}.json`, buildEnvelope(item));
     }
-    log.push(`exported ${computedBatch.items.length} diplomas`);
+    log.push(`exported ${computedBatch.items.length} diplomas${computedBatch.items[0]?.salts ? " (private)" : ""}`);
   }
 
   function exportSingle(item: BatchItem) {
     resetMessages();
     if (!computedBatch || !account) return;
-    const envelope: DiplomaEnvelope = {
-      payload: item.payload,
-      proof: { type: "MERKLE_BATCH", batchId: computedBatch.batchIdNumber, proof: item.proof, issuer: account },
-    };
-    downloadJson(`diploma-${computedBatch.batchIdNumber}-${item.index}.json`, envelope);
-    log.push(`exported diploma [${item.index}]: ${item.docHash}`);
+    downloadJson(`diploma-${computedBatch.batchIdNumber}-${item.index}.json`, buildEnvelope(item));
+    log.push(`exported diploma [${item.index}]: ${item.docHash}${item.salts ? " (private)" : ""}`);
   }
 
   return (
@@ -255,6 +284,19 @@ export default function IssuerPage() {
             onChange={(e) => { setBatchIdInput(e.target.value.trim()); setComputedBatch(null); localStorage.removeItem(BATCH_STORAGE_KEY); resetMessages(); }}
             style={{ width: 160 }}
           />
+        </div>
+
+        <div style={{ marginTop: 14, display: "flex", alignItems: "center", gap: 8 }}>
+          <label style={{ fontWeight: 500, fontSize: 14 }}>
+            <input
+              type="checkbox"
+              checked={privateMode}
+              onChange={(e) => { setPrivateMode(e.target.checked); setComputedBatch(null); localStorage.removeItem(BATCH_STORAGE_KEY); resetMessages(); }}
+              style={{ marginRight: 6 }}
+            />
+            Private mode (selective disclosure)
+          </label>
+          {privateMode && <span style={{ fontSize: 12, color: "var(--muted)" }}>Diplomas will use field-level commitments</span>}
         </div>
 
         <div style={{ marginTop: 14 }}>
