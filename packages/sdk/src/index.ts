@@ -7,6 +7,8 @@ export type {
   UniversityInfo,
   IssuerInfo,
   BatchInfo,
+  PrivateDiplomaEnvelope,
+  SelectiveVerifyResult,
 } from "./client.js";
 
 // Re-export commonly needed utilities from verifier-core
@@ -19,4 +21,18 @@ export {
   DiplomaRegistryAbi,
   type StatusCode,
   type DiplomaPayload,
+} from "@univerify/verifier-core";
+
+// Re-export privacy utilities from verifier-core
+export {
+  generateFieldSalts,
+  computeFieldCommitments,
+  computePrivateDocHash,
+  verifyDisclosedFields,
+  DISCLOSURE_FIELDS,
+  type FieldSalts,
+  type FieldCommitments,
+  type DisclosedFields,
+  type DisclosedEntry,
+  type DisclosureField,
 } from "@univerify/verifier-core";
