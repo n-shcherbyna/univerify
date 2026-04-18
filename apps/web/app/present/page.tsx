@@ -1,9 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { Hex } from "viem";
-
-import { DISCLOSURE_FIELDS, type DisclosureField, type FieldCommitments, type DisclosedFields } from "@univerify/verifier-core";
+import { DISCLOSURE_FIELDS, type DisclosureField, type DisclosedFields } from "@univerify/verifier-core";
 import { parseJson, downloadJson } from "@/lib/univerify/json";
 import { readFileAsText } from "@/lib/univerify/file";
 import type { PrivateDiplomaEnvelope } from "@/lib/univerify/types";
@@ -36,6 +34,7 @@ export default function PresentPage() {
     try {
       const parsed = parseJson(text);
       if (!parsed.ok) throw new Error(parsed.error);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- validation of arbitrary JSON input
       const obj = parsed.value as any;
 
       if (!obj || typeof obj !== "object" || !("commitments" in obj) || !("disclosed" in obj)) {
@@ -71,6 +70,7 @@ export default function PresentPage() {
     const disclosed: DisclosedFields = {};
     for (const field of DISCLOSURE_FIELDS) {
       if (selectedFields.has(field) && fullEnvelope.disclosed[field]) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any -- building partial DisclosedFields dynamically
         (disclosed as any)[field] = fullEnvelope.disclosed[field];
       }
     }
