@@ -13,8 +13,12 @@ import {
   hashPayload,
   computeMerkleLeaf,
   computeRootFromProof,
+  computePrivateDocHash,
+  verifyDisclosedFields,
   type StatusCode,
   type DiplomaPayload,
+  type FieldCommitments,
+  type DisclosedFields,
 } from "@univerify/verifier-core";
 
 // ─── Public types ────────────────────────────────────────────────────────────
@@ -86,6 +90,35 @@ export type BatchInfo = {
   issuer: Address;
   batchId: bigint;
   merkleRoot: Hex;
+};
+
+export type PrivateDiplomaEnvelope = {
+  commitments: FieldCommitments;
+  disclosed: DisclosedFields;
+  proof: {
+    type: "MERKLE_BATCH";
+    batchId: number;
+    proof: Hex[];
+    issuer: Address;
+  };
+};
+
+export type SelectiveVerifyResult = {
+  verified: boolean;
+  status: { code: StatusCode; label: string };
+  docHash: Hex;
+  issuer: { address: Address; trusted: boolean; universityId: string };
+  batchId: number;
+  revoked: boolean;
+  merkle: {
+    leaf: Hex;
+    computedRoot: Hex;
+    onChainRoot: Hex;
+    rootMatches: boolean;
+  };
+  university: UniversityInfo | null;
+  disclosedFieldsValid: boolean;
+  disclosedData: DisclosedFields;
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -161,6 +194,54 @@ export class UniverifySdk {
       merkle: { leaf, computedRoot, onChainRoot: merkleRoot, rootMatches },
       university,
       diploma: parsed.success ? parsed.data : null,
+    };
+  }
+
+  // ── Selective disclosure verification ────────────────────────────────────
+
+  async selectiveVerify(envelope: PrivateDiplomaEnvelope): Promise<SelectiveVerifyResult> {
+    const disclosedFieldsValid = verifyDisclosedFields(envelope.disclosed, envelope.commitments);
+    const docHash = computePrivateDocHash(envelope.commitments);
+    const { issuer, batchId: batchIdNum, proof } = envelope.proof;
+    const batchId = BigInt(batchIdNum);
+
+    const [statusCode, merkleRoot, issuerTrusted, issuerUniversityId, revoked] =
+      await Promise.all([
+        this.readStatusWithProof(docHash, issuer, batchId, proof),
+        this.readBatchRoot(issuer, batchId),
+        this.readIsIssuer(issuer),
+        this.readIssuerUniversityId(issuer),
+        this.readIsRevoked(docHash, issuer, batchId),
+      ]);
+
+    const leaf = computeMerkleLeaf({
+      registry: this.registry,
+      chainId: BigInt(this.chainId),
+      issuer,
+      batchId,
+      docHash,
+    });
+    const computedRoot = computeRootFromProof({ leaf, proof });
+    const rootMatches = computedRoot.toLowerCase() === merkleRoot.toLowerCase();
+
+    const university = issuerUniversityId > 0n
+      ? await this.getUniversity(issuerUniversityId)
+      : null;
+
+    const universityActive = university?.status === 1;
+    const verified = disclosedFieldsValid && statusCode === 1 && rootMatches && universityActive;
+
+    return {
+      verified,
+      status: { code: statusCode, label: statusLabel(statusCode) },
+      docHash,
+      issuer: { address: issuer, trusted: issuerTrusted, universityId: issuerUniversityId.toString() },
+      batchId: batchIdNum,
+      revoked,
+      merkle: { leaf, computedRoot, onChainRoot: merkleRoot, rootMatches },
+      university,
+      disclosedFieldsValid,
+      disclosedData: envelope.disclosed,
     };
   }
 
