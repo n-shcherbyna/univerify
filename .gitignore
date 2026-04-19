@@ -35,3 +35,6 @@ texput.log
 
 # MCP config (may contain local paths)
 .mcp.json
+
+# Git worktrees (local only)
+.worktrees/
