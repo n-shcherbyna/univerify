@@ -260,6 +260,12 @@ export function writeMeta(
   return outPath;
 }
 
+export function writeMeasuredAt(run: RunResults, outDir: string): string {
+  const p = path.join(outDir, "measured-at.tex");
+  fs.writeFileSync(p, run.measuredAt);
+  return p;
+}
+
 // --- Stage driver ---------------------------------------------------------
 
 export type StageExportOpts = { resultsPath?: string; pricesPath?: string };
@@ -285,7 +291,8 @@ export function stageExport(opts: StageExportOpts = {}): void {
   writeFigReadLatencyCdf(run, outDir);
   writeFigBasefeeScenarios(run, prices, outDir);
   writeMeta(run, pricesPath, outDir);
-  console.log(`[export] wrote 10 files under ${outDir}`);
+  writeMeasuredAt(run, outDir);
+  console.log(`[export] wrote 11 files under ${outDir}`);
 }
 
 function newestResultsPath(): string | null {
