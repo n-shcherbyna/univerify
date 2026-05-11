@@ -38,3 +38,6 @@ texput.log
 
 # Git worktrees (local only)
 .worktrees/
+
+# Benchmarks — ignore partial/in-progress run state
+benchmarks/results/*.partial.json
