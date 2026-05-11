@@ -156,3 +156,156 @@ export function writeInclusionLatencyTable(run: RunResults, outDir: string): str
   fs.writeFileSync(csvPath, [header, ...rows].join("\n") + "\n");
   return csvPath;
 }
+
+// --- Figures --------------------------------------------------------------
+
+export function writeFigCostPerDiploma(
+  run: RunResults,
+  prices: PriceHistory,
+  outDir: string
+): string {
+  const { p50 } = derivePercentiles(prices);
+  const datPath = path.join(outDir, "fig1-cost-per-diploma.dat");
+  const sizeCols = [...BATCH_SIZES];
+  const header = ["batchSize", ...Object.keys(run.chains)].join(" ");
+  const rows: string[] = [];
+  for (const s of sizeCols) {
+    const cols: string[] = [String(s)];
+    for (const chain of Object.keys(run.chains)) {
+      const m = run.chains[chain].issueBatch.find(
+        (x) => x.tag === "main" && x.batchSize === s
+      );
+      cols.push(m ? (weiToUsd(totalCostWei(m, p50)) / s).toFixed(12) : "nan");
+    }
+    rows.push(cols.join(" "));
+  }
+  fs.writeFileSync(datPath, [header, ...rows].join("\n") + "\n");
+  return datPath;
+}
+
+export function writeFigGasVsL1Data(
+  run: RunResults,
+  outDir: string
+): string {
+  const datPath = path.join(outDir, "fig2-gas-vs-l1data.dat");
+  const header = "chain execution_wei l1data_wei";
+  const rows: string[] = [];
+  for (const [chain, data] of Object.entries(run.chains)) {
+    const m = data.issueBatch.find((x) => x.tag === "main" && x.batchSize === 1000);
+    if (!m) continue;
+    const exec = BigInt(m.gasUsed) * BigInt(m.effectiveGasPrice);
+    rows.push([chain, exec.toString(), BigInt(m.l1DataFee).toString()].join(" "));
+  }
+  fs.writeFileSync(datPath, [header, ...rows].join("\n") + "\n");
+  return datPath;
+}
+
+export function writeFigReadLatencyCdf(run: RunResults, outDir: string): string {
+  const datPath = path.join(outDir, "fig3-read-latency-cdf.dat");
+  const chains = Object.keys(run.chains);
+  const series = chains.map((c) =>
+    run.chains[c].readLatency.map((x) => x.latencyMs).sort((a, b) => a - b)
+  );
+  const maxLen = Math.max(0, ...series.map((s) => s.length));
+  const header = ["rank", ...chains].join(" ");
+  const rows: string[] = [];
+  for (let i = 0; i < maxLen; i++) {
+    const cols: string[] = [String(i + 1)];
+    for (const s of series) cols.push(i < s.length ? s[i].toFixed(2) : "nan");
+    rows.push(cols.join(" "));
+  }
+  fs.writeFileSync(datPath, [header, ...rows].join("\n") + "\n");
+  return datPath;
+}
+
+export function writeFigBasefeeScenarios(
+  run: RunResults,
+  prices: PriceHistory,
+  outDir: string
+): string {
+  const { p10, p50, p90 } = derivePercentiles(prices);
+  const datPath = path.join(outDir, "fig4-basefee-scenarios.dat");
+  const header = "chain quiet_usd normal_usd congested_usd";
+  const rows: string[] = [];
+  for (const [chain, data] of Object.entries(run.chains)) {
+    const m = data.issueBatch.find((x) => x.tag === "main" && x.batchSize === 1000);
+    if (!m) continue;
+    rows.push(
+      [
+        chain,
+        weiToUsd(totalCostWei(m, p10)).toFixed(6),
+        weiToUsd(totalCostWei(m, p50)).toFixed(6),
+        weiToUsd(totalCostWei(m, p90)).toFixed(6),
+      ].join(" ")
+    );
+  }
+  fs.writeFileSync(datPath, [header, ...rows].join("\n") + "\n");
+  return datPath;
+}
+
+export function writeMeta(
+  run: RunResults,
+  pricePath: string,
+  outDir: string
+): string {
+  const outPath = path.join(outDir, "meta.json");
+  const meta = {
+    runId: run.runId,
+    measuredAt: run.measuredAt,
+    priceSource: pricePath,
+    ethUsd: ETH_USD,
+    chains: Object.keys(run.chains),
+  };
+  fs.writeFileSync(outPath, JSON.stringify(meta, null, 2));
+  return outPath;
+}
+
+// --- Stage driver ---------------------------------------------------------
+
+export type StageExportOpts = { resultsPath?: string; pricesPath?: string };
+
+export function stageExport(opts: StageExportOpts = {}): void {
+  const resultsPath = opts.resultsPath ?? newestResultsPath();
+  if (!resultsPath) throw new Error("no results file in benchmarks/results/");
+  const pricesPath = opts.pricesPath ?? newestPriceHistoryPathLocal();
+  if (!pricesPath)
+    throw new Error(
+      "no price history in benchmarks/price-history/ — run `benchmarks price` first"
+    );
+  const run = JSON.parse(fs.readFileSync(resultsPath, "utf8")) as RunResults;
+  const prices = JSON.parse(fs.readFileSync(pricesPath, "utf8")) as PriceHistory;
+  const outDir = path.resolve("docs", "l2-benchmarks", "data");
+  writeIssueCostTable(run, prices, outDir);
+  writeIssuePerDiplomaTable(run, prices, outDir);
+  writeRevokeCostTable(run, prices, outDir);
+  writeReadLatencyTable(run, outDir);
+  writeInclusionLatencyTable(run, outDir);
+  writeFigCostPerDiploma(run, prices, outDir);
+  writeFigGasVsL1Data(run, outDir);
+  writeFigReadLatencyCdf(run, outDir);
+  writeFigBasefeeScenarios(run, prices, outDir);
+  writeMeta(run, pricesPath, outDir);
+  console.log(`[export] wrote 10 files under ${outDir}`);
+}
+
+function newestResultsPath(): string | null {
+  const dir = path.resolve("benchmarks", "results");
+  if (!fs.existsSync(dir)) return null;
+  const files = fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith(".json") && !f.endsWith(".partial.json"))
+    .sort()
+    .reverse();
+  return files.length ? path.join(dir, files[0]) : null;
+}
+
+function newestPriceHistoryPathLocal(): string | null {
+  const dir = path.resolve("benchmarks", "price-history");
+  if (!fs.existsSync(dir)) return null;
+  const files = fs
+    .readdirSync(dir)
+    .filter((f) => f.endsWith(".json"))
+    .sort()
+    .reverse();
+  return files.length ? path.join(dir, files[0]) : null;
+}
