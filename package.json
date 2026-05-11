@@ -6,13 +6,19 @@
         "packages/*"
     ],
     "scripts": {
-        "build": "npm -w @univerify/verifier-core run build && npm -w @univerify/sdk run build && npm -w @univerify/verifier-cli run build && npm -w web run build",
+        "build": "npm -w @univerify/verifier-core run build && npm -w @univerify/sdk run build && npm -w @univerify/verifier-cli run build && npm -w @univerify/benchmarks run build && npm -w web run build",
         "test": "vitest run",
         "contracts:deploy": "dotenv -e .env -- sh -c 'cd contracts && forge script script/Deploy.s.sol:Deploy --rpc-url $RPC_URL --private-key $OWNER_PK --broadcast'",
         "sync:env:sepolia": "CHAIN_ID=11155111 dotenv -e .env node scripts/sync-env.mjs",
         "sync:env:mainnet": "CHAIN_ID=1 dotenv -e .env node scripts/sync-env.mjs",
         "deploy:sepolia": "npm run contracts:deploy && npm run sync:env:sepolia",
-        "deploy:mainnet": "npm run contracts:deploy && npm run sync:env:mainnet"
+        "deploy:mainnet": "npm run contracts:deploy && npm run sync:env:mainnet",
+        "benchmarks:deploy": "npm -w @univerify/benchmarks run deploy",
+        "benchmarks:measure": "npm -w @univerify/benchmarks run measure",
+        "benchmarks:price": "npm -w @univerify/benchmarks run price",
+        "benchmarks:export": "npm -w @univerify/benchmarks run export",
+        "benchmarks:all": "npm -w @univerify/benchmarks run all",
+        "benchmarks:smoke": "npm -w @univerify/benchmarks run smoke"
     },
     "devDependencies": {
         "dotenv-cli": "^11.0.0",
