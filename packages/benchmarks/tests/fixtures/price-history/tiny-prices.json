@@ -1,0 +1,12 @@
+{
+  "source": "eth_feeHistory",
+  "fetchedAt": "2026-04-19T12:00:00Z",
+  "windowDays": 90,
+  "samples": [
+    { "blockNumber": 100, "baseFeePerGas": "10000000000" },
+    { "blockNumber": 200, "baseFeePerGas": "20000000000" },
+    { "blockNumber": 300, "baseFeePerGas": "30000000000" },
+    { "blockNumber": 400, "baseFeePerGas": "40000000000" },
+    { "blockNumber": 500, "baseFeePerGas": "50000000000" }
+  ]
+}
