@@ -41,6 +41,23 @@ export const RPC_ENV: Record<ChainKey, string> = {
   zksyncSepolia: "RPC_ZKSYNC_SEPOLIA",
 };
 
+/**
+ * Typical mainnet sequencer gas price per L2, in wei per gas. Used by the
+ * export stage to project measured L2 testnet gas usage to mainnet cost.
+ * L1 chains use the L1 mainnet basefee (from price history) directly.
+ *
+ * Values are conservative round numbers for an L2 in typical (non-congested)
+ * conditions; they are set by the sequencer and do not track L1 basefee.
+ *   Arbitrum One — ~0.01–0.1 gwei observed; 0.1 gwei used here.
+ *   Base mainnet — ~0.001–0.01 gwei observed; 0.005 gwei used here.
+ *   zkSync Era  — ~0.025–0.1 gwei observed; 0.05 gwei used here.
+ */
+export const L2_MAINNET_GAS_PRICE_WEI: Partial<Record<ChainKey, bigint>> = {
+  arbitrumSepolia: 100_000_000n,
+  baseSepolia: 5_000_000n,
+  zksyncSepolia: 50_000_000n,
+};
+
 /** Faucet URLs shown to the user on underfunded-wallet errors. */
 export const FAUCETS: Record<ChainKey, string> = {
   sepolia: "https://sepoliafaucet.com/",
