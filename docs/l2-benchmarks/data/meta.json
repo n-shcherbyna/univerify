@@ -1,0 +1,12 @@
+{
+  "runId": "20260512T211158-c4da",
+  "measuredAt": "2026-05-12T21:11:58.253Z",
+  "priceSource": "/home/nazar/projects/univerify/.worktrees/l2-benchmarks/benchmarks/price-history/2026-05-12.json",
+  "ethUsd": 3500,
+  "chains": [
+    "sepolia",
+    "arbitrumSepolia",
+    "baseSepolia",
+    "zksyncSepolia"
+  ]
+}
