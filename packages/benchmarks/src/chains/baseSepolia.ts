@@ -70,8 +70,14 @@ export function createBaseSepoliaAdapter(init: BaseSepoliaAdapterInit): ChainAda
         tag: extra?.tag,
         gasUsed: receipt.gasUsed,
         effectiveGasPrice: receipt.effectiveGasPrice,
-        l1DataFee: receipt.l1Fee ?? 0n,
-        l1GasUsed: receipt.l1GasUsed,
+        l1DataFee:
+          receipt.l1Fee != null
+            ? BigInt(receipt.l1Fee as unknown as string | number | bigint)
+            : 0n,
+        l1GasUsed:
+          receipt.l1GasUsed != null
+            ? BigInt(receipt.l1GasUsed as unknown as string | number | bigint)
+            : undefined,
         calldataBytes: hexToBytes(submission.calldata).length,
         blockNumber: receipt.blockNumber,
         txHash: receipt.transactionHash,

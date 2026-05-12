@@ -63,7 +63,10 @@ export function createArbitrumSepoliaAdapter(
         timeout: RECEIPT_TIMEOUT_MS,
       })) as unknown as ArbReceipt;
       const includedAt = now();
-      const gasUsedForL1 = receipt.gasUsedForL1 ?? 0n;
+      const gasUsedForL1 =
+        receipt.gasUsedForL1 != null
+          ? BigInt(receipt.gasUsedForL1 as unknown as string | number | bigint)
+          : 0n;
       return {
         chainId: 421614,
         chainName: "arbitrumSepolia",
