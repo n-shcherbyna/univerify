@@ -13,7 +13,8 @@ export function percentile(samples: number[], p: number): number {
   if (samples.length === 0) throw new Error("percentile: empty samples");
   if (p < 0 || p > 1) throw new Error("percentile: p must be in [0, 1]");
   const s = sortAsc(samples);
-  const idx = Math.min(s.length - 1, Math.floor(p * s.length));
+  // Nearest-rank, zero-indexed: index = ceil(p * n) - 1, clamped to [0, n-1].
+  const idx = Math.max(0, Math.min(s.length - 1, Math.ceil(p * s.length) - 1));
   return s[idx];
 }
 
