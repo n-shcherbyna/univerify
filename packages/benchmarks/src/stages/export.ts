@@ -2,7 +2,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { NormalizedMetrics, ReadLatencySample } from "../chains/types.js";
-import { BATCH_SIZES } from "../config.js";
+import { BATCH_SIZES, L2_MAINNET_GAS_PRICE_WEI, type ChainKey } from "../config.js";
 import { derivePercentiles, type PriceHistory } from "./price.js";
 
 // --- result envelope written by Stage 2 -----------------------------------
@@ -21,10 +21,20 @@ export type RunResults = {
 /** ETH price in USD used for USD-cost columns. Sourced separately; hard-coded for now. */
 export const ETH_USD = 3500;
 
-function totalCostWei(m: NormalizedMetrics, basefeeWei: bigint): bigint {
-  // gasUsed × basefee (modelled L1 price) + l1DataFee (already in wei, measured).
-  // Coerce through BigInt so JSON-loaded fixtures (string numerics) also work.
-  return BigInt(m.gasUsed) * basefeeWei + BigInt(m.l1DataFee);
+function totalCostWei(m: NormalizedMetrics, mainnetBasefeeWei: bigint): bigint {
+  // Cost model is chain-aware so L2 execution gas is not priced at L1 rates.
+  //   L1 (e.g. Sepolia → mainnet): gasUsed × L1 mainnet basefee.
+  //   L2 mainnet projection:       gasUsed × L2 sequencer price (constant)
+  //                              + l1GasUsed × L1 mainnet basefee  (rollup data posting).
+  // Falls back to the L1 formula for any chain without an L2 gas-price entry.
+  const l2Price = L2_MAINNET_GAS_PRICE_WEI[m.chainName as ChainKey];
+  if (l2Price == null) {
+    return BigInt(m.gasUsed) * mainnetBasefeeWei;
+  }
+  const execCost = BigInt(m.gasUsed) * l2Price;
+  const l1GasUsed = m.l1GasUsed != null ? BigInt(m.l1GasUsed) : 0n;
+  const l1Cost = l1GasUsed * mainnetBasefeeWei;
+  return execCost + l1Cost;
 }
 
 function weiToUsd(wei: bigint): number {
@@ -185,16 +195,31 @@ export function writeFigCostPerDiploma(
 
 export function writeFigGasVsL1Data(
   run: RunResults,
-  outDir: string
+  outDir: string,
+  prices?: PriceHistory
 ): string {
   const datPath = path.join(outDir, "fig2-gas-vs-l1data.dat");
   const header = "chain execution_wei l1data_wei";
   const rows: string[] = [];
+  const mainnetBasefee = prices ? derivePercentiles(prices).p50 : null;
   for (const [chain, data] of Object.entries(run.chains)) {
     const m = data.issueBatch.find((x) => x.tag === "main" && x.batchSize === 1000);
     if (!m) continue;
-    const exec = BigInt(m.gasUsed) * BigInt(m.effectiveGasPrice);
-    rows.push([chain, exec.toString(), BigInt(m.l1DataFee).toString()].join(" "));
+    // Mainnet-projected breakdown: L2 execution at sequencer price, L1 data
+    // posting at L1 mainnet p50 basefee. Falls back to measured testnet values
+    // when no price history is provided (test path).
+    const l2Price = L2_MAINNET_GAS_PRICE_WEI[m.chainName as ChainKey];
+    const exec =
+      l2Price != null
+        ? BigInt(m.gasUsed) * l2Price
+        : mainnetBasefee != null
+          ? BigInt(m.gasUsed) * mainnetBasefee
+          : BigInt(m.gasUsed) * BigInt(m.effectiveGasPrice);
+    const l1Wei =
+      m.l1GasUsed != null && mainnetBasefee != null
+        ? BigInt(m.l1GasUsed) * mainnetBasefee
+        : BigInt(m.l1DataFee);
+    rows.push([chain, exec.toString(), l1Wei.toString()].join(" "));
   }
   fs.writeFileSync(datPath, [header, ...rows].join("\n") + "\n");
   return datPath;
@@ -287,7 +312,7 @@ export function stageExport(opts: StageExportOpts = {}): void {
   writeReadLatencyTable(run, outDir);
   writeInclusionLatencyTable(run, outDir);
   writeFigCostPerDiploma(run, prices, outDir);
-  writeFigGasVsL1Data(run, outDir);
+  writeFigGasVsL1Data(run, outDir, prices);
   writeFigReadLatencyCdf(run, outDir);
   writeFigBasefeeScenarios(run, prices, outDir);
   writeMeta(run, pricesPath, outDir);
