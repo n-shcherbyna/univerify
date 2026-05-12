@@ -58,6 +58,20 @@ export const L2_MAINNET_GAS_PRICE_WEI: Partial<Record<ChainKey, bigint>> = {
   zksyncSepolia: 50_000_000n,
 };
 
+/**
+ * Per-L2 estimate of L1 gas per calldata byte after rollup compression.
+ * Used by the export stage as a fallback when the chain's testnet reports
+ * l1GasUsed = 0 by policy (Arbitrum Sepolia waives the L1 data fee; mainnet
+ * Arbitrum One still charges it). Chains absent from this map use the
+ * measured l1GasUsed directly.
+ *
+ * Arbitrum One: typical 10 L1 gas/byte effective after compression for
+ * mostly-nonzero calldata (raw 16 gas/byte × ~0.6 compression).
+ */
+export const L1_GAS_PER_CALLDATA_BYTE_ESTIMATE: Partial<Record<ChainKey, number>> = {
+  arbitrumSepolia: 10,
+};
+
 /** Faucet URLs shown to the user on underfunded-wallet errors. */
 export const FAUCETS: Record<ChainKey, string> = {
   sepolia: "https://sepoliafaucet.com/",

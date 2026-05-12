@@ -2,7 +2,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { NormalizedMetrics, ReadLatencySample } from "../chains/types.js";
-import { BATCH_SIZES, L2_MAINNET_GAS_PRICE_WEI, type ChainKey } from "../config.js";
+import {
+  BATCH_SIZES,
+  L1_GAS_PER_CALLDATA_BYTE_ESTIMATE,
+  L2_MAINNET_GAS_PRICE_WEI,
+  type ChainKey,
+} from "../config.js";
 import { derivePercentiles, type PriceHistory } from "./price.js";
 
 // --- result envelope written by Stage 2 -----------------------------------
@@ -21,19 +26,30 @@ export type RunResults = {
 /** ETH price in USD used for USD-cost columns. Sourced separately; hard-coded for now. */
 export const ETH_USD = 3500;
 
+function l1GasForL2(m: NormalizedMetrics): bigint {
+  // Prefer the chain's reported l1GasUsed. Fall back to a per-byte estimate
+  // only when the chain reports zero and we have a calibration for it
+  // (Arbitrum Sepolia waives L1 data fees on testnet; mainnet does not).
+  const measured = m.l1GasUsed != null ? BigInt(m.l1GasUsed) : 0n;
+  const perByte = L1_GAS_PER_CALLDATA_BYTE_ESTIMATE[m.chainName as ChainKey];
+  if (perByte == null) return measured;
+  const estimated = BigInt(m.calldataBytes) * BigInt(perByte);
+  return measured > estimated ? measured : estimated;
+}
+
 function totalCostWei(m: NormalizedMetrics, mainnetBasefeeWei: bigint): bigint {
   // Cost model is chain-aware so L2 execution gas is not priced at L1 rates.
   //   L1 (e.g. Sepolia → mainnet): gasUsed × L1 mainnet basefee.
   //   L2 mainnet projection:       gasUsed × L2 sequencer price (constant)
-  //                              + l1GasUsed × L1 mainnet basefee  (rollup data posting).
+  //                              + l1Gas × L1 mainnet basefee   (rollup data posting,
+  //                                                              measured or estimated).
   // Falls back to the L1 formula for any chain without an L2 gas-price entry.
   const l2Price = L2_MAINNET_GAS_PRICE_WEI[m.chainName as ChainKey];
   if (l2Price == null) {
     return BigInt(m.gasUsed) * mainnetBasefeeWei;
   }
   const execCost = BigInt(m.gasUsed) * l2Price;
-  const l1GasUsed = m.l1GasUsed != null ? BigInt(m.l1GasUsed) : 0n;
-  const l1Cost = l1GasUsed * mainnetBasefeeWei;
+  const l1Cost = l1GasForL2(m) * mainnetBasefeeWei;
   return execCost + l1Cost;
 }
 
@@ -140,15 +156,17 @@ export function writeRevokeCostTable(
 }
 
 export function writeReadLatencyTable(run: RunResults, outDir: string): string {
+  // At N=100 samples per chain, p99 is a single-sample estimate equal to the
+  // max — reporting it adds no information beyond max_observed_ms, so omit.
   const csvPath = path.join(outDir, "table-read-latency.csv");
-  const header = "chain,p50_ms,p95_ms,p99_ms,max_ms";
+  const header = "chain,p50_ms,p95_ms,max_observed_ms";
   const rows: string[] = [];
   for (const [chain, data] of Object.entries(run.chains)) {
     if (data.readLatency.length === 0) continue;
     const s = data.readLatency.map((x) => x.latencyMs).sort((a, b) => a - b);
     const pick = (p: number) =>
       s[Math.max(0, Math.min(s.length - 1, Math.ceil(p * s.length) - 1))];
-    rows.push([chain, pick(0.5), pick(0.95), pick(0.99), s[s.length - 1]].join(","));
+    rows.push([chain, pick(0.5), pick(0.95), s[s.length - 1]].join(","));
   }
   fs.writeFileSync(csvPath, [header, ...rows].join("\n") + "\n");
   return csvPath;
@@ -218,8 +236,8 @@ export function writeFigGasVsL1Data(
           ? BigInt(m.gasUsed) * mainnetBasefee
           : BigInt(m.gasUsed) * BigInt(m.effectiveGasPrice);
     const l1Wei =
-      m.l1GasUsed != null && mainnetBasefee != null
-        ? BigInt(m.l1GasUsed) * mainnetBasefee
+      l2Price != null && mainnetBasefee != null
+        ? l1GasForL2(m) * mainnetBasefee
         : BigInt(m.l1DataFee);
     rows.push([chain, exec.toString(), l1Wei.toString()].join(" "));
   }
