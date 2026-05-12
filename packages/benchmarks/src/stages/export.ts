@@ -146,7 +146,8 @@ export function writeReadLatencyTable(run: RunResults, outDir: string): string {
   for (const [chain, data] of Object.entries(run.chains)) {
     if (data.readLatency.length === 0) continue;
     const s = data.readLatency.map((x) => x.latencyMs).sort((a, b) => a - b);
-    const pick = (p: number) => s[Math.min(s.length - 1, Math.floor(p * s.length))];
+    const pick = (p: number) =>
+      s[Math.max(0, Math.min(s.length - 1, Math.ceil(p * s.length) - 1))];
     rows.push([chain, pick(0.5), pick(0.95), pick(0.99), s[s.length - 1]].join(","));
   }
   fs.writeFileSync(csvPath, [header, ...rows].join("\n") + "\n");
@@ -160,7 +161,8 @@ export function writeInclusionLatencyTable(run: RunResults, outDir: string): str
   for (const [chain, data] of Object.entries(run.chains)) {
     if (data.revokeFromBatch.length === 0) continue;
     const s = data.revokeFromBatch.map((x) => x.inclusionLatencyMs).sort((a, b) => a - b);
-    const pick = (p: number) => s[Math.min(s.length - 1, Math.floor(p * s.length))];
+    const pick = (p: number) =>
+      s[Math.max(0, Math.min(s.length - 1, Math.ceil(p * s.length) - 1))];
     rows.push([chain, pick(0.5), pick(0.95)].join(","));
   }
   fs.writeFileSync(csvPath, [header, ...rows].join("\n") + "\n");

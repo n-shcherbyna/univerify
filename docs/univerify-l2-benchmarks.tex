@@ -99,9 +99,17 @@ Dla \texttt{statusWithProof} zebrano 100 próbek czasu odpowiedzi RPC.
 
 \begin{table}[H]
   \centering
-  \caption{Tabela 5: Latencja inkluzji transakcji zapisu.}
+  \caption{Tabela 5: Czas odbioru paragonu transakcji zapisu po stronie klienta.}
   \csvautotabular{\DataDir/table-inclusion-latency.csv}
 \end{table}
+
+\noindent Mierzona wartość to czas między wywołaniem \texttt{sendTransaction}
+a otrzymaniem paragonu przez klienta RPC. Przy interwale odpytywania
+około 4 s (domyślnym w bibliotece viem) wynik jest górnym ograniczeniem
+faktycznego czasu inkluzji w bloku, nie jego dokładnym pomiarem;
+rozkład wartości na sieci Sepolia jest wyraźnie skupiony wokół
+wielokrotności czasu bloku ($\approx 12$ s), co potwierdza powyższą
+interpretację.
 
 \section{Wyniki: wrażliwość na scenariusze basefee}
 \begin{figure}[H]
