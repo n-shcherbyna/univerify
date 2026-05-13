@@ -11,6 +11,12 @@ import { mainnet } from "viem/chains";
  * execution clients to derive blob basefee from excessBlobGas.
  *
  * Source: EIP-4844, "fake_exponential" pseudocode.
+ *
+ * NOTE: Not used in production — `fetchBasefeeHistory` now calls
+ * `eth_feeHistory` to read `baseFeePerBlobGas` directly from the node,
+ * which is resilient to post-Cancun fork changes to BLOB_BASE_FEE_UPDATE_FRACTION
+ * (Pectra raised it; later BPO forks adjust it further). Kept exported so the
+ * spec reference function remains available and testable.
  */
 export function fakeExponential(
   factor: bigint,
@@ -74,9 +80,10 @@ const BLOCKS_PER_DAY = 7200; // mainnet, ~12s blocks
 const WINDOW_DAYS = 90;
 const SAMPLE_STRIDE = BLOCKS_PER_DAY; // one sample per day
 
-// EIP-4844 constants
-const MIN_BASE_FEE_PER_BLOB_GAS = 1n;
-const BLOB_BASE_FEE_UPDATE_FRACTION = 3338477n;
+type FeeHistoryResponse = {
+  baseFeePerGas: `0x${string}`[];
+  baseFeePerBlobGas?: `0x${string}`[];
+};
 
 async function fetchBasefeeHistory(rpcUrl: string): Promise<PriceHistory> {
   const client = createPublicClient({ chain: mainnet, transport: http(rpcUrl) });
@@ -85,27 +92,28 @@ async function fetchBasefeeHistory(rpcUrl: string): Promise<PriceHistory> {
   for (let i = 0; i < WINDOW_DAYS; i++) {
     const bn = latest - BigInt(i) * BigInt(SAMPLE_STRIDE);
     if (bn <= 0n) break;
-    const block = await client.getBlock({ blockNumber: bn });
-    if (block.baseFeePerGas == null) continue;
-    if (block.excessBlobGas == null) {
+    // eth_feeHistory(blockCount=1, newestBlock=bn) returns [bn, bn+1] for both
+    // baseFeePerGas and baseFeePerBlobGas — we take index 0 (the sampled block).
+    // Using the node's computed value avoids hardcoding fork-dependent
+    // BLOB_BASE_FEE_UPDATE_FRACTION (Pectra and later BPO forks change it).
+    const fh = (await client.request({
+      method: "eth_feeHistory",
+      params: [`0x1`, `0x${bn.toString(16)}`, []],
+    } as never)) as FeeHistoryResponse;
+    if (!fh.baseFeePerBlobGas || fh.baseFeePerBlobGas.length === 0) {
       throw new Error(
-        `Block ${bn} predates Cancun (no excessBlobGas). The 90-day window ` +
-          `must lie entirely post-Cancun; re-run after the next sync.`
+        `Block ${bn} predates Cancun (eth_feeHistory returned no baseFeePerBlobGas). ` +
+          `The 90-day window must lie entirely post-Cancun; re-run after the next sync.`
       );
     }
-    const blobBaseFee = fakeExponential(
-      MIN_BASE_FEE_PER_BLOB_GAS,
-      block.excessBlobGas,
-      BLOB_BASE_FEE_UPDATE_FRACTION
-    );
     samples.push({
       blockNumber: Number(bn),
-      baseFeePerGas: block.baseFeePerGas.toString(),
-      blobBaseFeePerGas: blobBaseFee.toString(),
+      baseFeePerGas: BigInt(fh.baseFeePerGas[0]).toString(),
+      blobBaseFeePerGas: BigInt(fh.baseFeePerBlobGas[0]).toString(),
     });
   }
   return {
-    source: "eth_getBlockByNumber",
+    source: "eth_feeHistory",
     fetchedAt: new Date().toISOString(),
     windowDays: WINDOW_DAYS,
     samples,
