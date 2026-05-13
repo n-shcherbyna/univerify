@@ -28,7 +28,11 @@ export function fakeExponential(
   return output / denominator;
 }
 
-export type PriceSample = { blockNumber: number; baseFeePerGas: string };
+export type PriceSample = {
+  blockNumber: number;
+  baseFeePerGas: string;
+  blobBaseFeePerGas: string;
+};
 export type PriceHistory = {
   source: string;
   fetchedAt: string;
@@ -52,6 +56,10 @@ const BLOCKS_PER_DAY = 7200; // mainnet, ~12s blocks
 const WINDOW_DAYS = 90;
 const SAMPLE_STRIDE = BLOCKS_PER_DAY; // one sample per day
 
+// EIP-4844 constants
+const MIN_BASE_FEE_PER_BLOB_GAS = 1n;
+const BLOB_BASE_FEE_UPDATE_FRACTION = 3338477n;
+
 async function fetchBasefeeHistory(rpcUrl: string): Promise<PriceHistory> {
   const client = createPublicClient({ chain: mainnet, transport: http(rpcUrl) });
   const latest = await client.getBlockNumber();
@@ -61,7 +69,22 @@ async function fetchBasefeeHistory(rpcUrl: string): Promise<PriceHistory> {
     if (bn <= 0n) break;
     const block = await client.getBlock({ blockNumber: bn });
     if (block.baseFeePerGas == null) continue;
-    samples.push({ blockNumber: Number(bn), baseFeePerGas: block.baseFeePerGas.toString() });
+    if (block.excessBlobGas == null) {
+      throw new Error(
+        `Block ${bn} predates Cancun (no excessBlobGas). The 90-day window ` +
+          `must lie entirely post-Cancun; re-run after the next sync.`
+      );
+    }
+    const blobBaseFee = fakeExponential(
+      MIN_BASE_FEE_PER_BLOB_GAS,
+      block.excessBlobGas,
+      BLOB_BASE_FEE_UPDATE_FRACTION
+    );
+    samples.push({
+      blockNumber: Number(bn),
+      baseFeePerGas: block.baseFeePerGas.toString(),
+      blobBaseFeePerGas: blobBaseFee.toString(),
+    });
   }
   return {
     source: "eth_getBlockByNumber",
