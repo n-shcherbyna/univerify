@@ -4,6 +4,30 @@ import path from "node:path";
 import { createPublicClient, http } from "viem";
 import { mainnet } from "viem/chains";
 
+/**
+ * EIP-4844 reference exponential approximation.
+ * Returns: factor * e^(numerator / denominator) — implemented as an integer
+ * Taylor series, matching the consensus-spec reference function used by
+ * execution clients to derive blob basefee from excessBlobGas.
+ *
+ * Source: EIP-4844, "fake_exponential" pseudocode.
+ */
+export function fakeExponential(
+  factor: bigint,
+  numerator: bigint,
+  denominator: bigint
+): bigint {
+  let i = 1n;
+  let output = 0n;
+  let numeratorAccum = factor * denominator;
+  while (numeratorAccum > 0n) {
+    output += numeratorAccum;
+    numeratorAccum = (numeratorAccum * numerator) / (denominator * i);
+    i += 1n;
+  }
+  return output / denominator;
+}
+
 export type PriceSample = { blockNumber: number; baseFeePerGas: string };
 export type PriceHistory = {
   source: string;
