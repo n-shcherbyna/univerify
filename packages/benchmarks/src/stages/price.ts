@@ -41,15 +41,33 @@ export type PriceHistory = {
 };
 
 export type Percentiles = { p10: bigint; p50: bigint; p90: bigint };
+export type PriceQuotePercentiles = {
+  basefee: Percentiles;
+  blobBasefee: Percentiles;
+};
 
-export function derivePercentiles(h: PriceHistory): Percentiles {
-  const bigs = h.samples
-    .map((s) => BigInt(s.baseFeePerGas))
-    .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
-  // Nearest-rank, zero-indexed: index = ceil(p * n) - 1, clamped to [0, n-1].
-  const pick = (p: number) =>
-    bigs[Math.max(0, Math.min(bigs.length - 1, Math.ceil(p * bigs.length) - 1))];
-  return { p10: pick(0.1), p50: pick(0.5), p90: pick(0.9) };
+export function derivePercentiles(h: PriceHistory): PriceQuotePercentiles {
+  if (h.samples.length === 0) {
+    throw new Error("derivePercentiles: empty price history");
+  }
+  if (h.samples[0].blobBaseFeePerGas == null) {
+    throw new Error(
+      "derivePercentiles: price-history file predates blob basefee support. " +
+        "Re-run `benchmarks price` to fetch a fresh window with blob basefees."
+    );
+  }
+  const pickWei = (selector: (s: PriceSample) => string): Percentiles => {
+    const bigs = h.samples
+      .map((s) => BigInt(selector(s)))
+      .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+    const pick = (p: number) =>
+      bigs[Math.max(0, Math.min(bigs.length - 1, Math.ceil(p * bigs.length) - 1))];
+    return { p10: pick(0.1), p50: pick(0.5), p90: pick(0.9) };
+  };
+  return {
+    basefee: pickWei((s) => s.baseFeePerGas),
+    blobBasefee: pickWei((s) => s.blobBaseFeePerGas),
+  };
 }
 
 const BLOCKS_PER_DAY = 7200; // mainnet, ~12s blocks

@@ -4,11 +4,14 @@ import tiny from "../fixtures/price-history/tiny-prices.json";
 import { derivePercentiles } from "../../src/stages/price.js";
 
 describe("derivePercentiles", () => {
-  it("returns p10/p50/p90 of sampled basefees in wei (bigint)", () => {
-    const { p10, p50, p90 } = derivePercentiles(tiny);
-    expect(p10).toBe(10_000_000_000n);
-    expect(p50).toBe(30_000_000_000n);
-    expect(p90).toBe(50_000_000_000n);
+  it("returns p10/p50/p90 for basefee and blob basefee in wei (bigint)", () => {
+    const { basefee, blobBasefee } = derivePercentiles(tiny);
+    expect(basefee.p10).toBe(10_000_000_000n);
+    expect(basefee.p50).toBe(30_000_000_000n);
+    expect(basefee.p90).toBe(50_000_000_000n);
+    expect(blobBasefee.p10).toBe(1_000_000_000n);
+    expect(blobBasefee.p50).toBe(3_000_000_000n);
+    expect(blobBasefee.p90).toBe(5_000_000_000n);
   });
 });
 
@@ -29,5 +32,17 @@ describe("fakeExponential (EIP-4844)", () => {
     const low = fakeExponential(1n, 1_000_000n, 3338477n);
     const high = fakeExponential(1n, 5_000_000n, 3338477n);
     expect(high).toBeGreaterThan(low);
+  });
+});
+
+describe("derivePercentiles migration guard", () => {
+  it("throws a clear error when price history predates blob support", () => {
+    const old = {
+      source: "eth_feeHistory",
+      fetchedAt: "2026-04-19T12:00:00Z",
+      windowDays: 90,
+      samples: [{ blockNumber: 100, baseFeePerGas: "10000000000" }],
+    };
+    expect(() => derivePercentiles(old as never)).toThrow(/predates blob basefee/);
   });
 });
