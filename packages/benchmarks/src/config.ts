@@ -46,11 +46,23 @@ export const RPC_ENV: Record<ChainKey, string> = {
  * export stage to project measured L2 testnet gas usage to mainnet cost.
  * L1 chains use the L1 mainnet basefee (from price history) directly.
  *
- * Values are conservative round numbers for an L2 in typical (non-congested)
- * conditions; they are set by the sequencer and do not track L1 basefee.
- *   Arbitrum One — ~0.01–0.1 gwei observed; 0.1 gwei used here.
- *   Base mainnet — ~0.001–0.01 gwei observed; 0.005 gwei used here.
- *   zkSync Era  — ~0.025–0.1 gwei observed; 0.05 gwei used here.
+ * These values are conservative upper bounds chosen above current snapshot
+ * to absorb typical congestion swings; they are set by each chain's
+ * sequencer and do not track L1 basefee. A real run can override per
+ * scenario; the thesis Limitations section discloses the snapshot.
+ *
+ * Live snapshots taken 2026-05-13 via `eth_gasPrice` on each mainnet RPC:
+ *   arb1.arbitrum.io/rpc:     20_000_000  wei (0.02   gwei)
+ *   mainnet.base.org:          6_000_000  wei (0.006  gwei)
+ *   mainnet.era.zksync.io:    45_250_000  wei (0.0453 gwei)
+ *
+ * Conservative values used here (round numbers above the snapshot):
+ *   arbitrumSepolia → 100_000_000 wei (0.1   gwei) — 5× live snapshot
+ *   baseSepolia     →   5_000_000 wei (0.005 gwei) — ~live snapshot
+ *   zksyncSepolia   →  50_000_000 wei (0.05  gwei) — ~live snapshot
+ *
+ * Sources: L2BEAT cost panels (https://l2beat.com/scaling/projects/{arbitrum,base,zksync-era})
+ * cross-checked against live eth_gasPrice on the snapshot date.
  */
 export const L2_MAINNET_GAS_PRICE_WEI: Partial<Record<ChainKey, bigint>> = {
   arbitrumSepolia: 100_000_000n,

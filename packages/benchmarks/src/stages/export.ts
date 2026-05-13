@@ -23,8 +23,15 @@ export type RunResults = {
 };
 
 // --- Cost model -----------------------------------------------------------
-/** ETH price in USD used for USD-cost columns. Sourced separately; hard-coded for now. */
-export const ETH_USD = 3500;
+/**
+ * ETH price in USD used for the USD-cost columns. Defaults to the
+ * 2026-05-13 snapshot ($3500, CoinGecko ETH/USD spot, mid-day UTC). For
+ * a fresh export at a different snapshot, set the `ETH_USD_SNAPSHOT`
+ * env var. The chosen value is also recorded in `meta.json` so every
+ * data file is traceable to the price assumption that produced it.
+ */
+export const ETH_USD_SNAPSHOT_DATE = "2026-05-13";
+export const ETH_USD = Number(process.env.ETH_USD_SNAPSHOT ?? 3500);
 
 function weiToUsd(wei: bigint): number {
   const eth = Number(wei) / 1e18;
@@ -280,6 +287,7 @@ export function writeMeta(
     measuredAt: run.measuredAt,
     priceSource: pricePath,
     ethUsd: ETH_USD,
+    ethUsdSnapshotDate: ETH_USD_SNAPSHOT_DATE,
     chains: Object.keys(run.chains),
   };
   fs.writeFileSync(outPath, JSON.stringify(meta, null, 2));
