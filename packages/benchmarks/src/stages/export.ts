@@ -2,12 +2,12 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { NormalizedMetrics, ReadLatencySample } from "../chains/types.js";
+import { BATCH_SIZES } from "../config.js";
 import {
-  BATCH_SIZES,
-  L1_GAS_PER_CALLDATA_BYTE_ESTIMATE,
-  L2_MAINNET_GAS_PRICE_WEI,
-  type ChainKey,
-} from "../config.js";
+  getCostModel,
+  totalCostWei,
+  type PriceQuote,
+} from "../cost-models/index.js";
 import { derivePercentiles, type PriceHistory } from "./price.js";
 
 // --- result envelope written by Stage 2 -----------------------------------
@@ -26,33 +26,6 @@ export type RunResults = {
 /** ETH price in USD used for USD-cost columns. Sourced separately; hard-coded for now. */
 export const ETH_USD = 3500;
 
-function l1GasForL2(m: NormalizedMetrics): bigint {
-  // Prefer the chain's reported l1GasUsed. Fall back to a per-byte estimate
-  // only when the chain reports zero and we have a calibration for it
-  // (Arbitrum Sepolia waives L1 data fees on testnet; mainnet does not).
-  const measured = m.l1GasUsed != null ? BigInt(m.l1GasUsed) : 0n;
-  const perByte = L1_GAS_PER_CALLDATA_BYTE_ESTIMATE[m.chainName as ChainKey];
-  if (perByte == null) return measured;
-  const estimated = BigInt(m.calldataBytes) * BigInt(perByte);
-  return measured > estimated ? measured : estimated;
-}
-
-function totalCostWei(m: NormalizedMetrics, mainnetBasefeeWei: bigint): bigint {
-  // Cost model is chain-aware so L2 execution gas is not priced at L1 rates.
-  //   L1 (e.g. Sepolia → mainnet): gasUsed × L1 mainnet basefee.
-  //   L2 mainnet projection:       gasUsed × L2 sequencer price (constant)
-  //                              + l1Gas × L1 mainnet basefee   (rollup data posting,
-  //                                                              measured or estimated).
-  // Falls back to the L1 formula for any chain without an L2 gas-price entry.
-  const l2Price = L2_MAINNET_GAS_PRICE_WEI[m.chainName as ChainKey];
-  if (l2Price == null) {
-    return BigInt(m.gasUsed) * mainnetBasefeeWei;
-  }
-  const execCost = BigInt(m.gasUsed) * l2Price;
-  const l1Cost = l1GasForL2(m) * mainnetBasefeeWei;
-  return execCost + l1Cost;
-}
-
 function weiToUsd(wei: bigint): number {
   const eth = Number(wei) / 1e18;
   return eth * ETH_USD;
@@ -64,7 +37,10 @@ export function writeIssueCostTable(
   prices: PriceHistory,
   outDir: string
 ): string {
-  const { p10, p50, p90 } = derivePercentiles(prices);
+  const { basefee, blobBasefee } = derivePercentiles(prices);
+  const q10: PriceQuote = { basefeeWei: basefee.p10, blobBasefeeWei: blobBasefee.p10 };
+  const q50: PriceQuote = { basefeeWei: basefee.p50, blobBasefeeWei: blobBasefee.p50 };
+  const q90: PriceQuote = { basefeeWei: basefee.p90, blobBasefeeWei: blobBasefee.p90 };
   fs.mkdirSync(outDir, { recursive: true });
   const csvPath = path.join(outDir, "table-issue-cost.csv");
 
@@ -89,15 +65,15 @@ export function writeIssueCostTable(
     const l1 = sizeCols.map((s) => BigInt(byBatch.get(s)?.l1DataFee ?? 0n).toString());
     const u10 = sizeCols.map((s) => {
       const m = byBatch.get(s);
-      return m ? weiToUsd(totalCostWei(m, p10)).toFixed(6) : "";
+      return m ? weiToUsd(totalCostWei(m, q10)).toFixed(6) : "";
     });
     const u50 = sizeCols.map((s) => {
       const m = byBatch.get(s);
-      return m ? weiToUsd(totalCostWei(m, p50)).toFixed(6) : "";
+      return m ? weiToUsd(totalCostWei(m, q50)).toFixed(6) : "";
     });
     const u90 = sizeCols.map((s) => {
       const m = byBatch.get(s);
-      return m ? weiToUsd(totalCostWei(m, p90)).toFixed(6) : "";
+      return m ? weiToUsd(totalCostWei(m, q90)).toFixed(6) : "";
     });
     rows.push([chain, ...gas, ...l1, ...u10, ...u50, ...u90].join(","));
   }
@@ -111,7 +87,8 @@ export function writeIssuePerDiplomaTable(
   prices: PriceHistory,
   outDir: string
 ): string {
-  const { p50 } = derivePercentiles(prices);
+  const { basefee, blobBasefee } = derivePercentiles(prices);
+  const q50: PriceQuote = { basefeeWei: basefee.p50, blobBasefeeWei: blobBasefee.p50 };
   const csvPath = path.join(outDir, "table-issue-per-diploma.csv");
   const sizeCols = [...BATCH_SIZES];
   const header = ["chain", ...sizeCols.map((s) => `usd_p50_per_diploma_${s}`)].join(",");
@@ -125,7 +102,7 @@ export function writeIssuePerDiplomaTable(
     const values = sizeCols.map((s) => {
       const m = byBatch.get(s);
       if (!m || m.batchSize == null) return "";
-      return (weiToUsd(totalCostWei(m, p50)) / m.batchSize).toFixed(9);
+      return (weiToUsd(totalCostWei(m, q50)) / m.batchSize).toFixed(9);
     });
     rows.push([chain, ...values].join(","));
   }
@@ -138,7 +115,8 @@ export function writeRevokeCostTable(
   prices: PriceHistory,
   outDir: string
 ): string {
-  const { p50 } = derivePercentiles(prices);
+  const { basefee, blobBasefee } = derivePercentiles(prices);
+  const q50: PriceQuote = { basefeeWei: basefee.p50, blobBasefeeWei: blobBasefee.p50 };
   const csvPath = path.join(outDir, "table-revoke-cost.csv");
   const header = "chain,median_gas,median_l1data_wei,usd_p50";
   const rows: string[] = [];
@@ -148,7 +126,7 @@ export function writeRevokeCostTable(
       a.gasUsed < b.gasUsed ? -1 : a.gasUsed > b.gasUsed ? 1 : 0
     );
     const mid = sorted[Math.floor(sorted.length / 2)];
-    const usd = weiToUsd(totalCostWei(mid, p50));
+    const usd = weiToUsd(totalCostWei(mid, q50));
     rows.push([chain, mid.gasUsed, mid.l1DataFee, usd.toFixed(6)].join(","));
   }
   fs.writeFileSync(csvPath, [header, ...rows].join("\n") + "\n");
@@ -194,7 +172,8 @@ export function writeFigCostPerDiploma(
   prices: PriceHistory,
   outDir: string
 ): string {
-  const { p50 } = derivePercentiles(prices);
+  const { basefee, blobBasefee } = derivePercentiles(prices);
+  const q50: PriceQuote = { basefeeWei: basefee.p50, blobBasefeeWei: blobBasefee.p50 };
   const datPath = path.join(outDir, "fig1-cost-per-diploma.dat");
   const sizeCols = [...BATCH_SIZES];
   const header = ["batchSize", ...Object.keys(run.chains)].join(" ");
@@ -205,7 +184,7 @@ export function writeFigCostPerDiploma(
       const m = run.chains[chain].issueBatch.find(
         (x) => x.tag === "main" && x.batchSize === s
       );
-      cols.push(m ? (weiToUsd(totalCostWei(m, p50)) / s).toFixed(12) : "nan");
+      cols.push(m ? (weiToUsd(totalCostWei(m, q50)) / s).toFixed(12) : "nan");
     }
     rows.push(cols.join(" "));
   }
@@ -221,26 +200,25 @@ export function writeFigGasVsL1Data(
   const datPath = path.join(outDir, "fig2-gas-vs-l1data.dat");
   const header = "chain execution_wei l1data_wei";
   const rows: string[] = [];
-  const mainnetBasefee = prices ? derivePercentiles(prices).p50 : null;
+
+  let q50: PriceQuote | null = null;
+  if (prices) {
+    const { basefee, blobBasefee } = derivePercentiles(prices);
+    q50 = { basefeeWei: basefee.p50, blobBasefeeWei: blobBasefee.p50 };
+  }
+
   for (const [chain, data] of Object.entries(run.chains)) {
     const m = data.issueBatch.find((x) => x.tag === "main" && x.batchSize === 1000);
     if (!m) continue;
-    // Mainnet-projected breakdown: L2 execution at sequencer price, L1 data
-    // posting at L1 mainnet p50 basefee. Falls back to measured testnet values
-    // when no price history is provided (test path).
-    const l2Price = L2_MAINNET_GAS_PRICE_WEI[m.chainName as ChainKey];
-    const exec =
-      l2Price != null
-        ? BigInt(m.gasUsed) * l2Price
-        : mainnetBasefee != null
-          ? BigInt(m.gasUsed) * mainnetBasefee
-          : BigInt(m.gasUsed) * BigInt(m.effectiveGasPrice);
-    const l1Wei =
-      l2Price != null && mainnetBasefee != null
-        ? l1GasForL2(m) * mainnetBasefee
-        : BigInt(m.l1DataFee);
+    const model = getCostModel(m.chainName);
+    // When prices are absent (test path), fall back to measured testnet values
+    // so the existing structural test on the empty fixture still works.
+    const q = q50 ?? { basefeeWei: BigInt(m.effectiveGasPrice), blobBasefeeWei: 0n };
+    const exec = model.exec(m, q);
+    const l1Wei = q50 != null ? model.l1Data(m, q) : BigInt(m.l1DataFee);
     rows.push([chain, exec.toString(), l1Wei.toString()].join(" "));
   }
+
   fs.writeFileSync(datPath, [header, ...rows].join("\n") + "\n");
   return datPath;
 }
@@ -268,7 +246,10 @@ export function writeFigBasefeeScenarios(
   prices: PriceHistory,
   outDir: string
 ): string {
-  const { p10, p50, p90 } = derivePercentiles(prices);
+  const { basefee, blobBasefee } = derivePercentiles(prices);
+  const q10: PriceQuote = { basefeeWei: basefee.p10, blobBasefeeWei: blobBasefee.p10 };
+  const q50: PriceQuote = { basefeeWei: basefee.p50, blobBasefeeWei: blobBasefee.p50 };
+  const q90: PriceQuote = { basefeeWei: basefee.p90, blobBasefeeWei: blobBasefee.p90 };
   const datPath = path.join(outDir, "fig4-basefee-scenarios.dat");
   const header = "chain quiet_usd normal_usd congested_usd";
   const rows: string[] = [];
@@ -278,9 +259,9 @@ export function writeFigBasefeeScenarios(
     rows.push(
       [
         chain,
-        weiToUsd(totalCostWei(m, p10)).toFixed(6),
-        weiToUsd(totalCostWei(m, p50)).toFixed(6),
-        weiToUsd(totalCostWei(m, p90)).toFixed(6),
+        weiToUsd(totalCostWei(m, q10)).toFixed(6),
+        weiToUsd(totalCostWei(m, q50)).toFixed(6),
+        weiToUsd(totalCostWei(m, q90)).toFixed(6),
       ].join(" ")
     );
   }
