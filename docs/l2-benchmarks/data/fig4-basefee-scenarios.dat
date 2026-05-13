@@ -1,0 +1,5 @@
+chain quiet_usd normal_usd congested_usd
+sepolia 0.007285 0.033921 0.178286
+arbitrumSepolia 0.017855 0.017857 0.017868
+baseSepolia 0.000894 0.000897 0.000916
+zksyncSepolia 0.023006 0.023006 0.023006

@@ -1,0 +1,27 @@
+{
+  "name": "@univerify/benchmarks",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "start": "node --import tsx src/index.ts",
+    "deploy": "node --import tsx src/index.ts deploy",
+    "measure": "node --import tsx src/index.ts measure",
+    "price": "node --import tsx src/index.ts price",
+    "export": "node --import tsx src/index.ts export",
+    "all": "node --import tsx src/index.ts all",
+    "smoke": "node --import tsx src/index.ts smoke"
+  },
+  "dependencies": {
+    "@univerify/verifier-core": "file:../verifier-core",
+    "viem": "^2.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^3.0.0"
+  }
+}

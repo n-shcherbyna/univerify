@@ -1,0 +1,9 @@
+{
+  "transactionHash": "0xcccccc00000000000000000000000000000000000000000000000000000001",
+  "blockNumber": "0x3456789",
+  "gasUsed": "0x30d40",
+  "effectiveGasPrice": "0x5f5e100",
+  "gasUsedForL1": "0x249f0",
+  "status": "0x1",
+  "logs": []
+}

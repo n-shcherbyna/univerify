@@ -1,0 +1,146 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[polish]{babel}
+\usepackage{lmodern}
+\usepackage{geometry}
+\usepackage{booktabs}
+\usepackage{siunitx}
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\usepackage{csvsimple}
+\usepackage{underscore}
+\usepackage{hyperref}
+\usepackage{caption}
+\usepackage{float}
+
+\pgfplotsset{compat=1.18}
+\geometry{margin=2.2cm}
+\sisetup{group-separator={\,}}
+
+\newcommand{\DataDir}{l2-benchmarks/data}
+
+\title{\textbf{UniVerify: Benchmarki warstwy 2\\w rejestrze dyplomów opartym na Ethereum}\\[0.6em]
+\large Porównanie Sepolia, Arbitrum, Base oraz zkSync}
+\author{Nazar Shcherbyna \\ Praca magisterska}
+\date{Pomiar wykonano: \input{\DataDir/measured-at.tex}\unskip}
+
+\begin{document}
+\maketitle
+\tableofcontents
+\newpage
+
+\section{Wprowadzenie}
+Niniejszy rozdział porównuje koszt uruchomienia kontraktu \texttt{DiplomaRegistry}
+na czterech sieciach Ethereum: warstwie pierwszej (Sepolia, jako punkt odniesienia)
+oraz trzech rozwiązaniach warstwy drugiej reprezentujących różne rodziny
+(Arbitrum Nitro, Base jako przedstawiciel OP-stack, zkSync Era jako rollup z dowodami zwięzłości).
+
+\section{Metodologia}
+\subsection{Pomiary}
+Każda sieć mierzona jest na sieci testowej: \emph{zużycie gazu} i
+\emph{opłata za dane L1} są wielkościami rzeczywistymi,
+natomiast koszty w USD są modelowane z~historycznych wartości \texttt{baseFeePerGas}
+warstwy pierwszej z ostatnich 90 dni (percentyle p10/p50/p90).
+
+\subsection{Parametry próby}
+Dla \texttt{issueBatch} użyto rozmiarów paczek
+$\{1, 10, 100, 1\,000, 10\,000\}$. Dla \texttt{revokeFromBatch}
+zebrano 30 próbek przeciwko paczce seed o rozmiarze 40.
+Dla \texttt{statusWithProof} zebrano 100 próbek czasu odpowiedzi RPC.
+
+\section{Wyniki: koszt \texttt{issueBatch}}
+\begin{table}[H]
+  \centering
+  \caption{Tabela 1: Koszt \texttt{issueBatch} według sieci i rozmiaru paczki.}
+  \csvautotabular{\DataDir/table-issue-cost.csv}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \caption{Tabela 2: Koszt na dyplom (amortyzacja paczki) w USD, scenariusz p50.}
+  \csvautotabular{\DataDir/table-issue-per-diploma.csv}
+\end{table}
+
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}
+    \begin{loglogaxis}[
+      xlabel={Rozmiar paczki (liczba dyplomów)},
+      ylabel={Koszt na dyplom (USD)},
+      legend pos=north east,
+      grid=major,
+      width=0.85\textwidth,
+      height=8cm,
+    ]
+      \addplot table[x=batchSize, y=sepolia] {\DataDir/fig1-cost-per-diploma.dat};
+      \addplot table[x=batchSize, y=arbitrumSepolia] {\DataDir/fig1-cost-per-diploma.dat};
+      \addplot table[x=batchSize, y=baseSepolia] {\DataDir/fig1-cost-per-diploma.dat};
+      \addplot table[x=batchSize, y=zksyncSepolia] {\DataDir/fig1-cost-per-diploma.dat};
+      \legend{Sepolia L1, Arbitrum Sepolia, Base Sepolia, zkSync Sepolia}
+    \end{loglogaxis}
+  \end{tikzpicture}
+  \caption{Rys. 1: Koszt na dyplom w funkcji rozmiaru paczki (skala log-log, scenariusz p50).}
+\end{figure}
+
+\section{Wyniki: koszt \texttt{revokeFromBatch}}
+\begin{table}[H]
+  \centering
+  \caption{Tabela 3: Koszt \texttt{revokeFromBatch} (pojedyncza transakcja, mediana).}
+  \csvautotabular{\DataDir/table-revoke-cost.csv}
+\end{table}
+
+\section{Wyniki: latencja}
+\begin{table}[H]
+  \centering
+  \caption{Tabela 4: Latencja odczytu \texttt{statusWithProof}.}
+  \csvautotabular{\DataDir/table-read-latency.csv}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \caption{Tabela 5: Czas odbioru paragonu transakcji zapisu po stronie klienta.}
+  \csvautotabular{\DataDir/table-inclusion-latency.csv}
+\end{table}
+
+\noindent Mierzona wartość to czas między wywołaniem \texttt{sendTransaction}
+a otrzymaniem paragonu przez klienta RPC. Przy interwale odpytywania
+około 4 s (domyślnym w bibliotece viem) wynik jest górnym ograniczeniem
+faktycznego czasu inkluzji w bloku, nie jego dokładnym pomiarem;
+rozkład wartości na sieci Sepolia jest wyraźnie skupiony wokół
+wielokrotności czasu bloku ($\approx 12$ s), co potwierdza powyższą
+interpretację.
+
+\section{Wyniki: wrażliwość na scenariusze basefee}
+\begin{figure}[H]
+  \centering
+  \begin{tikzpicture}
+    \begin{axis}[
+      ybar,
+      symbolic x coords={sepolia, arbitrumSepolia, baseSepolia, zksyncSepolia},
+      xtick=data,
+      ylabel={Koszt \texttt{issueBatch(1000)} (USD)},
+      bar width=10pt,
+      legend pos=north west,
+      width=0.85\textwidth,
+      height=8cm,
+    ]
+      \addplot table[x=chain, y=quiet_usd] {\DataDir/fig4-basefee-scenarios.dat};
+      \addplot table[x=chain, y=normal_usd] {\DataDir/fig4-basefee-scenarios.dat};
+      \addplot table[x=chain, y=congested_usd] {\DataDir/fig4-basefee-scenarios.dat};
+      \legend{p10 (quiet), p50 (normal), p90 (congested)}
+    \end{axis}
+  \end{tikzpicture}
+  \caption{Rys. 4: Koszt \texttt{issueBatch(1000)} przy scenariuszach basefee p10/p50/p90.}
+\end{figure}
+
+\section{Dyskusja}
+\paragraph{Ograniczenia pomiaru.}
+Ceny gazu zostały wzięte z historycznych wartości mainnet; same transakcje
+wykonano na sieciach testowych. Dla zkSync opłata za dane L1 nie jest wyodrębniona
+na paragonie — koszt publikacji jest wliczony w \texttt{gasUsed}.
+
+\paragraph{Wniosek.}
+\dots{}
+
+\end{document}
