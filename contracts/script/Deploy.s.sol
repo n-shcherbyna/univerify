@@ -8,6 +8,14 @@ contract Deploy is Script {
     function run() external returns (DiplomaRegistry registry) {
         vm.startBroadcast();
         registry = new DiplomaRegistry();
+        registry.onboardIssuerAndUniversity(
+            tx.origin,
+            1,
+            "Bench University",
+            "PL",
+            "https://bench.invalid",
+            "BENCH-001"
+        );
         vm.stopBroadcast();
 
         uint256 chainId = block.chainid;

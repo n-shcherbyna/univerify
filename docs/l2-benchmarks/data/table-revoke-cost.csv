@@ -1,0 +1,5 @@
+chain,median_gas,median_l1data_wei,usd_p50
+sepolia,59784,0,0.039764
+arbitrumSepolia,59796,0,0.020941
+baseSepolia,59794,26106,0.001067
+zksyncSepolia,222722,0,0.038976

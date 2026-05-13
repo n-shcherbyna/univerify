@@ -1,0 +1,22 @@
+{
+  "runId": "20260419T120000-beef",
+  "measuredAt": "2026-04-19T12:00:00Z",
+  "chains": {
+    "sepolia": {
+      "issueBatch": [
+        { "chainId": 11155111, "chainName": "sepolia", "op": "issueBatch", "batchSize": 1, "tag": "main", "gasUsed": "55000", "effectiveGasPrice": "30000000000", "l1DataFee": "0", "calldataBytes": 68, "blockNumber": "100", "txHash": "0xaa", "submittedAt": 0, "includedAt": 100, "inclusionLatencyMs": 100 },
+        { "chainId": 11155111, "chainName": "sepolia", "op": "issueBatch", "batchSize": 100, "tag": "main", "gasUsed": "55000", "effectiveGasPrice": "30000000000", "l1DataFee": "0", "calldataBytes": 68, "blockNumber": "101", "txHash": "0xab", "submittedAt": 0, "includedAt": 120, "inclusionLatencyMs": 120 }
+      ],
+      "revokeFromBatch": [],
+      "readLatency": []
+    },
+    "baseSepolia": {
+      "issueBatch": [
+        { "chainId": 84532, "chainName": "baseSepolia", "op": "issueBatch", "batchSize": 1, "tag": "main", "gasUsed": "55000", "effectiveGasPrice": "100000", "l1DataFee": "1500000000000", "l1GasUsed": "10000", "calldataBytes": 68, "blockNumber": "100", "txHash": "0xbb", "submittedAt": 0, "includedAt": 200, "inclusionLatencyMs": 200 },
+        { "chainId": 84532, "chainName": "baseSepolia", "op": "issueBatch", "batchSize": 100, "tag": "main", "gasUsed": "55000", "effectiveGasPrice": "100000", "l1DataFee": "1500000000000", "l1GasUsed": "10000", "calldataBytes": 68, "blockNumber": "101", "txHash": "0xbc", "submittedAt": 0, "includedAt": 220, "inclusionLatencyMs": 220 }
+      ],
+      "revokeFromBatch": [],
+      "readLatency": []
+    }
+  }
+}
