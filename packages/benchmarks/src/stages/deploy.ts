@@ -1,7 +1,7 @@
 // packages/benchmarks/src/stages/deploy.ts
 import fs from "node:fs";
 import path from "node:path";
-import { execSync } from "node:child_process";
+import { execFileSync } from "node:child_process";
 import { CHAIN_IDS, CHAIN_KEYS, RPC_ENV, type ChainKey } from "../config.js";
 
 function deploymentPath(chainId: number): string {
@@ -21,9 +21,16 @@ function deployOne(key: ChainKey): void {
   if (!pk) throw new Error(`Missing BENCH_PK`);
 
   console.log(`[deploy] ${key} (${chainId}) — broadcasting...`);
-  execSync(
-    `forge script script/Deploy.s.sol:Deploy --rpc-url ${rpcUrl} --private-key ${pk} --broadcast`,
-    { cwd: path.resolve("contracts"), stdio: "inherit" }
+  execFileSync(
+    "forge",
+    [
+      "script",
+      "script/Deploy.s.sol:Deploy",
+      "--rpc-url", rpcUrl,
+      "--private-key", pk,
+      "--broadcast",
+    ],
+    { cwd: path.resolve("contracts"), stdio: "inherit", env: process.env }
   );
   if (!fs.existsSync(p)) {
     throw new Error(`[deploy] ${key}: Deploy.s.sol did not write ${p}`);
