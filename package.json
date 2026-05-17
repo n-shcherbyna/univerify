@@ -17,6 +17,7 @@
         "benchmarks:measure": "npm -w @univerify/benchmarks run measure",
         "benchmarks:price": "npm -w @univerify/benchmarks run price",
         "benchmarks:export": "npm -w @univerify/benchmarks run export",
+        "benchmarks:aggregate": "npm -w @univerify/benchmarks run aggregate",
         "benchmarks:all": "npm -w @univerify/benchmarks run all",
         "benchmarks:smoke": "npm -w @univerify/benchmarks run smoke"
     },
