@@ -28,8 +28,6 @@ import type { PerChainResults, RunResults } from "./export.js";
 import { resumeNeedsOp, markComplete, type ResumeProgress } from "./measureResume.js";
 import { findNextBatchId } from "./nextBatchId.js";
 
-const RESULTS_DIR = path.resolve("benchmarks", "results");
-
 async function checkBalance(adapter: ChainAdapter, key: ChainKey): Promise<void> {
   const bal = await adapter.publicClient.getBalance({
     address: adapter.walletClient.account!.address,
@@ -54,16 +52,19 @@ async function nextBatchId(adapter: ChainAdapter): Promise<bigint> {
   );
 }
 
-export type MeasureOpts = { only?: ChainKey; resume?: string };
+export type MeasureOpts = { only?: ChainKey; resume?: string; runLabel?: string };
 
 export async function stageMeasure(opts: MeasureOpts = {}): Promise<string> {
-  fs.mkdirSync(RESULTS_DIR, { recursive: true });
+  const resultsDir = opts.runLabel
+    ? path.resolve("benchmarks", "results", opts.runLabel)
+    : path.resolve("benchmarks", "results");
+  fs.mkdirSync(resultsDir, { recursive: true });
   const account = loadBenchAccount();
   const keys = opts.only ? [opts.only] : CHAIN_KEYS;
 
   const runId = opts.resume ?? newRunId();
-  const partialPath = path.join(RESULTS_DIR, `${runId}.partial.json`);
-  const finalPath = path.join(RESULTS_DIR, `${runId}.json`);
+  const partialPath = path.join(resultsDir, `${runId}.partial.json`);
+  const finalPath = path.join(resultsDir, `${runId}.json`);
 
   const onInterrupt = () => {
     console.log(`\n[measure] interrupted — partial state preserved at ${partialPath}`);

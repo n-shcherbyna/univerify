@@ -43,9 +43,18 @@ async function main(): Promise<void> {
       await stageDeploy(only);
       for (let r = 1; r <= runs; r++) {
         if (runs > 1) console.log(`[all] run ${r}/${runs}`);
-        await stageMeasure({ only });
+        await stageMeasure({
+          only,
+          runLabel: runs > 1 ? `run-${r}` : undefined,
+        });
       }
       await stagePrice();
+      if (runs > 1) {
+        // Aggregation handled in Task C.6 — for now, print guidance so the
+        // operator knows the export step needs the aggregate output.
+        console.log(`[all] runs=${runs}: run 'benchmarks aggregate' before export.`);
+        return;
+      }
       stageExport({});
       return;
     }
