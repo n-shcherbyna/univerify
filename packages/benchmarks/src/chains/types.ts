@@ -21,6 +21,8 @@ export type NormalizedMetrics = {
   submittedAt: number;
   includedAt: number;
   inclusionLatencyMs: number;
+  /** Additional inclusion-latency samples (ms) for this size, beyond the primary measurement. Phase C addition. */
+  latencySamplesMs?: number[];
 };
 
 export type ReadLatencySample = {

@@ -27,6 +27,14 @@ export const READ_N = 100;
 /** Seed-batch size used to pre-populate leaves for revokeBatch (must be ≥ REVOKE_N + 10 slack). */
 export const SEED_BATCH_SIZE = 40;
 
+/**
+ * Latency-only repetitions per issueBatch size. Each repetition consumes a
+ * fresh batchId. N>=30 lets us report p50/p95/σ instead of a single sample.
+ * Gas is deterministic per (size, code) so it's reported once; only timing
+ * is sampled multiple times.
+ */
+export const ISSUE_LATENCY_REPS = 30;
+
 /** Hard timeout for `waitForReceipt` (ms). zkSync tolerant. */
 export const RECEIPT_TIMEOUT_MS = 5 * 60 * 1000;
 
