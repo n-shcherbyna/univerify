@@ -1,7 +1,8 @@
 import { encodeFunctionData, type Address, type Hex } from "viem";
 import { DiplomaRegistryAbi, buildMerkleFromLeaves } from "@univerify/verifier-core";
 import type { ChainAdapter, NormalizedMetrics } from "../chains/types.js";
-import { REVOKE_N, SEED_BATCH_SIZE } from "../config.js";
+import { BENCH_RANDOM_SEED, REVOKE_N, SEED_BATCH_SIZE } from "../config.js";
+import { createPrng, sampleWithoutReplacement } from "../util/prng.js";
 import { now } from "../util/timing.js";
 import { sendWithRetry } from "../util/nonceManager.js";
 import {
@@ -38,9 +39,13 @@ export async function runRevokeBurst(
   });
   const tree = buildMerkleFromLeaves(leaves);
 
-  // 3. REVOKE_N distinct revokes
+  // 3. REVOKE_N distinct revokes — uniformly sampled from [0, SEED_BATCH_SIZE).
+  // Per-chain seed prefix keeps cross-chain runs independent.
+  const rng = createPrng(`${BENCH_RANDOM_SEED}:${adapter.name}:${nextBatchId.toString()}`);
+  const indices = sampleWithoutReplacement(rng, SEED_BATCH_SIZE, REVOKE_N);
+
   const revokes: NormalizedMetrics[] = [];
-  for (let i = 0; i < REVOKE_N; i++) {
+  for (const i of indices) {
     const docHash = docHashes[i];
     const proof = tree.proofs[i];
     const calldata = encodeFunctionData({

@@ -70,6 +70,13 @@ export const L2_MAINNET_GAS_PRICE_WEI: Partial<Record<ChainKey, bigint>> = {
   zksyncSepolia: 50_000_000n,
 };
 
+/**
+ * Seed for randomized revoke leaf selection. Default is the literal
+ * "univerify-phase-2" so a fresh `git clone` reproduces the committed run;
+ * override via `BENCH_RANDOM_SEED` for a perturbation study.
+ */
+export const BENCH_RANDOM_SEED = process.env.BENCH_RANDOM_SEED ?? "univerify-phase-2";
+
 /** Faucet URLs shown to the user on underfunded-wallet errors. */
 export const FAUCETS: Record<ChainKey, string> = {
   sepolia: "https://sepoliafaucet.com/",
