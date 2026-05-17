@@ -91,7 +91,6 @@ export async function stageMeasure(opts: MeasureOpts = {}): Promise<string> {
     for (const size of BATCH_SIZES) {
       if (!resumeNeedsOp(progress, key, "issueBatch", size)) {
         console.log(`[measure] ${key} issueBatch(${size}) already complete — skipping.`);
-        nextId += 1n;
         continue;
       }
       console.log(`[measure] ${key} issueBatch(${size}) batchId=${nextId} primary`);
