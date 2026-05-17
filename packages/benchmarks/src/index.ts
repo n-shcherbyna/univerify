@@ -3,6 +3,7 @@ import { stageDeploy } from "./stages/deploy.js";
 import { stageMeasure } from "./stages/measure.js";
 import { stagePrice } from "./stages/price.js";
 import { stageExport } from "./stages/export.js";
+import { stageAggregate } from "./stages/aggregate.js";
 import type { ChainKey } from "./config.js";
 
 function argValue(args: string[], flag: string): string | undefined {
@@ -34,6 +35,11 @@ async function main(): Promise<void> {
       stageExport({ resultsPath, pricesPath });
       return;
     }
+    case "aggregate": {
+      const runsDir = argValue(rest, "dir");
+      stageAggregate({ runsDir });
+      return;
+    }
     case "all": {
       const only = argValue(rest, "chain") as ChainKey | undefined;
       const runs = Number(argValue(rest, "runs") ?? "1");
@@ -50,12 +56,11 @@ async function main(): Promise<void> {
       }
       await stagePrice();
       if (runs > 1) {
-        // Aggregation handled in Task C.6 — for now, print guidance so the
-        // operator knows the export step needs the aggregate output.
-        console.log(`[all] runs=${runs}: run 'benchmarks aggregate' before export.`);
-        return;
+        const aggregated = stageAggregate({});
+        stageExport({ resultsPath: aggregated });
+      } else {
+        stageExport({});
       }
-      stageExport({});
       return;
     }
     case "smoke": {
@@ -67,7 +72,7 @@ async function main(): Promise<void> {
     }
     default:
       console.error(
-        "Usage: benchmarks {deploy|measure|price|export|all|smoke} [--chain=KEY] [--resume=RUN_ID] [--runs=N]"
+        "Usage: benchmarks {deploy|measure|price|export|aggregate|all|smoke} [--chain=KEY] [--resume=RUN_ID] [--runs=N]"
       );
       process.exit(1);
   }

@@ -11,6 +11,7 @@
     "measure": "node --import tsx src/index.ts measure",
     "price": "node --import tsx src/index.ts price",
     "export": "node --import tsx src/index.ts export",
+    "aggregate": "node --import tsx src/index.ts aggregate",
     "all": "node --import tsx src/index.ts all",
     "smoke": "node --import tsx src/index.ts smoke"
   },
