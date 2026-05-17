@@ -1,7 +1,7 @@
 // packages/benchmarks/src/stages/measure.ts
 import fs from "node:fs";
 import path from "node:path";
-import { keccak256, toBytes, type Hex } from "viem";
+import { type Hex } from "viem";
 import { DiplomaRegistryAbi, buildMerkleFromLeaves } from "@univerify/verifier-core";
 import { getAdapter } from "../chains/index.js";
 import type { ChainAdapter, NormalizedMetrics, ReadLatencySample } from "../chains/types.js";
@@ -25,10 +25,9 @@ import { runRevokeBurst } from "../ops/revokeBatch.js";
 import { runReadLatency } from "../ops/readLatency.js";
 import type { PerChainResults, RunResults } from "./export.js";
 import { resumeNeedsOp, markComplete, type ResumeProgress } from "./measureResume.js";
+import { findNextBatchId } from "./nextBatchId.js";
 
 const RESULTS_DIR = path.resolve("benchmarks", "results");
-const ZERO_BYTES32: Hex =
-  "0x0000000000000000000000000000000000000000000000000000000000000000";
 
 async function checkBalance(adapter: ChainAdapter, key: ChainKey): Promise<void> {
   const bal = await adapter.publicClient.getBalance({
@@ -43,19 +42,15 @@ async function checkBalance(adapter: ChainAdapter, key: ChainKey): Promise<void>
 }
 
 async function nextBatchId(adapter: ChainAdapter): Promise<bigint> {
-  // Issuer-scoped batchId: scan from 0 until getBatch returns the zero root.
   const issuer = adapter.walletClient.account!.address;
-  let id = 0n;
-  for (;;) {
-    const root = (await adapter.publicClient.readContract({
+  return findNextBatchId(async (id) =>
+    (await adapter.publicClient.readContract({
       address: adapter.registryAddress,
       abi: DiplomaRegistryAbi,
       functionName: "getBatch",
       args: [issuer, id],
-    })) as Hex;
-    if (root === ZERO_BYTES32) return id;
-    id += 1n;
-  }
+    })) as Hex
+  );
 }
 
 export type MeasureOpts = { only?: ChainKey; resume?: string };
