@@ -13,6 +13,7 @@ import {
   type ChainKey,
 } from "../config.js";
 import { loadBenchAccount } from "../util/wallet.js";
+import { atomicWriteJson } from "../util/atomicWrite.js";
 import { newRunId } from "../util/runId.js";
 import {
   batchSeed,
@@ -66,6 +67,13 @@ export async function stageMeasure(opts: MeasureOpts = {}): Promise<string> {
   const runId = opts.resume ?? newRunId();
   const partialPath = path.join(RESULTS_DIR, `${runId}.partial.json`);
   const finalPath = path.join(RESULTS_DIR, `${runId}.json`);
+
+  const onInterrupt = () => {
+    console.log(`\n[measure] interrupted — partial state preserved at ${partialPath}`);
+    process.exit(130);
+  };
+  process.once("SIGINT", onInterrupt);
+  process.once("SIGTERM", onInterrupt);
 
   const run: RunResults = fs.existsSync(partialPath)
     ? (JSON.parse(fs.readFileSync(partialPath, "utf8")) as RunResults)
@@ -126,20 +134,14 @@ export async function stageMeasure(opts: MeasureOpts = {}): Promise<string> {
     perChain.readLatency = reads;
 
     run.chains[key] = perChain;
-    fs.writeFileSync(partialPath, stringify(run));
+    atomicWriteJson(partialPath, run);
   }
 
   // promote partial → final
-  fs.writeFileSync(finalPath, stringify(run));
+  process.removeListener("SIGINT", onInterrupt);
+  process.removeListener("SIGTERM", onInterrupt);
+  atomicWriteJson(finalPath, run);
   fs.unlinkSync(partialPath);
   console.log(`[measure] wrote ${finalPath}`);
   return finalPath;
-}
-
-function stringify(obj: unknown): string {
-  return JSON.stringify(
-    obj,
-    (_, v) => (typeof v === "bigint" ? v.toString() : v),
-    2
-  );
 }
