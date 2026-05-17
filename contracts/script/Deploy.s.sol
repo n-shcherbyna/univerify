@@ -22,7 +22,8 @@ contract Deploy is Script {
         address addr = address(registry);
 
         string memory path = string.concat(
-            "deployments/",
+            vm.projectRoot(),
+            "/deployments/",
             vm.toString(chainId),
             ".json"
         );
