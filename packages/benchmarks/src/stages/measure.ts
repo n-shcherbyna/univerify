@@ -24,6 +24,7 @@ import {
 import { runRevokeBurst } from "../ops/revokeBatch.js";
 import { runReadLatency } from "../ops/readLatency.js";
 import type { PerChainResults, RunResults } from "./export.js";
+import { resumeNeedsOp, markComplete, type ResumeProgress } from "./measureResume.js";
 
 const RESULTS_DIR = path.resolve("benchmarks", "results");
 const ZERO_BYTES32: Hex =
@@ -75,71 +76,79 @@ export async function stageMeasure(opts: MeasureOpts = {}): Promise<string> {
   process.once("SIGINT", onInterrupt);
   process.once("SIGTERM", onInterrupt);
 
-  const run: RunResults = fs.existsSync(partialPath)
-    ? (JSON.parse(fs.readFileSync(partialPath, "utf8")) as RunResults)
-    : { runId, measuredAt: new Date().toISOString(), chains: {} };
+  const run: RunResults & { progress?: ResumeProgress } = fs.existsSync(partialPath)
+    ? (JSON.parse(fs.readFileSync(partialPath, "utf8")) as RunResults & { progress?: ResumeProgress })
+    : { runId, measuredAt: new Date().toISOString(), chains: {}, progress: {} };
+  const progress: ResumeProgress = (run.progress ??= {});
 
   for (const key of keys) {
-    if (run.chains[key]) {
-      console.log(`[measure] ${key} already present in run — skipping.`);
-      continue;
-    }
     const adapter = getAdapter(key, account);
     await checkBalance(adapter, key);
 
-    const perChain: PerChainResults = {
-      issueBatch: [],
-      revokeFromBatch: [],
-      readLatency: [],
-    };
+    const perChain: PerChainResults =
+      run.chains[key] ?? { issueBatch: [], revokeFromBatch: [], readLatency: [] };
+    run.chains[key] = perChain;
 
-    // issue sweep — main
     let nextId = await nextBatchId(adapter);
+
+    // issueBatch sweep — main, per-size skip
     for (const size of BATCH_SIZES) {
+      if (!resumeNeedsOp(progress, key, "issueBatch", size)) {
+        console.log(`[measure] ${key} issueBatch(${size}) already complete — skipping.`);
+        nextId += 1n;
+        continue;
+      }
       console.log(`[measure] ${key} issueBatch(${size}) batchId=${nextId}`);
       const m = await runIssueBatch(adapter, size, { tag: "main", nextBatchId: nextId });
       perChain.issueBatch.push(m);
       nextId += 1n;
+      markComplete(progress, key, "issueBatch", size);
+      atomicWriteJson(partialPath, run);
     }
 
-    // revoke burst (seed + revokes)
-    console.log(`[measure] ${key} revoke burst (seed batchId=${nextId})`);
-    const burst = await runRevokeBurst(adapter, nextId);
-    perChain.issueBatch.push(burst.seed);
-    perChain.revokeFromBatch.push(...burst.revokes);
-    const seedBatchId = nextId;
-    nextId += 1n;
+    // revoke burst + read latency are bundled (they share the seed batch)
+    if (resumeNeedsOp(progress, key, "revokeBurst")) {
+      console.log(`[measure] ${key} revoke burst (seed batchId=${nextId})`);
+      const burst = await runRevokeBurst(adapter, nextId);
+      perChain.issueBatch.push(burst.seed);
+      perChain.revokeFromBatch.push(...burst.revokes);
+      const seedBatchId = nextId;
+      nextId += 1n;
 
-    // read latency against seed batch, docHash 0
-    const issuer = adapter.walletClient.account!.address;
-    const seedDocHashes = makeSyntheticDocHashes(
-      SEED_BATCH_SIZE,
-      batchSeed(adapter, seedBatchId)
-    );
-    const seedLeaves = computeBatchLeaves({
-      registry: adapter.registryAddress,
-      chainId: BigInt(adapter.chainId),
-      issuer,
-      batchId: seedBatchId,
-      docHashes: seedDocHashes,
-    });
-    const tree = buildMerkleFromLeaves(seedLeaves);
-    console.log(`[measure] ${key} read latency (N samples)`);
-    const reads: ReadLatencySample[] = await runReadLatency(adapter, {
-      batchId: seedBatchId,
-      docHash: seedDocHashes[0],
-      proof: tree.proofs[0],
-      issuer,
-    });
-    perChain.readLatency = reads;
+      const issuer = adapter.walletClient.account!.address;
+      const seedDocHashes = makeSyntheticDocHashes(
+        SEED_BATCH_SIZE,
+        batchSeed(adapter, seedBatchId)
+      );
+      const seedLeaves = computeBatchLeaves({
+        registry: adapter.registryAddress,
+        chainId: BigInt(adapter.chainId),
+        issuer,
+        batchId: seedBatchId,
+        docHashes: seedDocHashes,
+      });
+      const tree = buildMerkleFromLeaves(seedLeaves);
+      console.log(`[measure] ${key} read latency (N samples)`);
+      const reads: ReadLatencySample[] = await runReadLatency(adapter, {
+        batchId: seedBatchId,
+        docHash: seedDocHashes[0],
+        proof: tree.proofs[0],
+        issuer,
+      });
+      perChain.readLatency = reads;
 
-    run.chains[key] = perChain;
-    atomicWriteJson(partialPath, run);
+      markComplete(progress, key, "revokeBurst");
+      markComplete(progress, key, "readLatency");
+      atomicWriteJson(partialPath, run);
+    } else {
+      console.log(`[measure] ${key} revoke burst already complete — skipping.`);
+    }
   }
 
-  // promote partial → final
+  // promote partial → final (strip transient progress field)
   process.removeListener("SIGINT", onInterrupt);
   process.removeListener("SIGTERM", onInterrupt);
+  delete (run as { progress?: ResumeProgress }).progress;
   atomicWriteJson(finalPath, run);
   fs.unlinkSync(partialPath);
   console.log(`[measure] wrote ${finalPath}`);
