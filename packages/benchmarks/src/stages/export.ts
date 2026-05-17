@@ -2,7 +2,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import type { NormalizedMetrics, ReadLatencySample } from "../chains/types.js";
-import { BATCH_SIZES } from "../config.js";
+import { BATCH_SIZES, RPC_PROVIDER, RPC_REGION, BENCH_RANDOM_SEED } from "../config.js";
 import {
   getCostModel,
   totalCostWei,
@@ -315,6 +315,9 @@ export function writeMeta(
     priceSource: pricePath,
     ethUsd: ETH_USD,
     ethUsdSnapshotDate: ETH_USD_SNAPSHOT_DATE,
+    rpcProvider: RPC_PROVIDER,
+    rpcRegion: RPC_REGION,
+    randomSeed: BENCH_RANDOM_SEED,
     chains: Object.keys(run.chains),
   };
   fs.writeFileSync(outPath, JSON.stringify(meta, null, 2));

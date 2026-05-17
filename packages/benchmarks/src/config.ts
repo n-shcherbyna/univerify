@@ -85,6 +85,10 @@ export const L2_MAINNET_GAS_PRICE_WEI: Partial<Record<ChainKey, bigint>> = {
  */
 export const BENCH_RANDOM_SEED = process.env.BENCH_RANDOM_SEED ?? "univerify-phase-2";
 
+/** Optional metadata: RPC provider name and POP/region, recorded in meta.json. */
+export const RPC_PROVIDER = process.env.RPC_PROVIDER ?? "unspecified";
+export const RPC_REGION = process.env.RPC_REGION ?? "unspecified";
+
 /** Faucet URLs shown to the user on underfunded-wallet errors. */
 export const FAUCETS: Record<ChainKey, string> = {
   sepolia: "https://sepoliafaucet.com/",

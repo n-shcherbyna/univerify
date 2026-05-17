@@ -41,6 +41,8 @@ Output goes to `docs/l2-benchmarks/data/`. Every artifact is paired with `meta.j
 | `RPC_MAINNET` | Ethereum mainnet RPC URL (for the `price` stage) |
 | `ETH_USD_SNAPSHOT` | (Optional) override ETH/USD price for export. Defaults to the value documented in `src/stages/export.ts`. |
 | `BENCH_RANDOM_SEED` | (Optional, Phase C) seed for randomized revoke. Defaults to `"univerify-phase-2"`. |
+| `RPC_PROVIDER` | (Optional) provider name string, recorded in `meta.json` (e.g., `"alchemy"`) |
+| `RPC_REGION` | (Optional) POP/region string, recorded in `meta.json` (e.g., `"us-east-1"`) |
 
 **Single-POP recommendation:** For defensible read-latency comparisons across chains, all four `RPC_*` variables should point at the **same provider and region** (e.g., Alchemy `us-east-1`). The thesis Limitations section discloses this.
 
