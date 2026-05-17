@@ -41,7 +41,7 @@ export async function sendWithRetry<TReceipt>(
       lastError = err;
       if (attempt < opts.maxAttempts) {
         console.warn(
-          `[nonceManager] receipt timeout on attempt ${attempt}/${opts.maxAttempts}, bumping and retrying`
+          `[nonceManager] receipt timeout on attempt ${attempt}/${opts.maxAttempts} (hash: ${hash}), bumping and retrying`
         );
       }
     }

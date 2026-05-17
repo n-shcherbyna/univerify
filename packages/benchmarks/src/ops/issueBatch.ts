@@ -64,38 +64,36 @@ export async function runIssueBatch(
   });
 
   const submittedAt = now();
-  let txHash: Hex | undefined;
-  await sendWithRetry({
+  const receipt = await sendWithRetry({
     client: adapter.publicClient,
-    send: async (attempt) => {
-      const hash = await adapter.walletClient.sendTransaction({
+    send: async (attempt, bumpFactor) => {
+      return adapter.walletClient.sendTransaction({
         to: adapter.registryAddress,
         data: calldata,
         account: adapter.walletClient.account!,
         chain: adapter.walletClient.chain!,
         // For attempts > 1, bump gas to replace any dropped pending tx.
         ...(attempt > 1
-          ? { gasPrice: await bumpedGasPrice(adapter, attempt) }
+          ? { gasPrice: await bumpedGasPrice(adapter, attempt, bumpFactor) }
           : {}),
       });
-      txHash = hash;
-      return hash;
     },
     timeoutMs: 90_000, // per-attempt; parseReceipt below has its own RECEIPT_TIMEOUT_MS as a safety net
     maxAttempts: 3,
     bumpFactor: 1.25,
   });
+  const txHash = receipt.transactionHash as Hex;
 
   return adapter.parseReceipt(
-    { txHash: txHash!, calldata, submittedAt },
+    { txHash, calldata, submittedAt },
     "issueBatch",
     { batchSize, tag: opts.tag ?? "main" }
   );
 }
 
-async function bumpedGasPrice(adapter: ChainAdapter, attempt: number): Promise<bigint> {
+async function bumpedGasPrice(adapter: ChainAdapter, attempt: number, bumpFactor: number): Promise<bigint> {
   const base = await adapter.publicClient.getGasPrice();
-  // bumpFactor^(attempt-1) — 1.25x at attempt 2, 1.5625x at attempt 3
-  const mult = Math.pow(1.25, attempt - 1);
+  // bumpFactor^(attempt-1) — e.g. 1.25x at attempt 2, 1.5625x at attempt 3
+  const mult = Math.pow(bumpFactor, attempt - 1);
   return (base * BigInt(Math.floor(mult * 100))) / 100n;
 }

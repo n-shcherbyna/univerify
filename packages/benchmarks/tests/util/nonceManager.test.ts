@@ -53,6 +53,25 @@ describe("sendWithRetry", () => {
     expect(client.sendCount()).toBe(2);
   });
 
+  it("forwards bumpFactor to the send callback", async () => {
+    const sendArgs: Array<[number, number]> = [];
+    const client = {
+      sendTransaction: vi.fn(async () => "0xaaa" as `0x${string}`),
+      waitForTransactionReceipt: vi.fn(async () => ({ blockNumber: 1n })),
+    };
+    await sendWithRetry({
+      client: client as any,
+      send: async (attempt, bumpFactor) => {
+        sendArgs.push([attempt, bumpFactor]);
+        return client.sendTransaction();
+      },
+      timeoutMs: 100,
+      maxAttempts: 1,
+      bumpFactor: 1.5,
+    });
+    expect(sendArgs).toEqual([[1, 1.5]]);
+  });
+
   it("gives up after maxAttempts and throws", async () => {
     const client = {
       sendTransaction: vi.fn(async () => "0xaaa" as `0x${string}`),
