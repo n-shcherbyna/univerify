@@ -9,6 +9,7 @@ import {
   BATCH_SIZES,
   CHAIN_KEYS,
   FAUCETS,
+  ISSUE_LATENCY_REPS,
   SEED_BATCH_SIZE,
   type ChainKey,
 } from "../config.js";
@@ -93,10 +94,27 @@ export async function stageMeasure(opts: MeasureOpts = {}): Promise<string> {
         nextId += 1n;
         continue;
       }
-      console.log(`[measure] ${key} issueBatch(${size}) batchId=${nextId}`);
-      const m = await runIssueBatch(adapter, size, { tag: "main", nextBatchId: nextId });
-      perChain.issueBatch.push(m);
+      console.log(`[measure] ${key} issueBatch(${size}) batchId=${nextId} primary`);
+      const primary = await runIssueBatch(adapter, size, {
+        tag: "main",
+        nextBatchId: nextId,
+      });
       nextId += 1n;
+
+      const latencySamplesMs: number[] = [primary.inclusionLatencyMs];
+      for (let rep = 1; rep < ISSUE_LATENCY_REPS; rep++) {
+        console.log(
+          `[measure] ${key} issueBatch(${size}) latency rep ${rep + 1}/${ISSUE_LATENCY_REPS} batchId=${nextId}`
+        );
+        const extra = await runIssueBatch(adapter, size, {
+          tag: "main",
+          nextBatchId: nextId,
+        });
+        latencySamplesMs.push(extra.inclusionLatencyMs);
+        nextId += 1n;
+      }
+      primary.latencySamplesMs = latencySamplesMs;
+      perChain.issueBatch.push(primary);
       markComplete(progress, key, "issueBatch", size);
       atomicWriteJson(partialPath, run);
     }

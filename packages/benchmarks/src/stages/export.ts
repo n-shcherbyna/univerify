@@ -159,17 +159,44 @@ export function writeReadLatencyTable(run: RunResults, outDir: string): string {
 
 export function writeInclusionLatencyTable(run: RunResults, outDir: string): string {
   const csvPath = path.join(outDir, "table-inclusion-latency.csv");
-  const header = "chain,p50_ms,p95_ms";
+  const header = [
+    "chain",
+    "revoke_p50_ms",
+    "revoke_p95_ms",
+    "issue_p50_ms",
+    "issue_p95_ms",
+    "issue_sigma_ms",
+    "issue_n",
+  ].join(",");
   const rows: string[] = [];
   for (const [chain, data] of Object.entries(run.chains)) {
     if (data.revokeFromBatch.length === 0) continue;
-    const s = data.revokeFromBatch.map((x) => x.inclusionLatencyMs).sort((a, b) => a - b);
-    const pick = (p: number) =>
+    const r = data.revokeFromBatch.map((x) => x.inclusionLatencyMs).sort((a, b) => a - b);
+    const pick = (s: number[], p: number) =>
       s[Math.max(0, Math.min(s.length - 1, Math.ceil(p * s.length) - 1))];
-    rows.push([chain, pick(0.5), pick(0.95)].join(","));
+
+    const issueMain = data.issueBatch.find(
+      (x) => x.tag === "main" && x.batchSize === 1000
+    );
+    const issueSamples = (issueMain?.latencySamplesMs ?? []).slice().sort((a, b) => a - b);
+    const issueP50 = issueSamples.length ? pick(issueSamples, 0.5).toFixed(0) : "";
+    const issueP95 = issueSamples.length ? pick(issueSamples, 0.95).toFixed(0) : "";
+    const issueSigma = issueSamples.length ? stddev(issueSamples).toFixed(2) : "";
+    const issueN = issueSamples.length || "";
+
+    rows.push(
+      [chain, pick(r, 0.5), pick(r, 0.95), issueP50, issueP95, issueSigma, issueN].join(",")
+    );
   }
   fs.writeFileSync(csvPath, [header, ...rows].join("\n") + "\n");
   return csvPath;
+}
+
+function stddev(xs: number[]): number {
+  if (xs.length < 2) return 0;
+  const mean = xs.reduce((a, b) => a + b, 0) / xs.length;
+  const v = xs.reduce((acc, x) => acc + (x - mean) ** 2, 0) / (xs.length - 1);
+  return Math.sqrt(v);
 }
 
 // --- Figures --------------------------------------------------------------
