@@ -154,6 +154,10 @@ Poniżej zebrano metodologiczne ograniczenia, których czytelnik powinien być �
 
 \paragraph{Konserwatywne ceny sekwensera L2.} Ceny gazu sekwensera L2 zostały ustawione na zaokrąglone wartości powyżej żywego snapshotu (Arbitrum 0.1\,gwei vs 0.02 żywe; Base 0.005 vs 0.006; zkSync 0.05 vs 0.0453), aby pochłonąć typowe wahania kongestii.
 
+\subsection{Reprodukowalność}
+
+Wszystkie wyniki w tym rozdziale można odtworzyć z czystego klona repozytorium UniVerify poleceniem \texttt{npm run benchmarks:all -{}- -{}-runs=3} po wypełnieniu pliku \texttt{.env} kluczem prywatnym portfela testowego oraz adresami RPC czterech sieci testnet (Sepolia, Arbitrum Sepolia, Base Sepolia, zkSync Sepolia). Pipeline wykonuje sekwencję \texttt{deploy} $\to$ \texttt{measure} $\to$ \texttt{price} $\to$ \texttt{aggregate} $\to$ \texttt{export}, regenerując wszystkie tabele i wykresy w \texttt{docs/l2-benchmarks/data/}. Każdy artefakt jest powiązany z plikiem \texttt{meta.json} zawierającym \texttt{runId}, \texttt{measuredAt}, kurs ETH/USD z datą snapshotu, ziarno losowości (\texttt{BENCH\_RANDOM\_SEED}), dostawcę i region RPC oraz listę łańcuchów. Plik \texttt{packages/benchmarks/README.md} dokumentuje wymagania środowiskowe i znane ograniczenia. CI repozytorium (\texttt{.github/workflows/benchmarks-drift.yml}) automatycznie regeneruje tabele z zacommitowanych próbek wyników i sygnalizuje rozjazd między źródłem a zatwierdzonymi danymi.
+
 \paragraph{Wniosek.}
 \dots{}
 
