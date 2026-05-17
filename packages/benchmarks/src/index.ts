@@ -35,7 +35,16 @@ async function main(): Promise<void> {
       return;
     }
     case "all": {
-      await stageMeasure({});
+      const only = argValue(rest, "chain") as ChainKey | undefined;
+      const runs = Number(argValue(rest, "runs") ?? "1");
+      if (!Number.isInteger(runs) || runs < 1) {
+        throw new Error(`--runs must be a positive integer, got ${runs}`);
+      }
+      await stageDeploy(only);
+      for (let r = 1; r <= runs; r++) {
+        if (runs > 1) console.log(`[all] run ${r}/${runs}`);
+        await stageMeasure({ only });
+      }
       await stagePrice();
       stageExport({});
       return;
@@ -49,7 +58,7 @@ async function main(): Promise<void> {
     }
     default:
       console.error(
-        "Usage: benchmarks {deploy|measure|price|export|all|smoke} [--chain=KEY] [--resume=RUN_ID]"
+        "Usage: benchmarks {deploy|measure|price|export|all|smoke} [--chain=KEY] [--resume=RUN_ID] [--runs=N]"
       );
       process.exit(1);
   }
