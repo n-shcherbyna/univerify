@@ -135,10 +135,24 @@ interpretację.
 \end{figure}
 
 \section{Dyskusja}
-\paragraph{Ograniczenia pomiaru.}
-Ceny gazu zostały wzięte z historycznych wartości mainnet; same transakcje
-wykonano na sieciach testowych. Dla zkSync opłata za dane L1 nie jest wyodrębniona
-na paragonie — koszt publikacji jest wliczony w \texttt{gasUsed}.
+
+Wszystkie pomiary opisane w niniejszym rozdziale wykonano przez jednego dostawcę RPC w jednej lokalizacji POP, z $N{=}30$ powtórzeniami dla każdego pomiaru opóźnienia oraz losowym wyborem liści przy revoke. Wyniki to średnia $\pm\sigma$ z trzech niezależnych runów. Wszystkie parametry konfiguracyjne (ziarno losowości, dostawca, region, kurs ETH/USD) są zapisane w pliku \texttt{docs/l2-benchmarks/data/meta.json}.
+
+\subsection{Ograniczenia pomiaru}
+
+Poniżej zebrano metodologiczne ograniczenia, których czytelnik powinien być świadomy interpretując wyniki. Cztery z pierwotnie zidentyfikowanych ograniczeń zostały wyeliminowane w toku rewizji eksperymentu (jednolity dostawca RPC, $N{=}30$ powtórzeń, losowy wybór liści do revoke, trzy niezależne runy z raportowaniem $\sigma$); pozostałe sześć omówiono poniżej.
+
+\paragraph{Założenie kompresji Brotli dla Arbitrum.} Model kosztu zapisu danych na L1 dla Arbitrum przyjmuje współczynnik kompresji Brotli równy 1.0, ponieważ dane Merkle (hashe pseudolosowe) nie kompresują się znacząco. Realny aplikacyjny calldata o strukturze rzadkiej kompresuje się 2--4-krotnie, co oznacza, że nasze oszacowanie kosztu L1 dla Arbitrum jest \textbf{górnym ograniczeniem}; rzeczywiste koszty produkcyjne mogą być proporcjonalnie niższe.
+
+\paragraph{Niewspółmierność jednostki gazu w zkSync Era.} Wartość \texttt{gasUsed} raportowana przez zkSync (131\,463 dla \texttt{issueBatch} z $n{=}1$) łączy w jednej jednostce koszt wykonania, dane publiczne i narzut bootloadera kontekstu Account Abstraction --- nie jest to ta sama jednostka, co \texttt{gasUsed} w EVM. Porównanie surowych liczb gazu między rodzinami rollupów jest \textbf{metodologicznie niepoprawne}; sensowne porównanie kosztów może odbywać się wyłącznie w USD lub ETH.
+
+\paragraph{Opóźnienie inkluzji jest ograniczone przez interwał odpytywania.} Pomiar czasu od submit do receipt opiera się o cykl odpytywania klienta viem (\textasciitilde 4\,s). Otrzymane wartości są zatem \textbf{górnym ograniczeniem czasu inkluzji w bloku}, a nie samym czasem inkluzji. Porównanie międzysieciowe jest dodatkowo zniekształcone interakcją czasu bloku z interwałem odpytywania.
+
+\paragraph{Snapshot skalarów Base SystemConfig.} Model kosztu Base Ecotone używa snapshotu parametrów \texttt{baseFeeScalar=2269} oraz \texttt{blobBaseFeeScalar=1055762} pobranego z bloku L1 \texttt{25087416}. Po zmianie tych skalarów przez operatora Base wynikowe koszty zmieniłyby się proporcjonalnie; data snapshotu jest udokumentowana w \texttt{meta.json} każdego eksportu.
+
+\paragraph{Snapshot kursu ETH/USD.} Wyniki w USD przeliczono kursem $\text{ETH}/\text{USD} = 3500$ (snapshot CoinGecko z dnia 2026-05-13). Wynik dla innego kursu można uzyskać mnożeniem przez czynnik $\frac{\text{nowy kurs}}{3500}$.
+
+\paragraph{Konserwatywne ceny sekwensera L2.} Ceny gazu sekwensera L2 zostały ustawione na zaokrąglone wartości powyżej żywego snapshotu (Arbitrum 0.1\,gwei vs 0.02 żywe; Base 0.005 vs 0.006; zkSync 0.05 vs 0.0453), aby pochłonąć typowe wahania kongestii.
 
 \paragraph{Wniosek.}
 \dots{}
