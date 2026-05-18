@@ -312,7 +312,7 @@ export function writeMeta(
   const meta = {
     runId: run.runId,
     measuredAt: run.measuredAt,
-    priceSource: pricePath,
+    priceSource: path.relative(process.cwd(), pricePath),
     ethUsd: ETH_USD,
     ethUsdSnapshotDate: ETH_USD_SNAPSHOT_DATE,
     rpcProvider: RPC_PROVIDER,
