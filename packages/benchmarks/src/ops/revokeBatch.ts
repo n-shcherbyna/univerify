@@ -55,23 +55,29 @@ export async function runRevokeBurst(
     });
 
     const submittedAt = now();
+    const initialFees = await adapter.publicClient.estimateFeesPerGas();
+    let lastMaxFee = initialFees.maxFeePerGas;
+    let lastPriority = initialFees.maxPriorityFeePerGas;
     const receipt = await sendWithRetry({
       client: adapter.publicClient,
       send: async (attempt, bumpFactor) => {
+        if (attempt > 1) {
+          const num = BigInt(Math.floor(bumpFactor * 100));
+          lastMaxFee = (lastMaxFee * num) / 100n;
+          lastPriority = (lastPriority * num) / 100n;
+        }
         return adapter.walletClient.sendTransaction({
           to: adapter.registryAddress,
           data: calldata,
           account: adapter.walletClient.account!,
           chain: adapter.walletClient.chain!,
-          // For attempts > 1, bump gas to replace any dropped pending tx.
-          ...(attempt > 1
-            ? { gasPrice: await bumpedGasPrice(adapter, attempt, bumpFactor) }
-            : {}),
+          maxFeePerGas: lastMaxFee,
+          maxPriorityFeePerGas: lastPriority,
         });
       },
-      timeoutMs: 90_000, // per-attempt; parseReceipt below has its own RECEIPT_TIMEOUT_MS as a safety net
+      timeoutMs: 150_000,
       maxAttempts: 3,
-      bumpFactor: 1.25,
+      bumpFactor: 1.5,
     });
     const txHash = receipt.transactionHash as Hex;
 
@@ -82,11 +88,4 @@ export async function runRevokeBurst(
     revokes.push(metrics);
   }
   return { seed, revokes };
-}
-
-async function bumpedGasPrice(adapter: ChainAdapter, attempt: number, bumpFactor: number): Promise<bigint> {
-  const base = await adapter.publicClient.getGasPrice();
-  // bumpFactor^(attempt-1) — e.g. 1.25x at attempt 2, 1.5625x at attempt 3
-  const mult = Math.pow(bumpFactor, attempt - 1);
-  return (base * BigInt(Math.floor(mult * 100))) / 100n;
 }
