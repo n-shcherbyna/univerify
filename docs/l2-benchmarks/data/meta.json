@@ -1,9 +1,12 @@
 {
-  "runId": "20260512T211158-c4da",
-  "measuredAt": "2026-05-12T21:11:58.253Z",
-  "priceSource": "packages/benchmarks/tests/fixtures/prices.fixture.json",
+  "runId": "agg-20260519T080428-2ff3+20260519T093540-7712+20260519T195136-aca0",
+  "measuredAt": "2026-05-19T08:04:28.281Z",
+  "priceSource": "benchmarks/price-history/2026-05-19.json",
   "ethUsd": 3500,
   "ethUsdSnapshotDate": "2026-05-13",
+  "rpcProvider": "alchemy",
+  "rpcRegion": "eu-central-1",
+  "randomSeed": "univerify-phase-2",
   "chains": [
     "sepolia",
     "arbitrumSepolia",

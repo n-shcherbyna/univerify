@@ -1,0 +1,5614 @@
+{
+  "runId": "20260519T080428-2ff3",
+  "measuredAt": "2026-05-19T08:04:28.281Z",
+  "chains": {
+    "sepolia": {
+      "issueBatch": [
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "issueBatch",
+          "batchSize": 1,
+          "tag": "main",
+          "gasUsed": "51012",
+          "effectiveGasPrice": "1000830",
+          "l1DataFee": "0",
+          "calldataBytes": 68,
+          "blockNumber": "10878591",
+          "txHash": "0x60b0beb8c4c79f15da90b1d6de0db8e810617a2e56c898666a273cbc34655bcb",
+          "submittedAt": 2623.568474,
+          "includedAt": 27868.470596,
+          "inclusionLatencyMs": 25244.902122,
+          "latencySamplesMs": [
+            25244.902122,
+            12760.741429000002,
+            12670.616162999999,
+            12571.849255999994,
+            12756.678287000002,
+            32866.739525,
+            12698.853763000006,
+            24856.10295300001,
+            12670.95274899999,
+            12551.513083000027,
+            12614.91568799998,
+            8644.65987599999,
+            12712.842214000004,
+            12638.555268999975,
+            12602.791347999999,
+            12733.354575000005,
+            12701.721988999983,
+            20789.894289999997,
+            24817.49559299997,
+            12585.432420000026,
+            12662.595513999986,
+            12733.952802999993,
+            12679.06886,
+            8650.01618399995,
+            12696.304598000017,
+            12645.81871099997,
+            24686.49371499999,
+            12534.570284999965,
+            12498.983126999985,
+            12499.481486000004
+          ]
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "issueBatch",
+          "batchSize": 10,
+          "tag": "main",
+          "gasUsed": "51024",
+          "effectiveGasPrice": "1000953",
+          "l1DataFee": "0",
+          "calldataBytes": 68,
+          "blockNumber": "10878622",
+          "txHash": "0x7c8f96cb9f496543d2a453efc4019fe2aac81f433a131d9cbe1a1df361dc36fc",
+          "submittedAt": 451437.717231,
+          "includedAt": 459883.058227,
+          "inclusionLatencyMs": 8445.340995999984,
+          "latencySamplesMs": [
+            8445.340995999984,
+            12510.118713999982,
+            12493.968952999974,
+            24613.449727999978,
+            12486.111952000007,
+            12561.86116500001,
+            44859.237548999954,
+            24688.97577000002,
+            12588.071863000048,
+            12511.006432999973,
+            12527.185999999987,
+            12579.261020999984,
+            12589.508776000002,
+            12482.720690999995,
+            8475.054231000016,
+            12488.150493999943,
+            12490.656960000051,
+            24598.037349000107,
+            24701.587755999994,
+            12489.875627000001,
+            8494.66591900005,
+            12534.54982299998,
+            12565.340045000077,
+            109595.75642300001,
+            36778.63769600005,
+            117669.76884799998,
+            36810.61514899996,
+            24683.693275999976,
+            12579.967634999892,
+            12545.00979400007
+          ]
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "issueBatch",
+          "batchSize": 100,
+          "tag": "main",
+          "gasUsed": "51024",
+          "effectiveGasPrice": "1002140",
+          "l1DataFee": "0",
+          "calldataBytes": 68,
+          "blockNumber": "10878670",
+          "txHash": "0x0de521471b341c871f53d28ff6d45eed6cb7aa1e922e6a5db0e681748e738d69",
+          "submittedAt": 1159016.905279,
+          "includedAt": 1203825.653923,
+          "inclusionLatencyMs": 44808.74864399992,
+          "latencySamplesMs": [
+            44808.74864399992,
+            12541.163035999984,
+            12525.150510000065,
+            12648.976613000035,
+            12516.70962999994,
+            12487.229582999833,
+            12500.618262999924,
+            8458.834238999989,
+            48905.54068299988,
+            12495.915480999975,
+            24600.347102000145,
+            12516.449365000008,
+            24717.798192000017,
+            8495.951543000061,
+            12643.412908999948,
+            12507.874236000003,
+            24619.56361800013,
+            24696.206548999995,
+            24616.075057000155,
+            12559.576738999924,
+            8500.995938000036,
+            12582.627153000096,
+            12638.605317000067,
+            36779.61437499989,
+            12550.440142000094,
+            21121.426945999963,
+            12684.578808000078,
+            12550.227392999921,
+            12510.755255999975,
+            12479.318551999982
+          ]
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "issueBatch",
+          "batchSize": 1000,
+          "tag": "main",
+          "gasUsed": "51024",
+          "effectiveGasPrice": "1013099",
+          "l1DataFee": "0",
+          "calldataBytes": 68,
+          "blockNumber": "10878705",
+          "txHash": "0x53b001437d8c8c4f050a30bfd4cc394a4c3c4198d23d7d8e0a80f7ab24ab9e54",
+          "submittedAt": 1686145.448195,
+          "includedAt": 1698678.098091,
+          "inclusionLatencyMs": 12532.649896000046,
+          "latencySamplesMs": [
+            12532.649896000046,
+            8462.650685,
+            12500.36974600004,
+            12492.779319999972,
+            48897.06639699987,
+            73272.64500200003,
+            8514.916586000007,
+            16575.34241500008,
+            20607.547320999904,
+            61040.08374600019,
+            12595.788109000074,
+            8474.157525999937,
+            24988.454137000022,
+            12544.677921999944,
+            24617.724673000164,
+            12620.004266999895,
+            49198.04001799994,
+            20645.90189999994,
+            12476.989711999893,
+            24693.78481800016,
+            24657.30096299993,
+            8495.916635999922,
+            12535.804496000055,
+            12523.632745000068,
+            24653.061747000087,
+            36901.37994899973,
+            8571.080132999923,
+            12514.853691000026,
+            12569.263139000162,
+            12536.515678999946
+          ]
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "issueBatch",
+          "batchSize": 10000,
+          "tag": "main",
+          "gasUsed": "51024",
+          "effectiveGasPrice": "1078992",
+          "l1DataFee": "0",
+          "calldataBytes": 68,
+          "blockNumber": "10878744",
+          "txHash": "0xd3542b5e9b54fa8cd44f2bab4e793a104ad7013cf582c48bd24ae7315caf29e5",
+          "submittedAt": 2334043.973503,
+          "includedAt": 2346542.74182,
+          "inclusionLatencyMs": 12498.76831700001,
+          "latencySamplesMs": [
+            12498.76831700001,
+            8457.461251999717,
+            12488.264875000343,
+            12517.318447000347,
+            20629.32019700017,
+            12490.206191999838,
+            12584.00096799992,
+            8540.889119000174,
+            61043.01028699987,
+            8487.703431000002,
+            12561.415335000027,
+            12499.469874999952,
+            8450.434708999936,
+            37028.87587499991,
+            24685.156939000357,
+            20636.907366000116,
+            12512.881260999944,
+            12530.088496999815,
+            8519.810606000014,
+            12562.733297999948,
+            12715.266044999938,
+            8417.019724000245,
+            12482.114835999906,
+            24666.645298999734,
+            44893.39148900006,
+            12764.210493999999,
+            8477.421856999863,
+            12525.850564999972,
+            24587.76590500027,
+            8466.21291100001
+          ]
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "issueBatch",
+          "batchSize": 40,
+          "tag": "seed",
+          "gasUsed": "51024",
+          "effectiveGasPrice": "2341838",
+          "l1DataFee": "0",
+          "calldataBytes": 68,
+          "blockNumber": "10878778",
+          "txHash": "0xf2f35638e3e57711a49afe2d4db63f28b86f3e4269181d9bc7eeb238eb3e6fcd",
+          "submittedAt": 2860133.047459,
+          "includedAt": 2872697.461484,
+          "inclusionLatencyMs": 12564.414025000297
+        }
+      ],
+      "revokeFromBatch": [
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59788",
+          "effectiveGasPrice": "2468154",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "10878779",
+          "txHash": "0x994fb016fed4330d38d27d723a220ba3b764c673f07cc0664442ab8506fd28d6",
+          "submittedAt": 2872703.351367,
+          "includedAt": 2885268.714553,
+          "inclusionLatencyMs": 12565.363185999915
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59776",
+          "effectiveGasPrice": "2512810",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "10878780",
+          "txHash": "0xf6233938a4fb3c9633b4b1fb96c1cac4a6f888d195cba09c5c88b938e50ec3c6",
+          "submittedAt": 2885268.891801,
+          "includedAt": 2897770.872744,
+          "inclusionLatencyMs": 12501.980942999944
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59776",
+          "effectiveGasPrice": "2694285",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "10878781",
+          "txHash": "0x27d965fa3433484e3c3f2b7d32680e7e51bb01af32476c7d7def5846ec1e580e",
+          "submittedAt": 2897771.08372,
+          "includedAt": 2910271.011179,
+          "inclusionLatencyMs": 12499.927459000144
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59798",
+          "effectiveGasPrice": "2857415",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "10878782",
+          "txHash": "0x7edae646d06296da5b6dba81cbe8a6f1769bdacfdcf7afbbe911a099620baa0e",
+          "submittedAt": 2910271.229346,
+          "includedAt": 2922785.7516,
+          "inclusionLatencyMs": 12514.522253999952
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59786",
+          "effectiveGasPrice": "2910286",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "10878783",
+          "txHash": "0x37b119dcf93d437e853e191d632dafac9b1dd4b0d1747ba9ebe40659bc3e61c2",
+          "submittedAt": 2922785.98608,
+          "includedAt": 2935284.815215,
+          "inclusionLatencyMs": 12498.829134999774
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59818",
+          "effectiveGasPrice": "3125941",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "10878784",
+          "txHash": "0x4f03d2b770d2cfe8f0109192f677a92cc9c8f8d7bdadf9fa697f8148fa886aff",
+          "submittedAt": 2935285.716138,
+          "includedAt": 2968003.034789,
+          "inclusionLatencyMs": 32717.318651000038
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59788",
+          "effectiveGasPrice": "3391597",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "10878785",
+          "txHash": "0xd6ed8f24ac6a7033cf1ce6c74ba814dfa077ba0d0d1e96d43fa54d8b78ef1778",
+          "submittedAt": 2968003.247452,
+          "includedAt": 2980613.45002,
+          "inclusionLatencyMs": 12610.202567999717
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59786",
+          "effectiveGasPrice": "3688568",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "10878786",
+          "txHash": "0x9d5ca36a4536d4731e89568c0afc14834719bd799f072693e5645bc5253ee727",
+          "submittedAt": 2980613.965865,
+          "includedAt": 2993113.66905,
+          "inclusionLatencyMs": 12499.703184999991
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59778",
+          "effectiveGasPrice": "3627598",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "10878787",
+          "txHash": "0xd1b52c5d317db87a8d45c4659e3eb39ccd772ed6b202506d0798528f8cc7c804",
+          "submittedAt": 2993113.848808,
+          "includedAt": 3005598.652679,
+          "inclusionLatencyMs": 12484.803871000186
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59808",
+          "effectiveGasPrice": "3718784",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "10878788",
+          "txHash": "0xc3fc27be4a4d0410c094859ad368596c04026f5044c906020ef60934ae915ae9",
+          "submittedAt": 3005599.184397,
+          "includedAt": 3030268.373741,
+          "inclusionLatencyMs": 24669.18934400007
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59796",
+          "effectiveGasPrice": "4058179",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "10878789",
+          "txHash": "0x28962471ee9ada09eb3d90851f4b308ff1542bc24f44d1e022f26e95850746a8",
+          "submittedAt": 3030268.646063,
+          "includedAt": 3042813.046993,
+          "inclusionLatencyMs": 12544.400930000003
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59776",
+          "effectiveGasPrice": "4358846",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "10878790",
+          "txHash": "0x4ff84f05f7749d47ad8148718d25371bbc302785dcd658712f9e790a1723b658",
+          "submittedAt": 3042813.550673,
+          "includedAt": 3055345.702492,
+          "inclusionLatencyMs": 12532.15181900002
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59794",
+          "effectiveGasPrice": "4628373",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "10878791",
+          "txHash": "0xb9cd180d14d38e15267fecabe391eee3ac8099c409748304cab791090e284bc3",
+          "submittedAt": 3055345.846043,
+          "includedAt": 3063814.730556,
+          "inclusionLatencyMs": 8468.884513000026
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59796",
+          "effectiveGasPrice": "4662645",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "10878792",
+          "txHash": "0x7bb3fad49ddf50f32f5a7f59fe4c5074a1416916f34a80f9f12964ac8771b58d",
+          "submittedAt": 3063815.267427,
+          "includedAt": 3088449.111716,
+          "inclusionLatencyMs": 24633.84428899968
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59808",
+          "effectiveGasPrice": "4758809",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "10878793",
+          "txHash": "0xb62d21f0fc697a279acbab87f6c2b7174f1693c53b176c7f75b314143fc45570",
+          "submittedAt": 3088450.032159,
+          "includedAt": 3101011.850776,
+          "inclusionLatencyMs": 12561.818616999779
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59798",
+          "effectiveGasPrice": "4656984",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "10878795",
+          "txHash": "0x767c01eb4863a81224aa38d56fec9cf62badb74ff55eb6eb834e13fe0391c166",
+          "submittedAt": 3101012.380641,
+          "includedAt": 3125638.97107,
+          "inclusionLatencyMs": 24626.59042900009
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59806",
+          "effectiveGasPrice": "4701936",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "10878796",
+          "txHash": "0xe5d65b0065ab4103de56964611facb8ba72036c94c390bebeecb48ede94e25d5",
+          "submittedAt": 3125639.448147,
+          "includedAt": 3138137.924892,
+          "inclusionLatencyMs": 12498.476745000109
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59808",
+          "effectiveGasPrice": "4567149",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "10878797",
+          "txHash": "0x6e0aec9fb0c4ac88df7b389db5225cee90cdc43fac83f25eed858a67bd50057e",
+          "submittedAt": 3138138.467688,
+          "includedAt": 3150646.102469,
+          "inclusionLatencyMs": 12507.634781000204
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59806",
+          "effectiveGasPrice": "4515241",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "10878798",
+          "txHash": "0x7583ffc5706af888d6d5e53b9d56231d320a9ca25da93172ce1eef583ffc8e6c",
+          "submittedAt": 3150646.236684,
+          "includedAt": 3163179.440711,
+          "inclusionLatencyMs": 12533.204026999883
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59808",
+          "effectiveGasPrice": "4482166",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "10878799",
+          "txHash": "0x7c0e31e3be283f80e7202f65bef717c164caadfce52cad7feed65883a116337d",
+          "submittedAt": 3163179.915474,
+          "includedAt": 3171635.9362,
+          "inclusionLatencyMs": 8456.020725999959
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59806",
+          "effectiveGasPrice": "4405065",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "10878800",
+          "txHash": "0x0a2e6fcd6ae8e835159731fd5061c6f8fde4e7bd240b1be67e38e86fdc625b67",
+          "submittedAt": 3171636.450289,
+          "includedAt": 3208491.908173,
+          "inclusionLatencyMs": 36855.45788400015
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59816",
+          "effectiveGasPrice": "4811914",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "10878801",
+          "txHash": "0x17f698d0b8a5879af9b5bdaec83f3bb15436dca7f02c1cd6e9d636fe72f6140f",
+          "submittedAt": 3208492.371958,
+          "includedAt": 3221018.587414,
+          "inclusionLatencyMs": 12526.215456000064
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59818",
+          "effectiveGasPrice": "5077440",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "10878802",
+          "txHash": "0xec682ed36526da7c9418700f1f4b09a93e90ed581e0d71784b18083baae5f92c",
+          "submittedAt": 3221018.833443,
+          "includedAt": 3233497.612671,
+          "inclusionLatencyMs": 12478.77922799997
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59786",
+          "effectiveGasPrice": "5321251",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "10878803",
+          "txHash": "0x2a112ae050e867d06512a90ea0747cef09f3fa615cedf9e42a51119491d3f2da",
+          "submittedAt": 3233498.16978,
+          "includedAt": 3246011.218232,
+          "inclusionLatencyMs": 12513.048451999668
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59818",
+          "effectiveGasPrice": "5815483",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "10878804",
+          "txHash": "0xb3d0864b9475cfd9d1529e5bd18d35b36983ab200ad871c25dc75eaa55614a58",
+          "submittedAt": 3246011.391781,
+          "includedAt": 3270623.088329,
+          "inclusionLatencyMs": 24611.696547999978
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59796",
+          "effectiveGasPrice": "6417114",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "10878805",
+          "txHash": "0x8e420cca49315919810567c8d5cda36790d6f7498c7a05339f58065584b52a04",
+          "submittedAt": 3270623.316879,
+          "includedAt": 3283154.651752,
+          "inclusionLatencyMs": 12531.33487300016
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59816",
+          "effectiveGasPrice": "6544349",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "10878806",
+          "txHash": "0x5bdf41d8ce88ddb7dba2e8f0adcf28ac1a3bc22e9b92b46b63bd3b478e0fd8ae",
+          "submittedAt": 3283155.082077,
+          "includedAt": 3291674.926689,
+          "inclusionLatencyMs": 8519.844612000044
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59774",
+          "effectiveGasPrice": "6379188",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "10878807",
+          "txHash": "0xd1049699cb26e80e743757aac4ed5e5025dd05320fcbbca2d9c9fc37d82ea4a2",
+          "submittedAt": 3291675.215184,
+          "includedAt": 3304246.452168,
+          "inclusionLatencyMs": 12571.236984000076
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59828",
+          "effectiveGasPrice": "6540892",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "10878808",
+          "txHash": "0xc638ddb2284dd3b8bfa91a0cc127479c2e354766ca92d82fcacdb5624bbe7dbf",
+          "submittedAt": 3304247.012514,
+          "includedAt": 3328949.739858,
+          "inclusionLatencyMs": 24702.727344000246
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59838",
+          "effectiveGasPrice": "7062463",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "10878809",
+          "txHash": "0x7d3137522d8cc9147f1cc2a65a14b0a537ec5dd5f749ec85ac0c713ca20f06d3",
+          "submittedAt": 3328950.17023,
+          "includedAt": 3341512.742237,
+          "inclusionLatencyMs": 12562.57200699998
+        }
+      ],
+      "readLatency": [
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 36.88589099980891,
+          "sampledAt": 1779181209299
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 43.04880099976435,
+          "sampledAt": 1779181209342
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 33.91879600007087,
+          "sampledAt": 1779181209376
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 88.65522100031376,
+          "sampledAt": 1779181209464
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 38.26240300014615,
+          "sampledAt": 1779181209503
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 40.149552000220865,
+          "sampledAt": 1779181209543
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 37.05468299984932,
+          "sampledAt": 1779181209580
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 42.74099100008607,
+          "sampledAt": 1779181209623
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 35.749008000362664,
+          "sampledAt": 1779181209658
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 35.428517000284046,
+          "sampledAt": 1779181209694
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 44.68618000019342,
+          "sampledAt": 1779181209739
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 120.32373600034043,
+          "sampledAt": 1779181209859
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 36.854412000160664,
+          "sampledAt": 1779181209896
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 43.09720299998298,
+          "sampledAt": 1779181209939
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 43.47372899996117,
+          "sampledAt": 1779181209982
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 37.001108000054955,
+          "sampledAt": 1779181210019
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 37.816792000085115,
+          "sampledAt": 1779181210057
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 35.05362900020555,
+          "sampledAt": 1779181210092
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 37.22804200043902,
+          "sampledAt": 1779181210130
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 39.81806000042707,
+          "sampledAt": 1779181210169
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 34.68331199977547,
+          "sampledAt": 1779181210204
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 40.26269300002605,
+          "sampledAt": 1779181210244
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 42.13725399971008,
+          "sampledAt": 1779181210286
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 45.979844000190496,
+          "sampledAt": 1779181210332
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 39.3266620002687,
+          "sampledAt": 1779181210372
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 36.97527300007641,
+          "sampledAt": 1779181210409
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 35.6926210001111,
+          "sampledAt": 1779181210444
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 261.95508200023323,
+          "sampledAt": 1779181210706
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 39.80226400028914,
+          "sampledAt": 1779181210746
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 40.922137999907136,
+          "sampledAt": 1779181210787
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 42.38152500009164,
+          "sampledAt": 1779181210830
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 44.771602999884635,
+          "sampledAt": 1779181210874
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 56.755762999877334,
+          "sampledAt": 1779181210931
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 36.799755999818444,
+          "sampledAt": 1779181210968
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 35.943580999970436,
+          "sampledAt": 1779181211004
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 36.39446800015867,
+          "sampledAt": 1779181211040
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 47.00561500014737,
+          "sampledAt": 1779181211087
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 74.6741200000979,
+          "sampledAt": 1779181211162
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 45.05089600011706,
+          "sampledAt": 1779181211207
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 40.923673999961466,
+          "sampledAt": 1779181211248
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 39.18022899981588,
+          "sampledAt": 1779181211287
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 39.23059999989346,
+          "sampledAt": 1779181211326
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 35.328637999948114,
+          "sampledAt": 1779181211362
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 44.61767499987036,
+          "sampledAt": 1779181211406
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 38.01024500001222,
+          "sampledAt": 1779181211444
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 49.57174800010398,
+          "sampledAt": 1779181211494
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 39.16857000021264,
+          "sampledAt": 1779181211533
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 37.23513499973342,
+          "sampledAt": 1779181211570
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 34.774594999849796,
+          "sampledAt": 1779181211605
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 47.59492099983618,
+          "sampledAt": 1779181211653
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 38.09745999984443,
+          "sampledAt": 1779181211691
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 37.76404399983585,
+          "sampledAt": 1779181211729
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 34.00966199999675,
+          "sampledAt": 1779181211763
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 35.63211299991235,
+          "sampledAt": 1779181211798
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 58.82462400011718,
+          "sampledAt": 1779181211857
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 45.66563499998301,
+          "sampledAt": 1779181211903
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 61.16648200014606,
+          "sampledAt": 1779181211964
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 55.08036799961701,
+          "sampledAt": 1779181212019
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 39.154992000199854,
+          "sampledAt": 1779181212058
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 43.059818000067025,
+          "sampledAt": 1779181212101
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 39.579078999813646,
+          "sampledAt": 1779181212141
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 32.95063399989158,
+          "sampledAt": 1779181212174
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 33.666701999958605,
+          "sampledAt": 1779181212207
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 43.63729500025511,
+          "sampledAt": 1779181212251
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 75.34596099983901,
+          "sampledAt": 1779181212326
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 39.69053399981931,
+          "sampledAt": 1779181212366
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 67.5520190000534,
+          "sampledAt": 1779181212434
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 36.12515200022608,
+          "sampledAt": 1779181212470
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 39.69420500006527,
+          "sampledAt": 1779181212510
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 39.37270400021225,
+          "sampledAt": 1779181212549
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 33.406523999758065,
+          "sampledAt": 1779181212582
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 40.797385999932885,
+          "sampledAt": 1779181212623
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 34.540932999923825,
+          "sampledAt": 1779181212658
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 47.91716000018641,
+          "sampledAt": 1779181212706
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 36.842821000143886,
+          "sampledAt": 1779181212742
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 40.297691999934614,
+          "sampledAt": 1779181212783
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 42.68294500000775,
+          "sampledAt": 1779181212825
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 35.934793000109494,
+          "sampledAt": 1779181212861
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 45.61671500001103,
+          "sampledAt": 1779181212907
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 38.62674600025639,
+          "sampledAt": 1779181212946
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 37.85201000003144,
+          "sampledAt": 1779181212984
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 47.457562000025064,
+          "sampledAt": 1779181213031
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 48.86544099962339,
+          "sampledAt": 1779181213080
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 51.37001199973747,
+          "sampledAt": 1779181213131
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 36.094618999864906,
+          "sampledAt": 1779181213167
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 36.21952399984002,
+          "sampledAt": 1779181213204
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 51.74801300000399,
+          "sampledAt": 1779181213255
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 33.4652570001781,
+          "sampledAt": 1779181213289
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 41.999971999786794,
+          "sampledAt": 1779181213331
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 39.79916300019249,
+          "sampledAt": 1779181213371
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 37.03924799989909,
+          "sampledAt": 1779181213408
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 34.8883710000664,
+          "sampledAt": 1779181213443
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 39.04346599988639,
+          "sampledAt": 1779181213482
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 37.31325299991295,
+          "sampledAt": 1779181213519
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 39.22201600018889,
+          "sampledAt": 1779181213558
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 37.75734500028193,
+          "sampledAt": 1779181213596
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 36.42895400011912,
+          "sampledAt": 1779181213632
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 35.07936799991876,
+          "sampledAt": 1779181213667
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 35.207016999833286,
+          "sampledAt": 1779181213703
+        },
+        {
+          "chainId": 11155111,
+          "chainName": "sepolia",
+          "op": "statusWithProof",
+          "latencyMs": 32.84001199994236,
+          "sampledAt": 1779181213736
+        }
+      ]
+    },
+    "arbitrumSepolia": {
+      "issueBatch": [
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "issueBatch",
+          "batchSize": 1,
+          "tag": "main",
+          "gasUsed": "51012",
+          "effectiveGasPrice": "20004000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 68,
+          "blockNumber": "269518395",
+          "txHash": "0xd058ce2c1b9202286fb40c9c88e3f989e6964a179561b950648610e211eb0ece",
+          "submittedAt": 3346950.694664,
+          "includedAt": 3347479.696653,
+          "inclusionLatencyMs": 529.0019890000112,
+          "latencySamplesMs": [
+            529.0019890000112,
+            429.65629799989983,
+            482.6970859998837,
+            600.8667219998315,
+            402.74935600021854,
+            501.7098359996453,
+            551.0736600002274,
+            568.3300410001539,
+            773.1547799999826,
+            886.6710040001199,
+            344.70966499997303,
+            460.3716420000419,
+            514.9316239999607,
+            430.1506960000843,
+            513.0751729998738,
+            495.8272449998185,
+            514.1680890000425,
+            490.8359730001539,
+            524.650617999956,
+            511.3498350000009,
+            505.2587609998882,
+            511.10605800012127,
+            621.5118999998085,
+            516.7498800000176,
+            607.3458190001547,
+            534.2779099997133,
+            790.1330950004049,
+            512.6182239996269,
+            410.9631590000354,
+            512.1065919999965
+          ]
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "issueBatch",
+          "batchSize": 10,
+          "tag": "main",
+          "gasUsed": "51012",
+          "effectiveGasPrice": "20000000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 68,
+          "blockNumber": "269518458",
+          "txHash": "0x277532357a7eb78d038ca72a9405061bc62befaef260326f9ef1d05a5777cceb",
+          "submittedAt": 3363023.696023,
+          "includedAt": 3363628.510835,
+          "inclusionLatencyMs": 604.8148119999096,
+          "latencySamplesMs": [
+            604.8148119999096,
+            509.3361940002069,
+            352.570308000315,
+            356.83960100030527,
+            484.2114110002294,
+            368.5073520001024,
+            355.72002199990675,
+            522.509832999669,
+            508.0583450002596,
+            389.7862990000285,
+            525.0944980001077,
+            609.1695500002243,
+            513.7779500000179,
+            335.74661700008437,
+            513.7837339998223,
+            572.8142760000192,
+            422.72420500032604,
+            610.3595850002021,
+            403.5631140000187,
+            605.7487559998408,
+            506.46555199986324,
+            329.8074329998344,
+            589.4744540001266,
+            548.6993450000882,
+            353.6512580001727,
+            443.41721999971196,
+            579.0702149998397,
+            531.8999850000255,
+            878.3878500000574,
+            545.1641319999471
+          ]
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "issueBatch",
+          "batchSize": 100,
+          "tag": "main",
+          "gasUsed": "51000",
+          "effectiveGasPrice": "20064000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 68,
+          "blockNumber": "269518511",
+          "txHash": "0xf02cb47d85890115b8b10ed85de740850a061704c0a7f88a17350cf0a41f1849",
+          "submittedAt": 3378004.055563,
+          "includedAt": 3378379.794255,
+          "inclusionLatencyMs": 375.73869200004265,
+          "latencySamplesMs": [
+            375.73869200004265,
+            488.7560010002926,
+            499.01451600017026,
+            594.392064999789,
+            501.1424059998244,
+            410.5262400000356,
+            328.7351119997911,
+            451.6170399999246,
+            462.55811400013044,
+            497.2458270001225,
+            480.6489780000411,
+            406.3217199998908,
+            390.2466299999505,
+            332.8892660001293,
+            489.26096699992195,
+            319.4980520000681,
+            670.1857429998927,
+            486.1313409996219,
+            667.5813770000823,
+            603.9531450001523,
+            592.00023900019,
+            502.7843709997833,
+            336.81320999981835,
+            348.284426999744,
+            575.1217350000516,
+            417.89036399964243,
+            466.03772300016135,
+            543.9567040000111,
+            489.61502599995583,
+            372.2115589999594
+          ]
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "issueBatch",
+          "batchSize": 1000,
+          "tag": "main",
+          "gasUsed": "51012",
+          "effectiveGasPrice": "20006000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 68,
+          "blockNumber": "269518570",
+          "txHash": "0x4a88dd94a642d88cbb9e8d2fc58af1ba30a76e5b3e38ff5fe31564441b8d6ab2",
+          "submittedAt": 3392888.853471,
+          "includedAt": 3393317.613225,
+          "inclusionLatencyMs": 428.75975399976596,
+          "latencySamplesMs": [
+            428.75975399976596,
+            754.864701999817,
+            564.2584079997614,
+            613.1494300002232,
+            366.35514699993655,
+            395.53008700022474,
+            433.91593100037426,
+            495.0385940000415,
+            617.912134999875,
+            643.9618489998393,
+            591.4536979999393,
+            367.85888800024986,
+            442.8004919998348,
+            362.7720449999906,
+            680.6235679998063,
+            605.9592470000498,
+            420.865941000171,
+            615.2381959999911,
+            363.55668900022283,
+            678.5277649997734,
+            604.8200810002163,
+            516.5796300000511,
+            347.2864169999957,
+            351.7279320000671,
+            501.14593100035563,
+            572.2542830002494,
+            655.801438999828,
+            444.97866700030863,
+            599.5300650000572,
+            342.86179400002584
+          ]
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "issueBatch",
+          "batchSize": 10000,
+          "tag": "main",
+          "gasUsed": "51024",
+          "effectiveGasPrice": "20020000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 68,
+          "blockNumber": "269518643",
+          "txHash": "0xe6482795236fdeced10851657a6f5359547df67e09933af8ea7d76d4f1be2fd9",
+          "submittedAt": 3411981.423883,
+          "includedAt": 3412600.670029,
+          "inclusionLatencyMs": 619.2461459999904,
+          "latencySamplesMs": [
+            619.2461459999904,
+            328.69285500003025,
+            343.1168039999902,
+            333.0952180000022,
+            479.7188740000129,
+            518.5217550001107,
+            348.926875999663,
+            440.49291399959475,
+            410.52553999982774,
+            644.9024210004136,
+            724.9919689996168,
+            645.5904109999537,
+            375.06901999982074,
+            652.336459999904,
+            469.80556299956515,
+            631.1267590001225,
+            588.7816490000114,
+            444.25735300034285,
+            429.73678799998015,
+            713.6694120001048,
+            365.4266900001094,
+            360.0605620001443,
+            641.762122000102,
+            363.5578140001744,
+            708.9485639999621,
+            368.8219030001201,
+            494.4203230002895,
+            695.9843889996409,
+            473.4468189999461,
+            634.4041720000096
+          ]
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "issueBatch",
+          "batchSize": 40,
+          "tag": "seed",
+          "gasUsed": "51024",
+          "effectiveGasPrice": "20020000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 68,
+          "blockNumber": "269518780",
+          "txHash": "0x081a6f1eff891de7496a79be861f46ca47d4f49db46e7aa3d0a728c33705bed7",
+          "submittedAt": 3450818.483528,
+          "includedAt": 3451497.995528,
+          "inclusionLatencyMs": 679.5120000001043
+        }
+      ],
+      "revokeFromBatch": [
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59818",
+          "effectiveGasPrice": "20000000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 324,
+          "blockNumber": "269518783",
+          "txHash": "0x6cd4f5439631993642533c8fc0aa66b4c1bd1cd37800aa7df1e51bf7c765fd03",
+          "submittedAt": 3451505.367083,
+          "includedAt": 3452206.036534,
+          "inclusionLatencyMs": 700.6694510001689
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59808",
+          "effectiveGasPrice": "20072000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 324,
+          "blockNumber": "269518785",
+          "txHash": "0xf3b5d0ffbdb15f960014601990c6e7ab92754e893ee002a4aa56771ccc991d6b",
+          "submittedAt": 3452206.192514,
+          "includedAt": 3452717.715274,
+          "inclusionLatencyMs": 511.52276000007987
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59818",
+          "effectiveGasPrice": "20000000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 324,
+          "blockNumber": "269518787",
+          "txHash": "0x6d60033f2b5e71be79bfcaabcb199093e83121b044f3c22d6c42ff6d241f7ed3",
+          "submittedAt": 3452717.834883,
+          "includedAt": 3453231.91997,
+          "inclusionLatencyMs": 514.0850870003924
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59808",
+          "effectiveGasPrice": "20026000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 324,
+          "blockNumber": "269518789",
+          "txHash": "0x459ea531d95b99332a46c3943d7bb0cb6e5634434d3de94c907f66b755f0bab9",
+          "submittedAt": 3453232.359954,
+          "includedAt": 3453754.523229,
+          "inclusionLatencyMs": 522.1632750001736
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59786",
+          "effectiveGasPrice": "20000000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 324,
+          "blockNumber": "269518791",
+          "txHash": "0x1ab3059b9e4c7cc6e2abc69ecb4b6782ac46aa91279567bd6d89b5de535f605e",
+          "submittedAt": 3453754.933675,
+          "includedAt": 3454267.045525,
+          "inclusionLatencyMs": 512.1118499999866
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59828",
+          "effectiveGasPrice": "20074000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 324,
+          "blockNumber": "269518793",
+          "txHash": "0x83bd7fe7a3cf4cb6e36e3caae92f3db3ce56a1473dd0a41831f4d86f26056737",
+          "submittedAt": 3454267.502959,
+          "includedAt": 3454759.155371,
+          "inclusionLatencyMs": 491.65241200011224
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59818",
+          "effectiveGasPrice": "20000000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 324,
+          "blockNumber": "269518795",
+          "txHash": "0x2c7237af75e12986e858e4d57cb6baf1576e7c64a54b351c0946c374a0b7dbdd",
+          "submittedAt": 3454759.592618,
+          "includedAt": 3455297.983626,
+          "inclusionLatencyMs": 538.3910079998896
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59796",
+          "effectiveGasPrice": "20044000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 324,
+          "blockNumber": "269518798",
+          "txHash": "0x7aebdba9e83ab2eff6c43b0886dfe3c488bb7fa95d83f9b63fd967984d9cc71a",
+          "submittedAt": 3455298.426909,
+          "includedAt": 3455997.162212,
+          "inclusionLatencyMs": 698.7353030000813
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59808",
+          "effectiveGasPrice": "20006000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 324,
+          "blockNumber": "269518800",
+          "txHash": "0xf0039397e1662e40187d0c519251ad83802573fd926268e943db08c26352233d",
+          "submittedAt": 3455997.281887,
+          "includedAt": 3456500.76017,
+          "inclusionLatencyMs": 503.47828300017864
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59806",
+          "effectiveGasPrice": "20012000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 324,
+          "blockNumber": "269518802",
+          "txHash": "0xb358f98f2343627d1255a1920158e6b8d61afb06ee747f47a7e53a9b7742bf63",
+          "submittedAt": 3456501.010936,
+          "includedAt": 3456957.903506,
+          "inclusionLatencyMs": 456.89257000014186
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59816",
+          "effectiveGasPrice": "20046000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 324,
+          "blockNumber": "269518804",
+          "txHash": "0x910ae6220cbaa74b637e4f43a3eba9874efc006216d2c68e91e3bb635c6d9a8d",
+          "submittedAt": 3456958.337883,
+          "includedAt": 3457532.568648,
+          "inclusionLatencyMs": 574.2307649999857
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59818",
+          "effectiveGasPrice": "20000000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 324,
+          "blockNumber": "269518807",
+          "txHash": "0x8c5ab544e918a86eaf14dfbefc365dd2401e637f30d0be15897e3ca191e216b9",
+          "submittedAt": 3457532.683166,
+          "includedAt": 3458258.164823,
+          "inclusionLatencyMs": 725.4816569997929
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59806",
+          "effectiveGasPrice": "20048000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 324,
+          "blockNumber": "269518809",
+          "txHash": "0x13e7f173332f2ca351357f4f32784dbd11ef60bc26a02ef06fca79c40b2f6ca7",
+          "submittedAt": 3458258.600515,
+          "includedAt": 3458768.666034,
+          "inclusionLatencyMs": 510.0655189999379
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59816",
+          "effectiveGasPrice": "20000000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 324,
+          "blockNumber": "269518811",
+          "txHash": "0x2ec88a2c4b7c099e186c6335d324d5611670e0bcb99f6b469804bef56f84b0e7",
+          "submittedAt": 3458769.077028,
+          "includedAt": 3459251.700914,
+          "inclusionLatencyMs": 482.623886000365
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59776",
+          "effectiveGasPrice": "20824000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 324,
+          "blockNumber": "269518813",
+          "txHash": "0x12e598ce89592ef3f36c72a20b3901f99e4dcdd09a62517bef0ac013d65f9a87",
+          "submittedAt": 3459252.070055,
+          "includedAt": 3459823.986988,
+          "inclusionLatencyMs": 571.9169330000877
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59828",
+          "effectiveGasPrice": "20000000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 324,
+          "blockNumber": "269518816",
+          "txHash": "0x1f95b3e1b1a4f376a2757be92779fdb70dbfff35b65aeef37de2777ecb358d86",
+          "submittedAt": 3459824.528029,
+          "includedAt": 3460523.170325,
+          "inclusionLatencyMs": 698.6422959999181
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59798",
+          "effectiveGasPrice": "20000000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 324,
+          "blockNumber": "269518819",
+          "txHash": "0xae809e05d7291050318e1652240b47abb03ed3a5cbd8f245402c27ea9a766d72",
+          "submittedAt": 3460523.599501,
+          "includedAt": 3461218.633813,
+          "inclusionLatencyMs": 695.0343120000325
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59818",
+          "effectiveGasPrice": "20032000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 324,
+          "blockNumber": "269518821",
+          "txHash": "0xc1072672cbfb74b3218a83b4c6234d1cb8fe45fb293eec947556e2eea6336ec3",
+          "submittedAt": 3461219.027759,
+          "includedAt": 3461753.838634,
+          "inclusionLatencyMs": 534.8108749999665
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59772",
+          "effectiveGasPrice": "20000000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 324,
+          "blockNumber": "269518823",
+          "txHash": "0x44c3e8c87f419b63b17d1ca2a6edc1df46f1db48eb749e2727db3205ad0faedd",
+          "submittedAt": 3461754.337876,
+          "includedAt": 3462245.007585,
+          "inclusionLatencyMs": 490.66970899980515
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59818",
+          "effectiveGasPrice": "20000000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 324,
+          "blockNumber": "269518826",
+          "txHash": "0xc60d3503238af0288b8e0b88aaba2b2d00f473926b8f65f865ec6deb371c1c0d",
+          "submittedAt": 3462245.692354,
+          "includedAt": 3463072.047964,
+          "inclusionLatencyMs": 826.3556099999696
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59774",
+          "effectiveGasPrice": "20204000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 324,
+          "blockNumber": "269518829",
+          "txHash": "0x389e0c6c5986448e452cbed2bc915260f1156a443acf00cb7b60d0d802629b92",
+          "submittedAt": 3463072.699786,
+          "includedAt": 3463873.883384,
+          "inclusionLatencyMs": 801.1835980000906
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59796",
+          "effectiveGasPrice": "20086000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 324,
+          "blockNumber": "269518831",
+          "txHash": "0x19540fef9acf0237de66c5f4c0101c0a0df198cb48a72e3bfdc552380d02f521",
+          "submittedAt": 3463874.006155,
+          "includedAt": 3464406.969762,
+          "inclusionLatencyMs": 532.9636069997214
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59794",
+          "effectiveGasPrice": "20274000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 324,
+          "blockNumber": "269518833",
+          "txHash": "0xb4df33627184959528ff6de0d24e5dcc77635de1934cf013c208fba61773fccc",
+          "submittedAt": 3464407.421088,
+          "includedAt": 3464924.811938,
+          "inclusionLatencyMs": 517.3908500000834
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59796",
+          "effectiveGasPrice": "20176000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 324,
+          "blockNumber": "269518836",
+          "txHash": "0xf41ca40978960bb5558c66b3ca21ce99d03ed90f44111d381680130fae3c5d9b",
+          "submittedAt": 3464925.310619,
+          "includedAt": 3465651.823945,
+          "inclusionLatencyMs": 726.5133259999566
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59784",
+          "effectiveGasPrice": "20000000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 324,
+          "blockNumber": "269518838",
+          "txHash": "0xe6383e123924e51698b3384320aedc1d8105c400c2939e50303c25f60afa1a85",
+          "submittedAt": 3465652.317142,
+          "includedAt": 3466135.519299,
+          "inclusionLatencyMs": 483.20215700007975
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59762",
+          "effectiveGasPrice": "20176000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 324,
+          "blockNumber": "269518840",
+          "txHash": "0x54881c0aa2d025ca914269e1785be90c29743f5468608929f91df7e399961a5c",
+          "submittedAt": 3466135.695414,
+          "includedAt": 3466650.35828,
+          "inclusionLatencyMs": 514.6628659996204
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59806",
+          "effectiveGasPrice": "20000000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 324,
+          "blockNumber": "269518842",
+          "txHash": "0xa977c1ad8b6e2b8939d484665a2389e6eb791b75c32e998f81a4937ed5f7f797",
+          "submittedAt": 3466650.788585,
+          "includedAt": 3467072.918249,
+          "inclusionLatencyMs": 422.1296639996581
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59808",
+          "effectiveGasPrice": "20170000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 324,
+          "blockNumber": "269518844",
+          "txHash": "0x26919ccd6da13350f3a755c408deb262560ae52c4625eec04e1365d3fe9ddc2b",
+          "submittedAt": 3467073.378544,
+          "includedAt": 3467669.427676,
+          "inclusionLatencyMs": 596.0491320001893
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59782",
+          "effectiveGasPrice": "20016000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 324,
+          "blockNumber": "269518847",
+          "txHash": "0x173af4d0ef246c1825861860812276ed7bc5b69a7e92f1746e554dd52ebf9076",
+          "submittedAt": 3467669.896265,
+          "includedAt": 3468382.139316,
+          "inclusionLatencyMs": 712.2430509999394
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59792",
+          "effectiveGasPrice": "20178000",
+          "l1DataFee": "0",
+          "l1GasUsed": "0",
+          "calldataBytes": 324,
+          "blockNumber": "269518849",
+          "txHash": "0x859266f19e10897982b2875de83e69c0c4435e17a83a3789e2649e417b71c94d",
+          "submittedAt": 3468382.677609,
+          "includedAt": 3468905.394606,
+          "inclusionLatencyMs": 522.7169969999231
+        }
+      ],
+      "readLatency": [
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 41.25928200036287,
+          "sampledAt": 1779181336697
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 34.94886500015855,
+          "sampledAt": 1779181336732
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 35.94469799986109,
+          "sampledAt": 1779181336768
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 40.712211000267416,
+          "sampledAt": 1779181336808
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 43.24105399986729,
+          "sampledAt": 1779181336852
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 35.9963150001131,
+          "sampledAt": 1779181336888
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 37.98581199999899,
+          "sampledAt": 1779181336926
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 36.76665100036189,
+          "sampledAt": 1779181336963
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 37.24022899987176,
+          "sampledAt": 1779181337000
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 36.1067459997721,
+          "sampledAt": 1779181337036
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 37.10012700036168,
+          "sampledAt": 1779181337073
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 49.05686599994078,
+          "sampledAt": 1779181337122
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 39.84359300043434,
+          "sampledAt": 1779181337162
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 41.16564599983394,
+          "sampledAt": 1779181337203
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 39.28504899982363,
+          "sampledAt": 1779181337242
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 35.44116500020027,
+          "sampledAt": 1779181337278
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 42.00568400043994,
+          "sampledAt": 1779181337320
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 36.64655400021002,
+          "sampledAt": 1779181337356
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 36.50992999970913,
+          "sampledAt": 1779181337393
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 45.14446600014344,
+          "sampledAt": 1779181337438
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 37.135517000220716,
+          "sampledAt": 1779181337475
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 48.305346000008285,
+          "sampledAt": 1779181337524
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 42.022671999875456,
+          "sampledAt": 1779181337566
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 35.71956000011414,
+          "sampledAt": 1779181337601
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 46.12348400009796,
+          "sampledAt": 1779181337648
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 39.22445699991658,
+          "sampledAt": 1779181337687
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 37.45125099970028,
+          "sampledAt": 1779181337724
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 37.71880399994552,
+          "sampledAt": 1779181337762
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 40.92547699995339,
+          "sampledAt": 1779181337803
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 44.49329400015995,
+          "sampledAt": 1779181337847
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 43.00221100030467,
+          "sampledAt": 1779181337890
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 40.84510499984026,
+          "sampledAt": 1779181337931
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 37.90154400002211,
+          "sampledAt": 1779181337969
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 40.59154599998146,
+          "sampledAt": 1779181338010
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 42.77009100001305,
+          "sampledAt": 1779181338053
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 52.19363499991596,
+          "sampledAt": 1779181338105
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 34.633586999960244,
+          "sampledAt": 1779181338139
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 39.705509999766946,
+          "sampledAt": 1779181338179
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 42.37747999979183,
+          "sampledAt": 1779181338221
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 43.074689000379294,
+          "sampledAt": 1779181338265
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 41.03276300011203,
+          "sampledAt": 1779181338306
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 36.24844399979338,
+          "sampledAt": 1779181338342
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 42.365976999979466,
+          "sampledAt": 1779181338384
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 53.26778799993917,
+          "sampledAt": 1779181338437
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 42.65535099990666,
+          "sampledAt": 1779181338480
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 43.344822000246495,
+          "sampledAt": 1779181338524
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 36.1446190001443,
+          "sampledAt": 1779181338560
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 36.27862699981779,
+          "sampledAt": 1779181338596
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 43.395900999661535,
+          "sampledAt": 1779181338639
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 37.395231999922544,
+          "sampledAt": 1779181338677
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 36.74214900005609,
+          "sampledAt": 1779181338714
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 33.71342599997297,
+          "sampledAt": 1779181338747
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 35.73181100003421,
+          "sampledAt": 1779181338783
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 35.6980499997735,
+          "sampledAt": 1779181338819
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 37.45579700032249,
+          "sampledAt": 1779181338856
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 37.35459899995476,
+          "sampledAt": 1779181338893
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 89.7236369997263,
+          "sampledAt": 1779181338983
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 42.803821000270545,
+          "sampledAt": 1779181339026
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 40.134005000349134,
+          "sampledAt": 1779181339066
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 36.976815999951214,
+          "sampledAt": 1779181339103
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 40.47721699997783,
+          "sampledAt": 1779181339144
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 39.00468900008127,
+          "sampledAt": 1779181339183
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 50.10280400002375,
+          "sampledAt": 1779181339233
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 51.869967999868095,
+          "sampledAt": 1779181339285
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 39.446198999881744,
+          "sampledAt": 1779181339324
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 51.830100999679416,
+          "sampledAt": 1779181339376
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 32.513801000081,
+          "sampledAt": 1779181339408
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 44.216374000068754,
+          "sampledAt": 1779181339453
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 39.55174500029534,
+          "sampledAt": 1779181339492
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 42.036292999982834,
+          "sampledAt": 1779181339534
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 72.15099099976942,
+          "sampledAt": 1779181339606
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 38.94542599981651,
+          "sampledAt": 1779181339645
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 36.80037199985236,
+          "sampledAt": 1779181339682
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 36.92484299978241,
+          "sampledAt": 1779181339719
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 48.662638999987394,
+          "sampledAt": 1779181339768
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 38.18137399991974,
+          "sampledAt": 1779181339806
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 36.602716000285,
+          "sampledAt": 1779181339843
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 37.4956840001978,
+          "sampledAt": 1779181339880
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 39.03539799991995,
+          "sampledAt": 1779181339919
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 36.736471000127494,
+          "sampledAt": 1779181339956
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 57.246953000314534,
+          "sampledAt": 1779181340013
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 45.38034899998456,
+          "sampledAt": 1779181340059
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 36.562063000164926,
+          "sampledAt": 1779181340095
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 42.380805999971926,
+          "sampledAt": 1779181340138
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 48.23262799996883,
+          "sampledAt": 1779181340186
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 63.46583000011742,
+          "sampledAt": 1779181340249
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 33.69286400033161,
+          "sampledAt": 1779181340283
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 30.66872199997306,
+          "sampledAt": 1779181340314
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 34.819075000006706,
+          "sampledAt": 1779181340348
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 52.09361999994144,
+          "sampledAt": 1779181340400
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 33.01132799964398,
+          "sampledAt": 1779181340434
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 34.00362200010568,
+          "sampledAt": 1779181340468
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 45.28686699969694,
+          "sampledAt": 1779181340513
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 43.454192999750376,
+          "sampledAt": 1779181340556
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 34.28662699973211,
+          "sampledAt": 1779181340591
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 33.51138099981472,
+          "sampledAt": 1779181340624
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 35.16759500000626,
+          "sampledAt": 1779181340659
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 45.347540999762714,
+          "sampledAt": 1779181340705
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 39.05877500027418,
+          "sampledAt": 1779181340744
+        },
+        {
+          "chainId": 421614,
+          "chainName": "arbitrumSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 42.992946999613196,
+          "sampledAt": 1779181340787
+        }
+      ]
+    },
+    "baseSepolia": {
+      "issueBatch": [
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "issueBatch",
+          "batchSize": 1,
+          "tag": "main",
+          "gasUsed": "51012",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "61208733",
+          "l1GasUsed": "1600",
+          "calldataBytes": 68,
+          "blockNumber": "41706705",
+          "txHash": "0xe5a9dbdf83f5dcea381a44ac21e4155078501870e935df1a0184c25b326377b8",
+          "submittedAt": 3470.745977,
+          "includedAt": 3775.476795,
+          "inclusionLatencyMs": 304.730818,
+          "latencySamplesMs": [
+            304.730818,
+            1410.4149349999998,
+            1431.316769,
+            413.9893089999996,
+            2445.3310919999994,
+            322.63246099999924,
+            1389.0424409999996,
+            1392.1969869999994,
+            405.91495300000133,
+            2415.970924000001,
+            406.2085739999984,
+            1406.0038540000005,
+            405.7692139999999,
+            382.6335719999988,
+            1387.1312550000002,
+            446.3062119999995,
+            1378.6660699999993,
+            445.0823449999989,
+            1400.4781110000004,
+            405.8767860000007,
+            407.70415499999945,
+            1497.923096999999,
+            390.062460000001,
+            1367.6864630000018,
+            384.3969270000016,
+            1397.5216540000001,
+            363.90771400000085,
+            378.08414300000004,
+            1382.0978319999995,
+            429.8670979999988
+          ]
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "issueBatch",
+          "batchSize": 10,
+          "tag": "main",
+          "gasUsed": "51012",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "67571895",
+          "l1GasUsed": "1600",
+          "calldataBytes": 68,
+          "blockNumber": "41706790",
+          "txHash": "0xbf50315c37b68c8ab3faf29ed00a2010c2c039784dd35ba45c38e8beda69480d",
+          "submittedAt": 3052.289253,
+          "includedAt": 3496.744966,
+          "inclusionLatencyMs": 444.4557130000003,
+          "latencySamplesMs": [
+            444.4557130000003,
+            1384.2363829999995,
+            1382.3727979999994,
+            378.275893,
+            372.0189529999998,
+            367.5502319999996,
+            1394.8561340000006,
+            413.36591299999964,
+            1403.1950419999994,
+            1661.7889699999996,
+            391.91623600000094,
+            1398.908496,
+            368.6074419999986,
+            382.21617200000037,
+            392.6612349999996,
+            1384.6161489999995,
+            429.0152109999981,
+            1384.5360199999996,
+            370.615386999998,
+            376.06685300000026,
+            1391.6808679999995,
+            361.43067299999893,
+            388.0325860000012,
+            1396.8353419999985,
+            394.9618780000019,
+            359.67164799999955,
+            1407.078837000001,
+            352.044589000001,
+            1378.7432149999986,
+            479.3839310000003
+          ]
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "issueBatch",
+          "batchSize": 100,
+          "tag": "main",
+          "gasUsed": "51012",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "31588802",
+          "l1GasUsed": "1600",
+          "calldataBytes": 68,
+          "blockNumber": "41706802",
+          "txHash": "0x725a278eb4f93df7f3c618286a4968f7a3400f2e2defc50f46aa04a6f39e254e",
+          "submittedAt": 27196.183018,
+          "includedAt": 27561.249316,
+          "inclusionLatencyMs": 365.06629800000155,
+          "latencySamplesMs": [
+            365.06629800000155,
+            391.8090030000021,
+            396.6519580000022,
+            395.5472090000003,
+            356.6981949999972,
+            351.375845999999,
+            1355.4799770000027,
+            373.0286930000002,
+            1388.525830999999,
+            360.9464250000019,
+            355.31244799999695,
+            1356.7772200000036,
+            458.2317919999987,
+            1362.197076000004,
+            384.2061380000014,
+            360.47499800000514,
+            1374.750294999998,
+            392.74356799999805,
+            1355.994150999999,
+            1377.1641440000021,
+            367.9906659999979,
+            257.78035400000226,
+            384.155230999997,
+            1363.6304070000042,
+            393.57920100000047,
+            265.11594999999943,
+            1371.923318000001,
+            281.4466990000001,
+            355.8409440000032,
+            1375.2958239999934
+          ]
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "issueBatch",
+          "batchSize": 1000,
+          "tag": "main",
+          "gasUsed": "51012",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "12823327",
+          "l1GasUsed": "1600",
+          "calldataBytes": 68,
+          "blockNumber": "41706813",
+          "txHash": "0xf55d38533d995b95164cb4c0e8ebb42986ec57714dae1d2edf5fe3a02c7ab2fa",
+          "submittedAt": 48878.349589,
+          "includedAt": 49143.634776,
+          "inclusionLatencyMs": 265.2851870000013,
+          "latencySamplesMs": [
+            265.2851870000013,
+            1386.9111619999967,
+            348.323642000003,
+            372.43092199999955,
+            347.24113800000487,
+            359.8030349999972,
+            263.57720999999583,
+            421.7569469999944,
+            1350.0411170000007,
+            362.8658510000023,
+            1366.403790999997,
+            392.0429010000007,
+            1414.450377000001,
+            410.45381700000144,
+            1376.4594829999987,
+            376.25722099999984,
+            1377.0666779999956,
+            389.74123099999997,
+            1373.8560270000016,
+            380.64085100000375,
+            392.34776799999236,
+            368.6935320000048,
+            354.1026169999968,
+            380.9602050000103,
+            388.5264909999969,
+            385.26044099999126,
+            2390.5051620000013,
+            2423.523257000008,
+            1384.8679989999946,
+            356.3410009999934
+          ]
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "issueBatch",
+          "batchSize": 10000,
+          "tag": "main",
+          "gasUsed": "51012",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "13008957",
+          "l1GasUsed": "1600",
+          "calldataBytes": 68,
+          "blockNumber": "41706827",
+          "txHash": "0xe5aace3770c8aaae41ea1a353eeb79695481f7f5e14def237f26c93e1b778c6f",
+          "submittedAt": 75705.44633,
+          "includedAt": 78134.901815,
+          "inclusionLatencyMs": 2429.4554849999986,
+          "latencySamplesMs": [
+            2429.4554849999986,
+            381.223610999994,
+            362.7647810000053,
+            1388.8230889999977,
+            1370.5274899999931,
+            377.2552310000028,
+            378.0471980000002,
+            364.12680099999125,
+            1385.8901769999939,
+            1354.4274489999952,
+            380.18260400000145,
+            373.1869230000011,
+            410.4636979999923,
+            1360.2069969999866,
+            1363.1722569999984,
+            1368.8873590000003,
+            2430.7095989999943,
+            389.76705599999696,
+            422.0577370000101,
+            1386.669584000003,
+            382.0770519999933,
+            371.24053500000446,
+            415.0243979999941,
+            1413.4800680000044,
+            2399.118963999994,
+            419.1919169999892,
+            376.2584419999912,
+            1366.6948059999995,
+            378.583157999994,
+            367.2179449999967
+          ]
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "issueBatch",
+          "batchSize": 40,
+          "tag": "seed",
+          "gasUsed": "51012",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "27279955",
+          "l1GasUsed": "1600",
+          "calldataBytes": 68,
+          "blockNumber": "41707183",
+          "txHash": "0x3e4b49429933a32bc5402bfb483aa40fa323054a0a63a49f62e34b077bc257c6",
+          "submittedAt": 6259.053106,
+          "includedAt": 8192.36358,
+          "inclusionLatencyMs": 1933.310473999999
+        }
+      ],
+      "revokeFromBatch": [
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59806",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "79165207",
+          "l1GasUsed": "4297",
+          "calldataBytes": 324,
+          "blockNumber": "41707185",
+          "txHash": "0x4df09ec3f511a017419c3b7cb07bfdd2c5d0cd3892c2eda26fabbcf4d4b1d82c",
+          "submittedAt": 9634.94782,
+          "includedAt": 10959.111342,
+          "inclusionLatencyMs": 1324.1635220000007
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59764",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "79165207",
+          "l1GasUsed": "4297",
+          "calldataBytes": 324,
+          "blockNumber": "41707185",
+          "txHash": "0xa2794f6c1b20080c7439f00e4acc329cf5afddb38fd802c34aa03767864a3472",
+          "submittedAt": 10959.829325,
+          "includedAt": 12391.177274,
+          "inclusionLatencyMs": 1431.347948999999
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59774",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "79165207",
+          "l1GasUsed": "4297",
+          "calldataBytes": 324,
+          "blockNumber": "41707186",
+          "txHash": "0x6c07d6aac6f48513cb4b212aa908be61fc3b1b0d38ff1cd1fddd9e8fdeae7533",
+          "submittedAt": 12391.451356,
+          "includedAt": 14133.75497,
+          "inclusionLatencyMs": 1742.3036140000004
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59796",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "140556380",
+          "l1GasUsed": "4297",
+          "calldataBytes": 324,
+          "blockNumber": "41707187",
+          "txHash": "0xa03338ef500b5b467ef4a513993be5172c1e78b93bee93c275b119a5aac13c9f",
+          "submittedAt": 14134.410441,
+          "includedAt": 15465.339784,
+          "inclusionLatencyMs": 1330.9293429999998
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59776",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "29474105",
+          "l1GasUsed": "4297",
+          "calldataBytes": 324,
+          "blockNumber": "41707188",
+          "txHash": "0x4a1458d113d24f7d67777f19748ad814b2f096c10675aadbf52d001563113152",
+          "submittedAt": 15465.95206,
+          "includedAt": 16999.225748,
+          "inclusionLatencyMs": 1533.2736880000011
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59762",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "29474105",
+          "l1GasUsed": "4297",
+          "calldataBytes": 324,
+          "blockNumber": "41707188",
+          "txHash": "0xa621b3be7edf2b75cd3d088665777e1dc1faac78ef7cb56d7db2efb6b50a31b2",
+          "submittedAt": 16999.470237,
+          "includedAt": 18536.427944,
+          "inclusionLatencyMs": 1536.9577069999978
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59796",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "103080644",
+          "l1GasUsed": "4243",
+          "calldataBytes": 324,
+          "blockNumber": "41707189",
+          "txHash": "0x6683570b5ce0b2a205a550098baa74b7f800faba842263697bd83c97a04197d9",
+          "submittedAt": 18536.659404,
+          "includedAt": 19971.88917,
+          "inclusionLatencyMs": 1435.2297659999967
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59806",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "87636291",
+          "l1GasUsed": "4297",
+          "calldataBytes": 324,
+          "blockNumber": "41707190",
+          "txHash": "0x7181efea55e8cb051c37b658a0b6a0aae5d7dda31236ab25da339fbfbd8242fa",
+          "submittedAt": 19972.467323,
+          "includedAt": 21507.419255,
+          "inclusionLatencyMs": 1534.951932
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59796",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "53792586",
+          "l1GasUsed": "4297",
+          "calldataBytes": 324,
+          "blockNumber": "41707191",
+          "txHash": "0x8202552b007ef0078047c7f327304619c35ab73bf3d9e4827184be5ccdec982b",
+          "submittedAt": 21508.23832,
+          "includedAt": 22879.884531,
+          "inclusionLatencyMs": 1371.6462109999993
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59786",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "48060991",
+          "l1GasUsed": "4297",
+          "calldataBytes": 324,
+          "blockNumber": "41707191",
+          "txHash": "0xb41c0dc36c96795532d37b999699c8b39d56a61a8a3e1972c05952aa7176de20",
+          "submittedAt": 22880.511359,
+          "includedAt": 23922.897213,
+          "inclusionLatencyMs": 1042.385854
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59786",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "87636291",
+          "l1GasUsed": "4297",
+          "calldataBytes": 324,
+          "blockNumber": "41707192",
+          "txHash": "0x2ea7afbc439084e4c032d0e43d8611e0c28a56d419fd77c5e533f618e987f146",
+          "submittedAt": 23923.492559,
+          "includedAt": 26217.020438,
+          "inclusionLatencyMs": 2293.527879000001
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59776",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "87636291",
+          "l1GasUsed": "4297",
+          "calldataBytes": 324,
+          "blockNumber": "41707193",
+          "txHash": "0xd67ceb40487a7b86fb7dcfe721316af0187a7c81598932ab4150a73e1975406b",
+          "submittedAt": 26217.526711,
+          "includedAt": 27956.771457,
+          "inclusionLatencyMs": 1739.2447460000003
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59786",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "32627986",
+          "l1GasUsed": "4297",
+          "calldataBytes": 324,
+          "blockNumber": "41707194",
+          "txHash": "0xc871bcd450f1c950f9404c03830624c5e3c4c19aa7be9ff1f860c67892eb7c01",
+          "submittedAt": 27957.139375,
+          "includedAt": 29389.972987,
+          "inclusionLatencyMs": 1432.8336120000022
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59784",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "198992998",
+          "l1GasUsed": "4297",
+          "calldataBytes": 324,
+          "blockNumber": "41707195",
+          "txHash": "0x1dd9f09e5a4e7b26782ef49f7681a10fe9b691e2c2f301490492ad694c2b19ce",
+          "submittedAt": 29390.31822,
+          "includedAt": 31439.642571,
+          "inclusionLatencyMs": 2049.3243509999993
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59772",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "109619261",
+          "l1GasUsed": "4297",
+          "calldataBytes": 324,
+          "blockNumber": "41707196",
+          "txHash": "0x5f3b7d1cc8ff0fb9dcebde598d2189d8fdd8ff599fbd0257e5b798b43fcffc3c",
+          "submittedAt": 31440.256359,
+          "includedAt": 33487.156551,
+          "inclusionLatencyMs": 2046.900192000001
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59762",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "31343708",
+          "l1GasUsed": "4297",
+          "calldataBytes": 324,
+          "blockNumber": "41707197",
+          "txHash": "0x7586d8dc866fe1a684f0317cc69788208ca4ae1673f34cb22bb7c09e1a0b57be",
+          "submittedAt": 33487.777166,
+          "includedAt": 35125.696878,
+          "inclusionLatencyMs": 1637.9197120000026
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59806",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "31343708",
+          "l1GasUsed": "4297",
+          "calldataBytes": 324,
+          "blockNumber": "41707198",
+          "txHash": "0x60a1f79a6cb8fa17b67274da0dd9fa171544877b728573ea9e4fdfa2b338a7aa",
+          "submittedAt": 35126.31122,
+          "includedAt": 37172.854002,
+          "inclusionLatencyMs": 2046.5427819999968
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59796",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "123515337",
+          "l1GasUsed": "4297",
+          "calldataBytes": 324,
+          "blockNumber": "41707198",
+          "txHash": "0xa288ce5d7ab0692ab0edeb4f6ceb2c87e6c82d8fde5270a91245170439bc07da",
+          "submittedAt": 37173.307292,
+          "includedAt": 38605.718938,
+          "inclusionLatencyMs": 1432.4116460000005
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59784",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "84186819",
+          "l1GasUsed": "4297",
+          "calldataBytes": 324,
+          "blockNumber": "41707199",
+          "txHash": "0x3b11eb1121b55d6ee634bde1769b17c366f1d85de24033bf46fea44957bdfe8c",
+          "submittedAt": 38605.88072,
+          "includedAt": 40142.667591,
+          "inclusionLatencyMs": 1536.7868709999966
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59786",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "31486604",
+          "l1GasUsed": "4297",
+          "calldataBytes": 324,
+          "blockNumber": "41707200",
+          "txHash": "0x2fb041713646ecd060f54263ddd440af8cafb83c6659e302c01750ae72bdb4a0",
+          "submittedAt": 40143.203882,
+          "includedAt": 41478.812992,
+          "inclusionLatencyMs": 1335.6091099999976
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59782",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "31343708",
+          "l1GasUsed": "4297",
+          "calldataBytes": 324,
+          "blockNumber": "41707201",
+          "txHash": "0x39139dbd01643c5986b2124c8f14ddec85ddc9582d07cadbeec8f85b3883ad78",
+          "submittedAt": 41479.464939,
+          "includedAt": 43318.728747,
+          "inclusionLatencyMs": 1839.2638080000033
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59764",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "93111382",
+          "l1GasUsed": "4297",
+          "calldataBytes": 324,
+          "blockNumber": "41707202",
+          "txHash": "0x9916c8dcbd7152f3eec930f2ef42b17f52c85b095b8975c3d63a726c9ae20462",
+          "submittedAt": 43322.037236,
+          "includedAt": 45467.099609,
+          "inclusionLatencyMs": 2145.0623730000007
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59806",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "34666425",
+          "l1GasUsed": "4297",
+          "calldataBytes": 324,
+          "blockNumber": "41707203",
+          "txHash": "0x6b6e045439f0c65ab881bc3b8cfbfd3fc947c74595fdc13540422054e3c9e38c",
+          "submittedAt": 45467.419522,
+          "includedAt": 47412.737945,
+          "inclusionLatencyMs": 1945.3184230000043
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59784",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "121239893",
+          "l1GasUsed": "4297",
+          "calldataBytes": 324,
+          "blockNumber": "41707204",
+          "txHash": "0x322cc632b29d0538d5c0c6376cabf65ed7cbfa4032338f19906f8f308cdcd0ea",
+          "submittedAt": 47413.152004,
+          "includedAt": 49289.382497,
+          "inclusionLatencyMs": 1876.2304929999955
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59796",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "127039586",
+          "l1GasUsed": "4297",
+          "calldataBytes": 324,
+          "blockNumber": "41707205",
+          "txHash": "0x5118f14a8eb0a7937c039a64ef395f97cee064d063b1aaa40c202346543860aa",
+          "submittedAt": 49289.691326,
+          "includedAt": 51408.04881,
+          "inclusionLatencyMs": 2118.357484
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59794",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "34666425",
+          "l1GasUsed": "4297",
+          "calldataBytes": 324,
+          "blockNumber": "41707206",
+          "txHash": "0x223a17b64937a4d13de2d731289734f5b3251475bb602f47e4353c313730dcfb",
+          "submittedAt": 51408.69446,
+          "includedAt": 53154.517222,
+          "inclusionLatencyMs": 1745.8227620000034
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59802",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "93111382",
+          "l1GasUsed": "4297",
+          "calldataBytes": 324,
+          "blockNumber": "41707206",
+          "txHash": "0x98478734942d7d0106e0aef8c28e9408b50d4a6ef8c93645c6ef3bda20950ef0",
+          "submittedAt": 53154.670029,
+          "includedAt": 54274.058835,
+          "inclusionLatencyMs": 1119.3888060000027
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59804",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "187066408",
+          "l1GasUsed": "4297",
+          "calldataBytes": 324,
+          "blockNumber": "41707207",
+          "txHash": "0xd99fdb60118683b1901d2035f200440d219612936484e6add6486ea142d86d13",
+          "submittedAt": 54274.402401,
+          "includedAt": 55808.878743,
+          "inclusionLatencyMs": 1534.4763420000018
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59794",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "97679872",
+          "l1GasUsed": "4297",
+          "calldataBytes": 324,
+          "blockNumber": "41707208",
+          "txHash": "0x6d39c1a819ab88bcd96d0e341fbef0819d0ccac1bdba91a9bfa0f9818ddbeb44",
+          "submittedAt": 55809.085536,
+          "includedAt": 57710.04459,
+          "inclusionLatencyMs": 1900.959053999999
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "59804",
+          "effectiveGasPrice": "6000000",
+          "l1DataFee": "371471281",
+          "l1GasUsed": "4297",
+          "calldataBytes": 324,
+          "blockNumber": "41707209",
+          "txHash": "0x830fb8c9abe22c11551cc28db7d4798c9a239b72f318e14a654beb20efbf5851",
+          "submittedAt": 57710.550549,
+          "includedAt": 59109.042338,
+          "inclusionLatencyMs": 1398.4917889999997
+        }
+      ],
+      "readLatency": [
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 126.78127099999983,
+          "sampledAt": 1779182711054
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 141.17546199999924,
+          "sampledAt": 1779182711196
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 205.0331640000004,
+          "sampledAt": 1779182711401
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 139.88989500000025,
+          "sampledAt": 1779182711541
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 173.82567800000106,
+          "sampledAt": 1779182711714
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 197.49177000000054,
+          "sampledAt": 1779182711912
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 206.48552100000234,
+          "sampledAt": 1779182712119
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 209.38299999999435,
+          "sampledAt": 1779182712328
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 123.59774399999878,
+          "sampledAt": 1779182712452
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 173.48962399999436,
+          "sampledAt": 1779182712625
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 213.60533700000087,
+          "sampledAt": 1779182712839
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 201.64043700000184,
+          "sampledAt": 1779182713040
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 204.3531010000006,
+          "sampledAt": 1779182713245
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 204.6016430000018,
+          "sampledAt": 1779182713449
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 210.8270709999997,
+          "sampledAt": 1779182713660
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 196.91239099999802,
+          "sampledAt": 1779182713857
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 204.77803200000199,
+          "sampledAt": 1779182714062
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 210.1621379999997,
+          "sampledAt": 1779182714272
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 125.14229100000375,
+          "sampledAt": 1779182714397
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 178.23139300000184,
+          "sampledAt": 1779182714576
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 126.7772530000002,
+          "sampledAt": 1779182714702
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 179.3434139999954,
+          "sampledAt": 1779182714882
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 209.9527919999964,
+          "sampledAt": 1779182715092
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 129.80087300000014,
+          "sampledAt": 1779182715221
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 185.15226899999834,
+          "sampledAt": 1779182715407
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 130.29938599999878,
+          "sampledAt": 1779182715537
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 132.11613499999658,
+          "sampledAt": 1779182715669
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 134.75058400000125,
+          "sampledAt": 1779182715804
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 220.31431300000258,
+          "sampledAt": 1779182716024
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 146.54569300000003,
+          "sampledAt": 1779182716171
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 145.92877500000031,
+          "sampledAt": 1779182716317
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 130.6826610000062,
+          "sampledAt": 1779182716447
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 184.04284200000257,
+          "sampledAt": 1779182716631
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 180.91075000000274,
+          "sampledAt": 1779182716812
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 134.96674899999925,
+          "sampledAt": 1779182716947
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 188.80518099999608,
+          "sampledAt": 1779182717136
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 204.375291999997,
+          "sampledAt": 1779182717340
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 204.45353400000022,
+          "sampledAt": 1779182717545
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 191.37756999999692,
+          "sampledAt": 1779182717736
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 121.57901299999503,
+          "sampledAt": 1779182717858
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 136.27115500000946,
+          "sampledAt": 1779182717994
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 128.52240800000436,
+          "sampledAt": 1779182718123
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 138.98694199998863,
+          "sampledAt": 1779182718262
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 205.24522300000535,
+          "sampledAt": 1779182718467
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 205.00429100000474,
+          "sampledAt": 1779182718672
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 126.98328000000038,
+          "sampledAt": 1779182718799
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 180.44194000000425,
+          "sampledAt": 1779182718979
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 126.83534799999325,
+          "sampledAt": 1779182719106
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 180.13761400000658,
+          "sampledAt": 1779182719286
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 204.9367889999994,
+          "sampledAt": 1779182719491
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 205.47899000000325,
+          "sampledAt": 1779182719697
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 202.38825600000564,
+          "sampledAt": 1779182719899
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 206.08777699999337,
+          "sampledAt": 1779182720105
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 204.05439599999227,
+          "sampledAt": 1779182720309
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 206.1974290000071,
+          "sampledAt": 1779182720516
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 203.36227800000052,
+          "sampledAt": 1779182720719
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 205.54999800000223,
+          "sampledAt": 1779182720924
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 126.90811699999904,
+          "sampledAt": 1779182721051
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 123.77856299999985,
+          "sampledAt": 1779182721175
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 127.90200499999628,
+          "sampledAt": 1779182721303
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 184.74233700000332,
+          "sampledAt": 1779182721488
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 120.33650900000066,
+          "sampledAt": 1779182721608
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 139.96006499999203,
+          "sampledAt": 1779182721748
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 121.44436100000166,
+          "sampledAt": 1779182721870
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 123.62251200000173,
+          "sampledAt": 1779182721993
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 159.90070499999274,
+          "sampledAt": 1779182722153
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 205.1685920000018,
+          "sampledAt": 1779182722358
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 203.00478299999668,
+          "sampledAt": 1779182722561
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 204.92101999999431,
+          "sampledAt": 1779182722766
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 204.56927300000098,
+          "sampledAt": 1779182722971
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 204.97260099998675,
+          "sampledAt": 1779182723176
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 125.9960790000041,
+          "sampledAt": 1779182723302
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 182.3129140000092,
+          "sampledAt": 1779182723484
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 205.3920119999966,
+          "sampledAt": 1779182723689
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 203.3491789999971,
+          "sampledAt": 1779182723893
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 205.08686000001035,
+          "sampledAt": 1779182724098
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 206.9100299999991,
+          "sampledAt": 1779182724305
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 124.88722800000687,
+          "sampledAt": 1779182724430
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 182.10442400000466,
+          "sampledAt": 1779182724612
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 204.06944200000726,
+          "sampledAt": 1779182724816
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 125.94152599999506,
+          "sampledAt": 1779182724942
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 181.61810900000273,
+          "sampledAt": 1779182725124
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 125.1034409999993,
+          "sampledAt": 1779182725249
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 181.61861299999873,
+          "sampledAt": 1779182725430
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 204.93471300000965,
+          "sampledAt": 1779182725635
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 203.02428500000678,
+          "sampledAt": 1779182725838
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 207.1306440000044,
+          "sampledAt": 1779182726045
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 203.35500499999034,
+          "sampledAt": 1779182726249
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 205.3145829999994,
+          "sampledAt": 1779182726454
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 204.72511400000076,
+          "sampledAt": 1779182726659
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 203.43982600000163,
+          "sampledAt": 1779182726862
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 207.06547099999443,
+          "sampledAt": 1779182727069
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 204.07956099999137,
+          "sampledAt": 1779182727273
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 205.8704490000091,
+          "sampledAt": 1779182727479
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 209.45486199999868,
+          "sampledAt": 1779182727689
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 198.30669900000794,
+          "sampledAt": 1779182727887
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 131.00328200000513,
+          "sampledAt": 1779182728018
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 176.72288699999626,
+          "sampledAt": 1779182728195
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 203.65209400000458,
+          "sampledAt": 1779182728398
+        },
+        {
+          "chainId": 84532,
+          "chainName": "baseSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 210.97612199999276,
+          "sampledAt": 1779182728609
+        }
+      ]
+    },
+    "zksyncSepolia": {
+      "issueBatch": [
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "issueBatch",
+          "batchSize": 1,
+          "tag": "main",
+          "gasUsed": "151171",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 68,
+          "blockNumber": "7438527",
+          "txHash": "0x68f5cdb2173963377e2e65b2dd00ea84bd9965b929e775541920859d7cb2abaf",
+          "submittedAt": 78440.909165,
+          "includedAt": 80796.890237,
+          "inclusionLatencyMs": 2355.981071999995,
+          "latencySamplesMs": [
+            2355.981071999995,
+            2647.277421999999,
+            2163.168055999995,
+            2358.4040090000053,
+            3066.3508370000054,
+            6143.314843999993,
+            5860.514142999993,
+            2074.8225000000093,
+            2301.4698170000047,
+            6060.337946,
+            6270.365925999999,
+            5930.17545699999,
+            2215.2148060000036,
+            5837.8143890000065,
+            2174.4224840000097,
+            2532.2877910000097,
+            1943.5033980000007,
+            1993.2971449999895,
+            5718.777979999984,
+            1916.090881000011,
+            1533.3382360000105,
+            1889.6287829999928,
+            1844.4842589999898,
+            1614.5669869999983,
+            1555.7051959999953,
+            1928.1864080000087,
+            6009.6942210000125,
+            1485.9575710000063,
+            1631.523027999996,
+            1896.9818680000026
+          ]
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "issueBatch",
+          "batchSize": 10,
+          "tag": "main",
+          "gasUsed": "131468",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 68,
+          "blockNumber": "7438562",
+          "txHash": "0x198e78b357fa1942cfc3e4c2bf2a2241c939dd5ca4f64ff631e54506f93bac07",
+          "submittedAt": 171426.570337,
+          "includedAt": 173364.653609,
+          "inclusionLatencyMs": 1938.083271999989,
+          "latencySamplesMs": [
+            1938.083271999989,
+            1786.7739700000093,
+            1916.436034000013,
+            5812.3807930000185,
+            5936.126573999994,
+            1753.2961779999896,
+            2067.548588000005,
+            1514.1268189999973,
+            1827.6500790000136,
+            2052.6250249999866,
+            5915.808507000009,
+            2065.8889159999962,
+            5910.690371000004,
+            2068.1636419999995,
+            1868.6374910000013,
+            1802.1105249999964,
+            1842.7796929999895,
+            1809.803402999998,
+            5797.519276000006,
+            1409.3740189999808,
+            1848.9595390000031,
+            1428.8023640000029,
+            5803.078443000006,
+            1452.076796999987,
+            1994.736904999998,
+            2060.4675049999787,
+            6022.69975,
+            5814.918594999996,
+            1445.1848009999958,
+            2163.489923999994
+          ]
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "issueBatch",
+          "batchSize": 100,
+          "tag": "main",
+          "gasUsed": "131462",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 68,
+          "blockNumber": "7438613",
+          "txHash": "0x467c2d9a5b43b2778b9c19b0ee639c71501593e5e5e4e5446eac15a1cdafac35",
+          "submittedAt": 258697.288087,
+          "includedAt": 260510.976553,
+          "inclusionLatencyMs": 1813.6884659999923,
+          "latencySamplesMs": [
+            1813.6884659999923,
+            1953.621742999996,
+            1803.7748710000305,
+            2029.8396070000017,
+            1801.8775940000196,
+            1925.5003260000376,
+            2552.14564599999,
+            1502.3904829999665,
+            1765.630094000022,
+            5789.00328200002,
+            1427.8300070000114,
+            1800.8002550000092,
+            2169.243717000005,
+            1979.4757129999925,
+            2045.2307420000434,
+            5832.527685999987,
+            2415.6637699999847,
+            1984.8721009999863,
+            1485.200593000045,
+            2053.0565400000196,
+            5886.236570000008,
+            1842.4360210000305,
+            2400.2061380000087,
+            1905.1484490000294,
+            1840.7059809999773,
+            1959.398817999987,
+            1798.8252679999568,
+            6451.427075000014,
+            2216.3785700000008,
+            1842.861176000035
+          ]
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "issueBatch",
+          "batchSize": 1000,
+          "tag": "main",
+          "gasUsed": "132010",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 68,
+          "blockNumber": "7438648",
+          "txHash": "0xe5ef9216ae678c21102b70af78570fc989409bb02290f1da57f2c4decf53c3a4",
+          "submittedAt": 333718.572719,
+          "includedAt": 335620.682635,
+          "inclusionLatencyMs": 1902.1099159999867,
+          "latencySamplesMs": [
+            1902.1099159999867,
+            5996.646753999987,
+            1834.5033979999716,
+            1794.5538589999778,
+            1982.3246710000094,
+            5996.314150999999,
+            6174.529455000011,
+            1954.6419350000215,
+            1945.0795620000572,
+            6047.954766999988,
+            2006.0207800000207,
+            6043.39850999997,
+            1887.2989720000187,
+            2181.592536000011,
+            5894.749019000039,
+            1857.833358999982,
+            6006.211225999985,
+            2476.7674710000283,
+            2205.1396209999803,
+            1766.5765339999925,
+            2069.728722000029,
+            1920.4815190000227,
+            5791.861848999979,
+            1823.716650999966,
+            1763.2408189999987,
+            2113.897617999988,
+            5901.567941999994,
+            5865.396948999958,
+            6075.780218,
+            1828.41470699996
+          ]
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "issueBatch",
+          "batchSize": 10000,
+          "tag": "main",
+          "gasUsed": "132010",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 68,
+          "blockNumber": "7438680",
+          "txHash": "0x9cd92b51f56750c557fe3a97bfe0a96f0b022a76276066a546f4e77caec604ec",
+          "submittedAt": 440287.4526,
+          "includedAt": 446474.440425,
+          "inclusionLatencyMs": 6186.98782499996,
+          "latencySamplesMs": [
+            6186.98782499996,
+            1896.9700109999976,
+            2040.0654290000093,
+            5835.26072000002,
+            1738.1817579999915,
+            1738.3987919999636,
+            1828.9557760000462,
+            1833.138414999994,
+            5951.857985999959,
+            2264.0272090000217,
+            1920.1989830000093,
+            1876.5579220000072,
+            2067.3676219999907,
+            5855.341035999998,
+            2195.735993999988,
+            1979.59021699999,
+            2355.7306490000337,
+            2063.635739999998,
+            5979.254554999992,
+            1502.5785720000276,
+            2128.487216999987,
+            1966.417287999997,
+            6424.667743000027,
+            6067.216950999922,
+            5951.809227999998,
+            2012.2991939999629,
+            2018.5263230000855,
+            1614.577801000094,
+            2230.477847000002,
+            5858.05285899993
+          ]
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "issueBatch",
+          "batchSize": 40,
+          "tag": "seed",
+          "gasUsed": "132010",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 68,
+          "blockNumber": "7438718",
+          "txHash": "0xd66ac507634fc52d50c6762355d63d3ac7ebfbd758adb33192b552f6237ecce7",
+          "submittedAt": 561511.925759,
+          "includedAt": 563333.472953,
+          "inclusionLatencyMs": 1821.5471939999843
+        }
+      ],
+      "revokeFromBatch": [
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "223172",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "7438719",
+          "txHash": "0x6d2ac8980224c37b3059d41c85f4aebbd26fb6a1c97b384957caf992dde26ca7",
+          "submittedAt": 563532.535491,
+          "includedAt": 565592.488194,
+          "inclusionLatencyMs": 2059.95270299993
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "223278",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "7438720",
+          "txHash": "0xaae5ec655d9fdd41879b6b3f25d8012c946891bd5ec4456a750661a720d66336",
+          "submittedAt": 565593.39924,
+          "includedAt": 571606.928979,
+          "inclusionLatencyMs": 6013.529738999903
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "223278",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "7438721",
+          "txHash": "0xfe18612c48dbca3c8984496a35decd5b0d5d74e775c32b179123509f6ccaefa8",
+          "submittedAt": 571607.460805,
+          "includedAt": 573546.540361,
+          "inclusionLatencyMs": 1939.0795559999533
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "222954",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "7438722",
+          "txHash": "0x92f19b5d0bd7dd13c414976d0cec38925cbcf11d530958ba85c9a932e8bcf99a",
+          "submittedAt": 573547.035154,
+          "includedAt": 575542.895933,
+          "inclusionLatencyMs": 1995.8607789999805
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "223060",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "7438723",
+          "txHash": "0xd3832812b13125970d7441884501a8986773a5e7b0b34969162e299ea9a55e1b",
+          "submittedAt": 575543.412854,
+          "includedAt": 581434.843856,
+          "inclusionLatencyMs": 5891.4310019999975
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "223172",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "7438724",
+          "txHash": "0x8c8d1c5d150f202d1cf4855b7d7c89606e5f233b4e7c2802782dacb9e1f332b8",
+          "submittedAt": 581435.358811,
+          "includedAt": 587787.303505,
+          "inclusionLatencyMs": 6351.944693999947
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "223272",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "7438725",
+          "txHash": "0x1789a5150e9cd4011d6f184ff3a1e4199be685da7a26348b18f6d9dad17a12b5",
+          "submittedAt": 587787.798873,
+          "includedAt": 593729.234949,
+          "inclusionLatencyMs": 5941.436075999984
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "223166",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "7438726",
+          "txHash": "0x9e3fbeea3db43caab2944a33bff9c805513a3c4859a21f8e901312ed9e2d1b07",
+          "submittedAt": 593729.740613,
+          "includedAt": 596047.990245,
+          "inclusionLatencyMs": 2318.249631999992
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "223166",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "7438727",
+          "txHash": "0x57f8e53b632db18338bb03b53f91f9f7adf55a175c2813c66c097cca7a4739b4",
+          "submittedAt": 596048.442583,
+          "includedAt": 598359.744953,
+          "inclusionLatencyMs": 2311.302369999932
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "223172",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "7438728",
+          "txHash": "0xf08ce4811c282e16bc4ffab99efea3c2156ab50dfeae5e45a864686f193025bf",
+          "submittedAt": 598360.221485,
+          "includedAt": 600874.687654,
+          "inclusionLatencyMs": 2514.466169000021
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "223272",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "7438729",
+          "txHash": "0x215122ae94b9ec14ad2714dc211ce0e8e292496b4bdd0f66ae651bd485a4707a",
+          "submittedAt": 600874.892421,
+          "includedAt": 603146.471029,
+          "inclusionLatencyMs": 2271.5786079999525
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "223278",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "7438730",
+          "txHash": "0x1e5bc5fb0955459d3529d1dcf8c5a54439a4eeb934edc8a52bf255d87e70789d",
+          "submittedAt": 603147.059941,
+          "includedAt": 604725.244879,
+          "inclusionLatencyMs": 1578.1849380000494
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "223378",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "7438731",
+          "txHash": "0xc705db0043f17bf19d69e9c038896d82f8e25fec424b8019a43b0527018efcee",
+          "submittedAt": 604725.471217,
+          "includedAt": 610653.264355,
+          "inclusionLatencyMs": 5927.79313799995
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "223060",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "7438732",
+          "txHash": "0xfcc771628e2ac4998abf5bb622f5d2c6af86017cf0439929894f23458db4deca",
+          "submittedAt": 610653.831615,
+          "includedAt": 612670.154283,
+          "inclusionLatencyMs": 2016.322668000008
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "223278",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "7438734",
+          "txHash": "0x3efd2736a4b3c05e1fe0238cebab9949d61a37ee01659811888a927c6ac865cc",
+          "submittedAt": 612670.611305,
+          "includedAt": 614659.988844,
+          "inclusionLatencyMs": 1989.3775390000083
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "223378",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "7438735",
+          "txHash": "0x98e4c3423ab3b386755bdd778b0e01924454ec307b59dc4120f557537074bfe9",
+          "submittedAt": 614660.47771,
+          "includedAt": 616610.160348,
+          "inclusionLatencyMs": 1949.6826379999984
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "223172",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "7438736",
+          "txHash": "0x81f6e8c603304de152448d3ea116e4902708178ef16ea94bd98e61579bebf3a7",
+          "submittedAt": 616610.881278,
+          "includedAt": 622672.935919,
+          "inclusionLatencyMs": 6062.054640999995
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "223272",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "7438738",
+          "txHash": "0x7ef6967d23547de3e0865b69f4a1ec9f2513d0d49b8a9605b624e855df3c69bd",
+          "submittedAt": 622673.481952,
+          "includedAt": 624650.900747,
+          "inclusionLatencyMs": 1977.4187950000633
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "223172",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "7438739",
+          "txHash": "0x7597a1161fdfe6972c0c51268a37b5b1753eba3fdb91a0ad42ff23ecc5c3bc14",
+          "submittedAt": 624651.420624,
+          "includedAt": 630720.87683,
+          "inclusionLatencyMs": 6069.456205999944
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "223172",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "7438740",
+          "txHash": "0xb7a7c65d4982de2995d43896e7305b51848641b6245f3fa57ef803e5a1906878",
+          "submittedAt": 630721.366477,
+          "includedAt": 632498.344643,
+          "inclusionLatencyMs": 1776.9781660001026
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "223278",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "7438741",
+          "txHash": "0x129a47ada7c505d1955b1ab1cb6902a41a1f5321ef255cca75fa547993426753",
+          "submittedAt": 632498.790033,
+          "includedAt": 634530.613562,
+          "inclusionLatencyMs": 2031.8235289999284
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "223172",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "7438742",
+          "txHash": "0x664da6648be9cf912b65fa6bf8d185aa1ad146bf5339a84d735e4930994d8702",
+          "submittedAt": 634531.095821,
+          "includedAt": 640350.332781,
+          "inclusionLatencyMs": 5819.236959999893
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "223278",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "7438743",
+          "txHash": "0x7fc49555bebfa87d3a3c7326e7327d38d696acb1db0fca39792b4f92edb5363f",
+          "submittedAt": 640351.144099,
+          "includedAt": 642663.601085,
+          "inclusionLatencyMs": 2312.4569859999465
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "223066",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "7438744",
+          "txHash": "0x70ee38bbe5e4d2d82ad77a340e0cf7c0cabadb2d9518ab79fe5e628cc714d3af",
+          "submittedAt": 642664.041048,
+          "includedAt": 648530.414261,
+          "inclusionLatencyMs": 5866.3732130000135
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "223166",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "7438745",
+          "txHash": "0x189cba2ff7192aab87bf13671e513d91884275ca83d64dc71edc07536ce6a1dc",
+          "submittedAt": 648530.86295,
+          "includedAt": 654673.568395,
+          "inclusionLatencyMs": 6142.7054449999705
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "223272",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "7438746",
+          "txHash": "0x7a272494edd1f0685bc275c2e26ba1e9f6e2f3e28e6a66193f94f7939d3e2afe",
+          "submittedAt": 654673.963447,
+          "includedAt": 660702.427774,
+          "inclusionLatencyMs": 6028.464326999965
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "223172",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "7438748",
+          "txHash": "0x6bd0191c8362f7647ec62477700ab12b7244c64a8e5aaa543e076dcd6dd4cd2d",
+          "submittedAt": 660702.892571,
+          "includedAt": 662739.668743,
+          "inclusionLatencyMs": 2036.7761719999835
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "223172",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "7438749",
+          "txHash": "0x6ec2b8d36b1767f184868a502c7ca4796fcd3efcad0c06e8494e8652aefb6324",
+          "submittedAt": 662740.176875,
+          "includedAt": 664996.935162,
+          "inclusionLatencyMs": 2256.758287000004
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "223384",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "7438750",
+          "txHash": "0x352cc0c22bf8b3278427a049954d2a7ffdea266cf594df18c6d7a7cb5cdaa6c9",
+          "submittedAt": 664997.476075,
+          "includedAt": 666478.972658,
+          "inclusionLatencyMs": 1481.496582999942
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "revokeFromBatch",
+          "gasUsed": "223272",
+          "effectiveGasPrice": "25000000",
+          "l1DataFee": "0",
+          "calldataBytes": 324,
+          "blockNumber": "7438751",
+          "txHash": "0xb3c447c7a3110816d9c76e01170ae45a6c86128dc204f85a7d3f0e5bab7193fc",
+          "submittedAt": 666479.727147,
+          "includedAt": 672518.212128,
+          "inclusionLatencyMs": 6038.484980999958
+        }
+      ],
+      "readLatency": [
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 242.52687199995853,
+          "sampledAt": 1779183324581
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 133.66156199993566,
+          "sampledAt": 1779183324715
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 128.7671379999956,
+          "sampledAt": 1779183324843
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 127.1642999999458,
+          "sampledAt": 1779183324971
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 131.7510750000365,
+          "sampledAt": 1779183325102
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 195.6093530000653,
+          "sampledAt": 1779183325298
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 204.5191760000307,
+          "sampledAt": 1779183325502
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 206.19782000000123,
+          "sampledAt": 1779183325709
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 202.79584899998736,
+          "sampledAt": 1779183325911
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 127.15358699997887,
+          "sampledAt": 1779183326039
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 180.33133600000292,
+          "sampledAt": 1779183326219
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 205.0884949999163,
+          "sampledAt": 1779183326424
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 204.8744899999583,
+          "sampledAt": 1779183326629
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 128.55990400002338,
+          "sampledAt": 1779183326757
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 133.32158500002697,
+          "sampledAt": 1779183326891
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 128.31822600006126,
+          "sampledAt": 1779183327019
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 125.34504299995024,
+          "sampledAt": 1779183327144
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 185.42679199995473,
+          "sampledAt": 1779183327330
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 126.09225200000219,
+          "sampledAt": 1779183327456
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 130.43145000003278,
+          "sampledAt": 1779183327586
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 129.46239699993748,
+          "sampledAt": 1779183327716
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 122.94087599997874,
+          "sampledAt": 1779183327839
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 125.46065699995961,
+          "sampledAt": 1779183327964
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 124.17577800003346,
+          "sampledAt": 1779183328089
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 178.41931999998633,
+          "sampledAt": 1779183328267
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 204.56812399998307,
+          "sampledAt": 1779183328472
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 208.4911209999118,
+          "sampledAt": 1779183328680
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 129.6762840000447,
+          "sampledAt": 1779183328810
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 174.02106900000945,
+          "sampledAt": 1779183328984
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 125.07493499992415,
+          "sampledAt": 1779183329109
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 128.64500700007193,
+          "sampledAt": 1779183329237
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 129.59478699998,
+          "sampledAt": 1779183329367
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 126.17595599999186,
+          "sampledAt": 1779183329493
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 206.94043700001203,
+          "sampledAt": 1779183329700
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 146.01215999992564,
+          "sampledAt": 1779183329846
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 161.42732500005513,
+          "sampledAt": 1779183330008
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 129.03220799996052,
+          "sampledAt": 1779183330137
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 178.20781900000293,
+          "sampledAt": 1779183330315
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 126.41230500000529,
+          "sampledAt": 1779183330441
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 180.32325299992226,
+          "sampledAt": 1779183330622
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 127.63484700000845,
+          "sampledAt": 1779183330749
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 180.2800259999931,
+          "sampledAt": 1779183330930
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 128.85935899999458,
+          "sampledAt": 1779183331058
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 128.34747399995103,
+          "sampledAt": 1779183331187
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 151.94482099998277,
+          "sampledAt": 1779183331339
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 203.9197929999791,
+          "sampledAt": 1779183331543
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 204.78693199995905,
+          "sampledAt": 1779183331748
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 205.27735400001984,
+          "sampledAt": 1779183331953
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 132.99009500001557,
+          "sampledAt": 1779183332086
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 174.46424700005446,
+          "sampledAt": 1779183332260
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 128.6562649999978,
+          "sampledAt": 1779183332389
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 179.27829599997494,
+          "sampledAt": 1779183332568
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 204.07253400003538,
+          "sampledAt": 1779183332772
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 129.93118800001685,
+          "sampledAt": 1779183332902
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 177.72823299991433,
+          "sampledAt": 1779183333080
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 128.12644600006752,
+          "sampledAt": 1779183333208
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 132.29105200001504,
+          "sampledAt": 1779183333340
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 148.5249560000375,
+          "sampledAt": 1779183333489
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 205.73733699996956,
+          "sampledAt": 1779183333695
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 203.87165200000163,
+          "sampledAt": 1779183333899
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 130.19103700004052,
+          "sampledAt": 1779183334029
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 177.34099499997683,
+          "sampledAt": 1779183334206
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 153.99698599998374,
+          "sampledAt": 1779183334360
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 145.76621699996758,
+          "sampledAt": 1779183334506
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 127.5349040000001,
+          "sampledAt": 1779183334633
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 191.3284509999212,
+          "sampledAt": 1779183334825
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 127.2776770000346,
+          "sampledAt": 1779183334952
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 127.25441399996635,
+          "sampledAt": 1779183335079
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 133.14772299991455,
+          "sampledAt": 1779183335213
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 129.00475500000175,
+          "sampledAt": 1779183335342
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 127.55859700008295,
+          "sampledAt": 1779183335469
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 175.83388199994806,
+          "sampledAt": 1779183335645
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 199.5341920000501,
+          "sampledAt": 1779183335844
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 130.0819640000118,
+          "sampledAt": 1779183335975
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 140.5203450000845,
+          "sampledAt": 1779183336115
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 138.78196099994238,
+          "sampledAt": 1779183336254
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 205.07793599995784,
+          "sampledAt": 1779183336459
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 204.731276000035,
+          "sampledAt": 1779183336664
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 131.2276439999696,
+          "sampledAt": 1779183336795
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 127.2873720000498,
+          "sampledAt": 1779183336922
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 128.7769649999682,
+          "sampledAt": 1779183337051
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 128.00116200000048,
+          "sampledAt": 1779183337179
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 130.61850099998992,
+          "sampledAt": 1779183337310
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 173.04940700007137,
+          "sampledAt": 1779183337483
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 205.32648200006224,
+          "sampledAt": 1779183337688
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 127.33722300000954,
+          "sampledAt": 1779183337815
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 179.62042399996426,
+          "sampledAt": 1779183337995
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 129.03181199997198,
+          "sampledAt": 1779183338124
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 125.77518799994141,
+          "sampledAt": 1779183338250
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 128.54186999995727,
+          "sampledAt": 1779183338378
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 231.328288000077,
+          "sampledAt": 1779183338610
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 129.77575900009833,
+          "sampledAt": 1779183338740
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 126.77760200004559,
+          "sampledAt": 1779183338866
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 152.7352429999737,
+          "sampledAt": 1779183339019
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 127.93284499994479,
+          "sampledAt": 1779183339147
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 179.50494900008198,
+          "sampledAt": 1779183339327
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 205.23174799990375,
+          "sampledAt": 1779183339532
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 129.7470279999543,
+          "sampledAt": 1779183339662
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 176.48986499989405,
+          "sampledAt": 1779183339838
+        },
+        {
+          "chainId": 300,
+          "chainName": "zksyncSepolia",
+          "op": "statusWithProof",
+          "latencyMs": 127.79138599999715,
+          "sampledAt": 1779183339966
+        }
+      ]
+    }
+  }
+}

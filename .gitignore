@@ -17,6 +17,7 @@ package-lock.json
 docs/*.aux
 docs/*.log
 docs/*.out
+docs/*.toc
 docs/*.synctex.gz
 docs/%OUTDIR%
 *.fls
@@ -41,3 +42,8 @@ texput.log
 
 # Benchmarks — ignore partial/in-progress run state
 benchmarks/results/*.partial.json
+benchmarks/results/run-*/*.partial.json
+
+# Local benchmark helpers and superseded archive (not part of canonical thesis data)
+benchmarks/resume.sh
+benchmarks/results/archive/
