@@ -99,8 +99,20 @@ Dla \texttt{statusWithProof} zebrano 100 próbek czasu odpowiedzi RPC.
 
 \begin{table}[H]
   \centering
-  \caption{Tabela 5: Czas odbioru paragonu transakcji zapisu po stronie klienta.}
-  \csvautotabular{\DataDir/table-inclusion-latency.csv}
+  \caption{Tabela 5: Czas odbioru paragonu transakcji zapisu po stronie klienta (ms). Kolumny \texttt{issue} pochodzą z $N{=}30$ powtórzeń \texttt{issueBatch(1000)} w każdym runie i są agregowane przez wszystkie trzy niezależne runy.}
+  \pgfplotstabletypeset[
+    col sep=comma,
+    string type,
+    every head row/.style={before row=\toprule, after row=\midrule},
+    every last row/.style={after row=\bottomrule},
+    columns/chain/.style={column name=Sieć, column type=l},
+    columns/revoke_p50_ms/.style={column name={revoke $p_{50}$}, column type=r},
+    columns/revoke_p95_ms/.style={column name={revoke $p_{95}$}, column type=r},
+    columns/issue_p50_ms/.style={column name={issue $p_{50}$}, column type=r},
+    columns/issue_p95_ms/.style={column name={issue $p_{95}$}, column type=r},
+    columns/issue_sigma_ms/.style={column name={issue $\sigma$}, column type=r},
+    columns/issue_n/.style={column name={$N$}, column type=r},
+  ]{\DataDir/table-inclusion-latency.csv}
 \end{table}
 
 \noindent Mierzona wartość to czas między wywołaniem \texttt{sendTransaction}

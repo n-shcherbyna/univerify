@@ -181,11 +181,19 @@ export function writeInclusionLatencyTable(run: RunResults, outDir: string): str
     const issueSamples = (issueMain?.latencySamplesMs ?? []).slice().sort((a, b) => a - b);
     const issueP50 = issueSamples.length ? pick(issueSamples, 0.5).toFixed(0) : "";
     const issueP95 = issueSamples.length ? pick(issueSamples, 0.95).toFixed(0) : "";
-    const issueSigma = issueSamples.length ? stddev(issueSamples).toFixed(2) : "";
+    const issueSigma = issueSamples.length ? stddev(issueSamples).toFixed(0) : "";
     const issueN = issueSamples.length || "";
 
     rows.push(
-      [chain, pick(r, 0.5), pick(r, 0.95), issueP50, issueP95, issueSigma, issueN].join(",")
+      [
+        chain,
+        pick(r, 0.5).toFixed(0),
+        pick(r, 0.95).toFixed(0),
+        issueP50,
+        issueP95,
+        issueSigma,
+        issueN,
+      ].join(",")
     );
   }
   fs.writeFileSync(csvPath, [header, ...rows].join("\n") + "\n");
