@@ -26,7 +26,8 @@ async function main(): Promise<void> {
     case "measure": {
       const only = argValue(rest, "chain") as ChainKey | undefined;
       const resume = argValue(rest, "resume");
-      await stageMeasure({ only, resume });
+      const runLabel = argValue(rest, "runLabel");
+      await stageMeasure({ only, resume, runLabel });
       return;
     }
     case "export": {

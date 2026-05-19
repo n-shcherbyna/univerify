@@ -64,29 +64,18 @@ export async function runIssueBatch(
   });
 
   const submittedAt = now();
-  const initialFees = await adapter.publicClient.estimateFeesPerGas();
-  let lastMaxFee = initialFees.maxFeePerGas;
-  let lastPriority = initialFees.maxPriorityFeePerGas;
   const receipt = await sendWithRetry({
     client: adapter.publicClient,
-    send: async (attempt, bumpFactor) => {
-      if (attempt > 1) {
-        const num = BigInt(Math.floor(bumpFactor * 100));
-        lastMaxFee = (lastMaxFee * num) / 100n;
-        lastPriority = (lastPriority * num) / 100n;
-      }
-      return adapter.walletClient.sendTransaction({
+    send: async () =>
+      adapter.walletClient.sendTransaction({
         to: adapter.registryAddress,
         data: calldata,
         account: adapter.walletClient.account!,
         chain: adapter.walletClient.chain!,
-        maxFeePerGas: lastMaxFee,
-        maxPriorityFeePerGas: lastPriority,
-      });
-    },
-    timeoutMs: 150_000,
-    maxAttempts: 3,
-    bumpFactor: 1.5,
+      }),
+    timeoutMs: 600_000,
+    maxAttempts: 1,
+    bumpFactor: 1,
   });
   const txHash = receipt.transactionHash as Hex;
 
