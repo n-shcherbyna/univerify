@@ -50,16 +50,58 @@ zebrano 30 próbek przeciwko paczce seed o rozmiarze 40.
 Dla \texttt{statusWithProof} zebrano 100 próbek czasu odpowiedzi RPC.
 
 \section{Wyniki: koszt \texttt{issueBatch}}
+
 \begin{table}[H]
   \centering
-  \caption{Tabela 1: Koszt \texttt{issueBatch} według sieci i rozmiaru paczki.}
-  \csvautotabular{\DataDir/table-issue-cost.csv}
+  \caption{Tabela 1a: Zużycie gazu \texttt{issueBatch} według sieci i rozmiaru paczki. Wartości deterministyczne (pojedyncza próbka per (sieć, rozmiar)).}
+  \pgfplotstabletypeset[
+    col sep=comma,
+    string type,
+    every head row/.style={before row=\toprule, after row=\midrule},
+    every last row/.style={after row=\bottomrule},
+    columns={chain,gas_1,gas_10,gas_100,gas_1000,gas_10000},
+    columns/chain/.style={column name=Sieć, column type=l},
+    columns/gas_1/.style={column name={$n{=}1$}, column type=r},
+    columns/gas_10/.style={column name={$n{=}10$}, column type=r},
+    columns/gas_100/.style={column name={$n{=}100$}, column type=r},
+    columns/gas_1000/.style={column name={$n{=}1000$}, column type=r},
+    columns/gas_10000/.style={column name={$n{=}10000$}, column type=r},
+  ]{\DataDir/table-issue-cost.csv}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \caption{Tabela 1b: Koszt \texttt{issueBatch} w USD (scenariusz p50, $\text{ETH}/\text{USD}{=}3500$). Pełna zmienność scenariuszy p10/p50/p90 dla $n{=}1000$ na Rys.~4.}
+  \pgfplotstabletypeset[
+    col sep=comma,
+    string type,
+    every head row/.style={before row=\toprule, after row=\midrule},
+    every last row/.style={after row=\bottomrule},
+    columns={chain,usd_p50_1,usd_p50_10,usd_p50_100,usd_p50_1000,usd_p50_10000},
+    columns/chain/.style={column name=Sieć, column type=l},
+    columns/usd_p50_1/.style={column name={$n{=}1$}, column type=r},
+    columns/usd_p50_10/.style={column name={$n{=}10$}, column type=r},
+    columns/usd_p50_100/.style={column name={$n{=}100$}, column type=r},
+    columns/usd_p50_1000/.style={column name={$n{=}1000$}, column type=r},
+    columns/usd_p50_10000/.style={column name={$n{=}10000$}, column type=r},
+  ]{\DataDir/table-issue-cost.csv}
 \end{table}
 
 \begin{table}[H]
   \centering
   \caption{Tabela 2: Koszt na dyplom (amortyzacja paczki) w USD, scenariusz p50.}
-  \csvautotabular{\DataDir/table-issue-per-diploma.csv}
+  \pgfplotstabletypeset[
+    col sep=comma,
+    string type,
+    every head row/.style={before row=\toprule, after row=\midrule},
+    every last row/.style={after row=\bottomrule},
+    columns/chain/.style={column name=Sieć, column type=l},
+    columns/usd_p50_per_diploma_1/.style={column name={$n{=}1$}, column type=r},
+    columns/usd_p50_per_diploma_10/.style={column name={$n{=}10$}, column type=r},
+    columns/usd_p50_per_diploma_100/.style={column name={$n{=}100$}, column type=r},
+    columns/usd_p50_per_diploma_1000/.style={column name={$n{=}1000$}, column type=r},
+    columns/usd_p50_per_diploma_10000/.style={column name={$n{=}10000$}, column type=r},
+  ]{\DataDir/table-issue-per-diploma.csv}
 \end{table}
 
 \begin{figure}[H]
@@ -99,8 +141,20 @@ Dla \texttt{statusWithProof} zebrano 100 próbek czasu odpowiedzi RPC.
 
 \begin{table}[H]
   \centering
-  \caption{Tabela 5: Czas odbioru paragonu transakcji zapisu po stronie klienta.}
-  \csvautotabular{\DataDir/table-inclusion-latency.csv}
+  \caption{Tabela 5: Czas odbioru paragonu transakcji zapisu po stronie klienta (ms). Kolumny \texttt{issue} pochodzą z $N{=}30$ powtórzeń \texttt{issueBatch(1000)} w każdym runie i są agregowane przez wszystkie trzy niezależne runy.}
+  \pgfplotstabletypeset[
+    col sep=comma,
+    string type,
+    every head row/.style={before row=\toprule, after row=\midrule},
+    every last row/.style={after row=\bottomrule},
+    columns/chain/.style={column name=Sieć, column type=l},
+    columns/revoke_p50_ms/.style={column name={revoke $p_{50}$}, column type=r},
+    columns/revoke_p95_ms/.style={column name={revoke $p_{95}$}, column type=r},
+    columns/issue_p50_ms/.style={column name={issue $p_{50}$}, column type=r},
+    columns/issue_p95_ms/.style={column name={issue $p_{95}$}, column type=r},
+    columns/issue_sigma_ms/.style={column name={issue $\sigma$}, column type=r},
+    columns/issue_n/.style={column name={$N$}, column type=r},
+  ]{\DataDir/table-inclusion-latency.csv}
 \end{table}
 
 \noindent Mierzona wartość to czas między wywołaniem \texttt{sendTransaction}
@@ -111,7 +165,9 @@ rozkład wartości na sieci Sepolia jest wyraźnie skupiony wokół
 wielokrotności czasu bloku ($\approx 12$ s), co potwierdza powyższą
 interpretację.
 
-\section{Wyniki: wrażliwość na scenariusze basefee}
+\section{Wyniki: analizy wrażliwości}
+
+\subsection{Scenariusze basefee L1}
 \begin{figure}[H]
   \centering
   \begin{tikzpicture}
@@ -134,11 +190,54 @@ interpretację.
   \caption{Rys. 4: Koszt \texttt{issueBatch(1000)} przy scenariuszach basefee p10/p50/p90.}
 \end{figure}
 
+\subsection{Wrażliwość na kurs ETH/USD}
+
+Koszt w USD jest liniową funkcją kursu ETH/USD: $C(r) = C_{3500} \cdot r/3500$, gdzie $C_{3500}$ to wartość bazowa zaraportowana przy snapshocie z dnia 2026-05-13 ($r=3500$). Tabela~6 pokazuje koszt \texttt{issueBatch(1000)} przy scenariuszu basefee p50 dla trzech zakotwiczonych poziomów rynkowych.
+
+\begin{table}[H]
+  \centering
+  \caption{Tabela 6: Wrażliwość kosztu \texttt{issueBatch(1000)} na kurs ETH/USD (basefee p50).}
+  \csvautotabular{\DataDir/table-sensitivity-eth-usd.csv}
+\end{table}
+
+\subsection{Wrażliwość na ceny gazu sekwensera L2}
+
+Cena gazu ustalana przez operatora sekwensera L2 jest niezależna od L1 basefee. Model kosztu rozkłada się addytywnie:
+\[
+C_{\text{total}} = C_{\text{exec}} + C_{\text{L1 data}},
+\]
+gdzie $C_{\text{exec}} = \texttt{gasUsed} \cdot p_{\text{L2}}$ skaluje się liniowo z ceną sekwensera $p_{\text{L2}}$, natomiast $C_{\text{L1 data}}$ pochodzi z blob basefee na L1 i pozostaje stała. Tabela~7 pokazuje koszt \texttt{issueBatch(1000)} przy trzech mnożnikach względem snapshotu cen w \texttt{packages/benchmarks/src/config.ts} (Arbitrum 0.1\,gwei, Base 0.005\,gwei, zkSync 0.05\,gwei). Sepolia pominięta --- jako sieć L1 nie ma ceny sekwensera.
+
+\begin{table}[H]
+  \centering
+  \caption{Tabela 7: Wrażliwość kosztu \texttt{issueBatch(1000)} na cenę gazu sekwensera L2 (ETH/USD=3500, basefee p50; mnożniki względem snapshotu z \texttt{config.ts}).}
+  \csvautotabular{\DataDir/table-sensitivity-l2-price.csv}
+\end{table}
+
 \section{Dyskusja}
-\paragraph{Ograniczenia pomiaru.}
-Ceny gazu zostały wzięte z historycznych wartości mainnet; same transakcje
-wykonano na sieciach testowych. Dla zkSync opłata za dane L1 nie jest wyodrębniona
-na paragonie — koszt publikacji jest wliczony w \texttt{gasUsed}.
+
+{\sloppy
+Wszystkie pomiary opisane w niniejszym rozdziale wykonano przez jednego dostawcę RPC w jednej lokalizacji POP, z $N{=}30$ powtórzeniami dla każdego pomiaru opóźnienia oraz losowym wyborem liści przy revoke. Wyniki to średnia $\pm\sigma$ z trzech niezależnych runów. Wszystkie parametry konfiguracyjne (ziarno losowości, dostawca, region, kurs ETH/USD) są zapisane w pliku \texttt{\DataDir/meta.json}.\par}
+
+\subsection{Ograniczenia pomiaru}
+
+Poniżej zebrano metodologiczne ograniczenia, których czytelnik powinien być świadomy interpretując wyniki. Cztery z pierwotnie zidentyfikowanych ograniczeń zostały wyeliminowane w toku rewizji eksperymentu (jednolity dostawca RPC, $N{=}30$ powtórzeń, losowy wybór liści do revoke, trzy niezależne runy z raportowaniem $\sigma$); pozostałe sześć omówiono poniżej.
+
+\paragraph{Założenie kompresji Brotli dla Arbitrum.} Model kosztu zapisu danych na L1 dla Arbitrum przyjmuje współczynnik kompresji Brotli równy 1.0, ponieważ dane Merkle (hashe pseudolosowe) nie kompresują się znacząco. Realny aplikacyjny calldata o strukturze rzadkiej kompresuje się 2--4-krotnie, co oznacza, że nasze oszacowanie kosztu L1 dla Arbitrum jest \textbf{górnym ograniczeniem}; rzeczywiste koszty produkcyjne mogą być proporcjonalnie niższe.
+
+\paragraph{Niewspółmierność jednostki gazu w zkSync Era.} Wartość \texttt{gasUsed} raportowana przez zkSync (131\,463 dla \texttt{issueBatch} z $n{=}1$) łączy w jednej jednostce koszt wykonania, dane publiczne i narzut bootloadera kontekstu Account Abstraction --- nie jest to ta sama jednostka, co \texttt{gasUsed} w EVM. Porównanie surowych liczb gazu między rodzinami rollupów jest \textbf{metodologicznie niepoprawne}; sensowne porównanie kosztów może odbywać się wyłącznie w USD lub ETH.
+
+\paragraph{Opóźnienie inkluzji jest ograniczone przez interwał odpytywania.} Pomiar czasu od submit do receipt opiera się o cykl odpytywania klienta viem (\textasciitilde 4\,s). Otrzymane wartości są zatem \textbf{górnym ograniczeniem czasu inkluzji w bloku}, a nie samym czasem inkluzji. Porównanie międzysieciowe jest dodatkowo zniekształcone interakcją czasu bloku z interwałem odpytywania.
+
+\paragraph{Snapshot skalarów Base SystemConfig.} Model kosztu Base Ecotone używa snapshotu parametrów \texttt{baseFeeScalar=2269} oraz \texttt{blobBaseFeeScalar=1055762} pobranego z bloku L1 \texttt{25087416}. Po zmianie tych skalarów przez operatora Base wynikowe koszty zmieniłyby się proporcjonalnie; data snapshotu jest udokumentowana w \texttt{meta.json} każdego eksportu.
+
+\paragraph{Snapshot kursu ETH/USD.} Wyniki w USD przeliczono kursem $\text{ETH}/\text{USD} = 3500$ (snapshot CoinGecko z dnia 2026-05-13). Wynik dla innego kursu można uzyskać mnożeniem przez czynnik $\frac{\text{nowy kurs}}{3500}$.
+
+\paragraph{Konserwatywne ceny sekwensera L2.} Ceny gazu sekwensera L2 zostały ustawione na zaokrąglone wartości powyżej żywego snapshotu (Arbitrum 0.1\,gwei vs 0.02 żywe; Base 0.005 vs 0.006; zkSync 0.05 vs 0.0453), aby pochłonąć typowe wahania kongestii.
+
+\subsection{Reprodukowalność}
+
+Wszystkie wyniki w tym rozdziale można odtworzyć z czystego klona repozytorium UniVerify poleceniem \texttt{npm run benchmarks:all -{}- -{}-runs=3} po wypełnieniu pliku \texttt{.env} kluczem prywatnym portfela testowego oraz adresami RPC czterech sieci testnet (Sepolia, Arbitrum Sepolia, Base Sepolia, zkSync Sepolia). Pipeline wykonuje sekwencję \texttt{deploy} $\to$ \texttt{measure} $\to$ \texttt{price} $\to$ \texttt{aggregate} $\to$ \texttt{export}, regenerując wszystkie tabele i wykresy w \texttt{docs/l2-benchmarks/data/}. Każdy artefakt jest powiązany z plikiem \texttt{meta.json} zawierającym \texttt{runId}, \texttt{measuredAt}, kurs ETH/USD z datą snapshotu, ziarno losowości (\texttt{BENCH\_RANDOM\_SEED}), dostawcę i region RPC oraz listę łańcuchów. Plik \texttt{packages/benchmarks/README.md} dokumentuje wymagania środowiskowe i znane ograniczenia. CI repozytorium (\texttt{.github/workflows/benchmarks-drift.yml}) automatycznie regeneruje tabele z zacommitowanych próbek wyników i sygnalizuje rozjazd między źródłem a zatwierdzonymi danymi.
 
 \paragraph{Wniosek.}
 \dots{}

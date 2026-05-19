@@ -3,6 +3,7 @@ import { stageDeploy } from "./stages/deploy.js";
 import { stageMeasure } from "./stages/measure.js";
 import { stagePrice } from "./stages/price.js";
 import { stageExport } from "./stages/export.js";
+import { stageAggregate } from "./stages/aggregate.js";
 import type { ChainKey } from "./config.js";
 
 function argValue(args: string[], flag: string): string | undefined {
@@ -25,7 +26,8 @@ async function main(): Promise<void> {
     case "measure": {
       const only = argValue(rest, "chain") as ChainKey | undefined;
       const resume = argValue(rest, "resume");
-      await stageMeasure({ only, resume });
+      const runLabel = argValue(rest, "runLabel");
+      await stageMeasure({ only, resume, runLabel });
       return;
     }
     case "export": {
@@ -34,10 +36,32 @@ async function main(): Promise<void> {
       stageExport({ resultsPath, pricesPath });
       return;
     }
+    case "aggregate": {
+      const runsDir = argValue(rest, "dir");
+      stageAggregate({ runsDir });
+      return;
+    }
     case "all": {
-      await stageMeasure({});
+      const only = argValue(rest, "chain") as ChainKey | undefined;
+      const runs = Number(argValue(rest, "runs") ?? "1");
+      if (!Number.isInteger(runs) || runs < 1) {
+        throw new Error(`--runs must be a positive integer, got ${runs}`);
+      }
+      await stageDeploy(only);
+      for (let r = 1; r <= runs; r++) {
+        if (runs > 1) console.log(`[all] run ${r}/${runs}`);
+        await stageMeasure({
+          only,
+          runLabel: runs > 1 ? `run-${r}` : undefined,
+        });
+      }
       await stagePrice();
-      stageExport({});
+      if (runs > 1) {
+        const aggregated = stageAggregate({});
+        stageExport({ resultsPath: aggregated });
+      } else {
+        stageExport({});
+      }
       return;
     }
     case "smoke": {
@@ -49,7 +73,7 @@ async function main(): Promise<void> {
     }
     default:
       console.error(
-        "Usage: benchmarks {deploy|measure|price|export|all|smoke} [--chain=KEY] [--resume=RUN_ID]"
+        "Usage: benchmarks {deploy|measure|price|export|aggregate|all|smoke} [--chain=KEY] [--resume=RUN_ID] [--runs=N]"
       );
       process.exit(1);
   }

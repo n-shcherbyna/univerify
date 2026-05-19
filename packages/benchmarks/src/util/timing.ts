@@ -1,6 +1,21 @@
 // packages/benchmarks/src/util/timing.ts
 
-/** Returns ms since a monotonic epoch. Safe to diff; do NOT interpret as wall clock. */
+/**
+ * Clock-source policy for this package:
+ *
+ *   - `performance.now()` (this module) — for ALL latency measurements
+ *     (`submittedAt`, `includedAt`, RPC read timings). Monotonic; safe to diff;
+ *     NOT comparable to wall-clock or `Date.now()`.
+ *
+ *   - `Date.now()` / `new Date()` — reserved for externally-meaningful
+ *     timestamps that are stored to disk or reported to the user (e.g.
+ *     `RunResults.measuredAt`, `ReadLatencySample.sampledAt`). These are
+ *     wall-clock and may jump under NTP adjustment; never subtract two of
+ *     them to measure an interval.
+ *
+ * When in doubt: a duration uses `performance.now()`; a timestamp uses
+ * `Date.now()`.
+ */
 export function now(): number {
   return performance.now();
 }

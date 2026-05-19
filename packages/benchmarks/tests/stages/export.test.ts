@@ -2,9 +2,10 @@
 import { describe, it, expect } from "vitest";
 import path from "node:path";
 import fs from "node:fs";
+import os from "node:os";
 import tiny from "../fixtures/results/tiny-run.json";
 import tinyPrices from "../fixtures/price-history/tiny-prices.json";
-import { writeIssueCostTable } from "../../src/stages/export.js";
+import { writeIssueCostTable, writeInclusionLatencyTable } from "../../src/stages/export.js";
 import { writeFigCostPerDiploma, writeFigGasVsL1Data } from "../../src/stages/export.js";
 import { totalCostWei } from "../../src/cost-models/index.js";
 
@@ -49,6 +50,46 @@ describe("figure emission", () => {
     } finally {
       fs.rmSync(tmp, { recursive: true, force: true });
     }
+  });
+});
+
+describe("writeInclusionLatencyTable", () => {
+  it("inclusion-latency table reports issue p50/p95/σ from latencySamplesMs", () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), "export-"));
+    const run = {
+      runId: "test",
+      measuredAt: "2026-05-17T00:00:00Z",
+      chains: {
+        sepolia: {
+          issueBatch: [
+            {
+              chainName: "sepolia",
+              tag: "main",
+              batchSize: 1000,
+              gasUsed: "0",
+              effectiveGasPrice: "0",
+              l1DataFee: "0",
+              inclusionLatencyMs: 1000,
+              latencySamplesMs: [900, 950, 1000, 1050, 1100],
+            },
+          ],
+          revokeFromBatch: [
+            {
+              chainName: "sepolia",
+              gasUsed: "0",
+              effectiveGasPrice: "0",
+              l1DataFee: "0",
+              inclusionLatencyMs: 500,
+            },
+          ],
+          readLatency: [],
+        },
+      },
+    };
+    writeInclusionLatencyTable(run as any, dir);
+    const csv = fs.readFileSync(path.join(dir, "table-inclusion-latency.csv"), "utf8");
+    expect(csv).toContain("issue_sigma_ms");
+    expect(csv).toContain("sepolia");
   });
 });
 

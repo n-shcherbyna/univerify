@@ -1,8 +1,10 @@
-import { encodeFunctionData, type Address } from "viem";
+import { encodeFunctionData, type Address, type Hex } from "viem";
 import { DiplomaRegistryAbi, buildMerkleFromLeaves } from "@univerify/verifier-core";
 import type { ChainAdapter, NormalizedMetrics } from "../chains/types.js";
-import { REVOKE_N, SEED_BATCH_SIZE } from "../config.js";
+import { BENCH_RANDOM_SEED, REVOKE_N, SEED_BATCH_SIZE } from "../config.js";
+import { createPrng, sampleWithoutReplacement } from "../util/prng.js";
 import { now } from "../util/timing.js";
+import { sendWithRetry } from "../util/nonceManager.js";
 import {
   batchSeed,
   computeBatchLeaves,
@@ -25,8 +27,24 @@ export async function runRevokeBurst(
     nextBatchId,
   });
 
-  // 2. Deterministically rebuild docHashes + leaves + proofs
+  // 2. Wait for the seed batch to be visible to the read endpoint. Multi-node
+  // RPC providers can briefly serve reads from a node behind the writer, which
+  // would make the first revokeFromBatch revert as NotIssuerOfBatch.
   const issuer = adapter.walletClient.account!.address as Address;
+  const deadline = now() + 60_000;
+  while (true) {
+    const root = (await adapter.publicClient.readContract({
+      address: adapter.registryAddress,
+      abi: DiplomaRegistryAbi,
+      functionName: "getBatch",
+      args: [issuer, nextBatchId],
+    })) as Hex;
+    if (root !== "0x0000000000000000000000000000000000000000000000000000000000000000") break;
+    if (now() > deadline) throw new Error(`seed batch ${nextBatchId} not visible after 60s`);
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+
+  // 3. Deterministically rebuild docHashes + leaves + proofs
   const docHashes = makeSyntheticDocHashes(SEED_BATCH_SIZE, batchSeed(adapter, nextBatchId));
   const leaves = computeBatchLeaves({
     registry: adapter.registryAddress,
@@ -37,9 +55,13 @@ export async function runRevokeBurst(
   });
   const tree = buildMerkleFromLeaves(leaves);
 
-  // 3. REVOKE_N distinct revokes
+  // 3. REVOKE_N distinct revokes — uniformly sampled from [0, SEED_BATCH_SIZE).
+  // Per-chain seed prefix keeps cross-chain runs independent.
+  const rng = createPrng(`${BENCH_RANDOM_SEED}:${adapter.name}:${nextBatchId.toString()}`);
+  const indices = sampleWithoutReplacement(rng, SEED_BATCH_SIZE, REVOKE_N);
+
   const revokes: NormalizedMetrics[] = [];
-  for (let i = 0; i < REVOKE_N; i++) {
+  for (const i of indices) {
     const docHash = docHashes[i];
     const proof = tree.proofs[i];
     const calldata = encodeFunctionData({
@@ -49,12 +71,20 @@ export async function runRevokeBurst(
     });
 
     const submittedAt = now();
-    const txHash = await adapter.walletClient.sendTransaction({
-      to: adapter.registryAddress,
-      data: calldata,
-      account: adapter.walletClient.account!,
-      chain: adapter.walletClient.chain!,
+    const receipt = await sendWithRetry({
+      client: adapter.publicClient,
+      send: async () =>
+        adapter.walletClient.sendTransaction({
+          to: adapter.registryAddress,
+          data: calldata,
+          account: adapter.walletClient.account!,
+          chain: adapter.walletClient.chain!,
+        }),
+      timeoutMs: 600_000,
+      maxAttempts: 1,
+      bumpFactor: 1,
     });
+    const txHash = receipt.transactionHash as Hex;
 
     const metrics = await adapter.parseReceipt(
       { txHash, calldata, submittedAt },

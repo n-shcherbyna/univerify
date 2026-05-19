@@ -43,7 +43,7 @@ export function createArbitrumSepoliaAdapter(
 
   const walletClient = createWalletClient({
     chain: arbitrumSepolia,
-    transport: http(init.rpcUrl),
+    transport: http(init.rpcUrl, { retryCount: 0 }),
     account: init.account,
   }) as WalletClient;
 

@@ -1,0 +1,40 @@
+name: Benchmarks drift
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+    paths:
+      - 'packages/benchmarks/**'
+      - 'docs/l2-benchmarks/data/**'
+      - '.github/workflows/benchmarks-drift.yml'
+
+jobs:
+  drift:
+    name: Regenerate tables and diff
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm install
+      - run: npm -w @univerify/verifier-core run build
+      - run: npm -w @univerify/benchmarks run build
+
+      - name: Regenerate data/ from committed fixtures
+        run: |
+          node packages/benchmarks/dist/index.js export \
+            --results=packages/benchmarks/tests/fixtures/results.fixture.json \
+            --prices=packages/benchmarks/tests/fixtures/prices.fixture.json
+
+      - name: Verify no drift in docs/l2-benchmarks/data/
+        run: |
+          git diff --exit-code -- \
+            ':(exclude)docs/l2-benchmarks/data/measured-at.tex' \
+            ':(exclude)docs/l2-benchmarks/data/meta.json' \
+            docs/l2-benchmarks/data/

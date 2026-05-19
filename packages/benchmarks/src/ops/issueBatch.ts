@@ -6,6 +6,7 @@ import {
 } from "@univerify/verifier-core";
 import type { ChainAdapter, NormalizedMetrics } from "../chains/types.js";
 import { now } from "../util/timing.js";
+import { sendWithRetry } from "../util/nonceManager.js";
 
 /** Build N synthetic docHashes of the form keccak256(seed||":"||i). Deterministic. */
 export function makeSyntheticDocHashes(count: number, seed: string): Hex[] {
@@ -63,12 +64,20 @@ export async function runIssueBatch(
   });
 
   const submittedAt = now();
-  const txHash = await adapter.walletClient.sendTransaction({
-    to: adapter.registryAddress,
-    data: calldata,
-    account: adapter.walletClient.account!,
-    chain: adapter.walletClient.chain!,
+  const receipt = await sendWithRetry({
+    client: adapter.publicClient,
+    send: async () =>
+      adapter.walletClient.sendTransaction({
+        to: adapter.registryAddress,
+        data: calldata,
+        account: adapter.walletClient.account!,
+        chain: adapter.walletClient.chain!,
+      }),
+    timeoutMs: 600_000,
+    maxAttempts: 1,
+    bumpFactor: 1,
   });
+  const txHash = receipt.transactionHash as Hex;
 
   return adapter.parseReceipt(
     { txHash, calldata, submittedAt },

@@ -1,7 +1,7 @@
 // packages/benchmarks/src/stages/measure.ts
 import fs from "node:fs";
 import path from "node:path";
-import { keccak256, toBytes, type Hex } from "viem";
+import { type Hex } from "viem";
 import { DiplomaRegistryAbi, buildMerkleFromLeaves } from "@univerify/verifier-core";
 import { getAdapter } from "../chains/index.js";
 import type { ChainAdapter, NormalizedMetrics, ReadLatencySample } from "../chains/types.js";
@@ -9,10 +9,12 @@ import {
   BATCH_SIZES,
   CHAIN_KEYS,
   FAUCETS,
+  ISSUE_LATENCY_REPS,
   SEED_BATCH_SIZE,
   type ChainKey,
 } from "../config.js";
 import { loadBenchAccount } from "../util/wallet.js";
+import { atomicWriteJson } from "../util/atomicWrite.js";
 import { newRunId } from "../util/runId.js";
 import {
   batchSeed,
@@ -23,10 +25,8 @@ import {
 import { runRevokeBurst } from "../ops/revokeBatch.js";
 import { runReadLatency } from "../ops/readLatency.js";
 import type { PerChainResults, RunResults } from "./export.js";
-
-const RESULTS_DIR = path.resolve("benchmarks", "results");
-const ZERO_BYTES32: Hex =
-  "0x0000000000000000000000000000000000000000000000000000000000000000";
+import { resumeNeedsOp, markComplete, type ResumeProgress } from "./measureResume.js";
+import { findNextBatchId } from "./nextBatchId.js";
 
 async function checkBalance(adapter: ChainAdapter, key: ChainKey): Promise<void> {
   const bal = await adapter.publicClient.getBalance({
@@ -41,105 +41,129 @@ async function checkBalance(adapter: ChainAdapter, key: ChainKey): Promise<void>
 }
 
 async function nextBatchId(adapter: ChainAdapter): Promise<bigint> {
-  // Issuer-scoped batchId: scan from 0 until getBatch returns the zero root.
   const issuer = adapter.walletClient.account!.address;
-  let id = 0n;
-  for (;;) {
-    const root = (await adapter.publicClient.readContract({
+  return findNextBatchId(async (id) =>
+    (await adapter.publicClient.readContract({
       address: adapter.registryAddress,
       abi: DiplomaRegistryAbi,
       functionName: "getBatch",
       args: [issuer, id],
-    })) as Hex;
-    if (root === ZERO_BYTES32) return id;
-    id += 1n;
-  }
+    })) as Hex
+  );
 }
 
-export type MeasureOpts = { only?: ChainKey; resume?: string };
+export type MeasureOpts = { only?: ChainKey; resume?: string; runLabel?: string };
 
 export async function stageMeasure(opts: MeasureOpts = {}): Promise<string> {
-  fs.mkdirSync(RESULTS_DIR, { recursive: true });
+  const resultsDir = opts.runLabel
+    ? path.resolve("benchmarks", "results", opts.runLabel)
+    : path.resolve("benchmarks", "results");
+  fs.mkdirSync(resultsDir, { recursive: true });
   const account = loadBenchAccount();
   const keys = opts.only ? [opts.only] : CHAIN_KEYS;
 
   const runId = opts.resume ?? newRunId();
-  const partialPath = path.join(RESULTS_DIR, `${runId}.partial.json`);
-  const finalPath = path.join(RESULTS_DIR, `${runId}.json`);
+  const partialPath = path.join(resultsDir, `${runId}.partial.json`);
+  const finalPath = path.join(resultsDir, `${runId}.json`);
 
-  const run: RunResults = fs.existsSync(partialPath)
-    ? (JSON.parse(fs.readFileSync(partialPath, "utf8")) as RunResults)
-    : { runId, measuredAt: new Date().toISOString(), chains: {} };
+  const onInterrupt = () => {
+    console.log(`\n[measure] interrupted — partial state preserved at ${partialPath}`);
+    process.exit(130);
+  };
+  process.once("SIGINT", onInterrupt);
+  process.once("SIGTERM", onInterrupt);
+
+  const run: RunResults & { progress?: ResumeProgress } = fs.existsSync(partialPath)
+    ? (JSON.parse(fs.readFileSync(partialPath, "utf8")) as RunResults & { progress?: ResumeProgress })
+    : { runId, measuredAt: new Date().toISOString(), chains: {}, progress: {} };
+  const progress: ResumeProgress = (run.progress ??= {});
 
   for (const key of keys) {
-    if (run.chains[key]) {
-      console.log(`[measure] ${key} already present in run — skipping.`);
-      continue;
-    }
     const adapter = getAdapter(key, account);
     await checkBalance(adapter, key);
 
-    const perChain: PerChainResults = {
-      issueBatch: [],
-      revokeFromBatch: [],
-      readLatency: [],
-    };
+    const perChain: PerChainResults =
+      run.chains[key] ?? { issueBatch: [], revokeFromBatch: [], readLatency: [] };
+    run.chains[key] = perChain;
 
-    // issue sweep — main
     let nextId = await nextBatchId(adapter);
+
+    // issueBatch sweep — main, per-size skip
     for (const size of BATCH_SIZES) {
-      console.log(`[measure] ${key} issueBatch(${size}) batchId=${nextId}`);
-      const m = await runIssueBatch(adapter, size, { tag: "main", nextBatchId: nextId });
-      perChain.issueBatch.push(m);
+      if (!resumeNeedsOp(progress, key, "issueBatch", size)) {
+        console.log(`[measure] ${key} issueBatch(${size}) already complete — skipping.`);
+        continue;
+      }
+      console.log(`[measure] ${key} issueBatch(${size}) batchId=${nextId} primary`);
+      const primary = await runIssueBatch(adapter, size, {
+        tag: "main",
+        nextBatchId: nextId,
+      });
       nextId += 1n;
+
+      const latencySamplesMs: number[] = [primary.inclusionLatencyMs];
+      for (let rep = 1; rep < ISSUE_LATENCY_REPS; rep++) {
+        console.log(
+          `[measure] ${key} issueBatch(${size}) latency rep ${rep + 1}/${ISSUE_LATENCY_REPS} batchId=${nextId}`
+        );
+        const extra = await runIssueBatch(adapter, size, {
+          tag: "main",
+          nextBatchId: nextId,
+        });
+        latencySamplesMs.push(extra.inclusionLatencyMs);
+        nextId += 1n;
+      }
+      primary.latencySamplesMs = latencySamplesMs;
+      perChain.issueBatch.push(primary);
+      markComplete(progress, key, "issueBatch", size);
+      atomicWriteJson(partialPath, run);
     }
 
-    // revoke burst (seed + revokes)
-    console.log(`[measure] ${key} revoke burst (seed batchId=${nextId})`);
-    const burst = await runRevokeBurst(adapter, nextId);
-    perChain.issueBatch.push(burst.seed);
-    perChain.revokeFromBatch.push(...burst.revokes);
-    const seedBatchId = nextId;
-    nextId += 1n;
+    // revoke burst + read latency are bundled (they share the seed batch)
+    if (resumeNeedsOp(progress, key, "revokeBurst")) {
+      console.log(`[measure] ${key} revoke burst (seed batchId=${nextId})`);
+      const burst = await runRevokeBurst(adapter, nextId);
+      perChain.issueBatch.push(burst.seed);
+      perChain.revokeFromBatch.push(...burst.revokes);
+      const seedBatchId = nextId;
+      nextId += 1n;
 
-    // read latency against seed batch, docHash 0
-    const issuer = adapter.walletClient.account!.address;
-    const seedDocHashes = makeSyntheticDocHashes(
-      SEED_BATCH_SIZE,
-      batchSeed(adapter, seedBatchId)
-    );
-    const seedLeaves = computeBatchLeaves({
-      registry: adapter.registryAddress,
-      chainId: BigInt(adapter.chainId),
-      issuer,
-      batchId: seedBatchId,
-      docHashes: seedDocHashes,
-    });
-    const tree = buildMerkleFromLeaves(seedLeaves);
-    console.log(`[measure] ${key} read latency (N samples)`);
-    const reads: ReadLatencySample[] = await runReadLatency(adapter, {
-      batchId: seedBatchId,
-      docHash: seedDocHashes[0],
-      proof: tree.proofs[0],
-      issuer,
-    });
-    perChain.readLatency = reads;
+      const issuer = adapter.walletClient.account!.address;
+      const seedDocHashes = makeSyntheticDocHashes(
+        SEED_BATCH_SIZE,
+        batchSeed(adapter, seedBatchId)
+      );
+      const seedLeaves = computeBatchLeaves({
+        registry: adapter.registryAddress,
+        chainId: BigInt(adapter.chainId),
+        issuer,
+        batchId: seedBatchId,
+        docHashes: seedDocHashes,
+      });
+      const tree = buildMerkleFromLeaves(seedLeaves);
+      console.log(`[measure] ${key} read latency (N samples)`);
+      const reads: ReadLatencySample[] = await runReadLatency(adapter, {
+        batchId: seedBatchId,
+        docHash: seedDocHashes[0],
+        proof: tree.proofs[0],
+        issuer,
+      });
+      perChain.readLatency = reads;
 
-    run.chains[key] = perChain;
-    fs.writeFileSync(partialPath, stringify(run));
+      markComplete(progress, key, "revokeBurst");
+      markComplete(progress, key, "readLatency");
+      atomicWriteJson(partialPath, run);
+    } else {
+      console.log(`[measure] ${key} revoke burst already complete — skipping.`);
+    }
   }
 
-  // promote partial → final
-  fs.writeFileSync(finalPath, stringify(run));
+  // promote partial → final (strip transient progress field)
+  process.removeListener("SIGINT", onInterrupt);
+  process.removeListener("SIGTERM", onInterrupt);
+  delete (run as { progress?: ResumeProgress }).progress;
+  atomicWriteJson(finalPath, run);
   fs.unlinkSync(partialPath);
   console.log(`[measure] wrote ${finalPath}`);
   return finalPath;
-}
-
-function stringify(obj: unknown): string {
-  return JSON.stringify(
-    obj,
-    (_, v) => (typeof v === "bigint" ? v.toString() : v),
-    2
-  );
 }

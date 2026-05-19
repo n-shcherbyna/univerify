@@ -27,6 +27,14 @@ export const READ_N = 100;
 /** Seed-batch size used to pre-populate leaves for revokeBatch (must be ≥ REVOKE_N + 10 slack). */
 export const SEED_BATCH_SIZE = 40;
 
+/**
+ * Latency-only repetitions per issueBatch size. Each repetition consumes a
+ * fresh batchId. N>=30 lets us report p50/p95/σ instead of a single sample.
+ * Gas is deterministic per (size, code) so it's reported once; only timing
+ * is sampled multiple times.
+ */
+export const ISSUE_LATENCY_REPS = 30;
+
 /** Hard timeout for `waitForReceipt` (ms). zkSync tolerant. */
 export const RECEIPT_TIMEOUT_MS = 5 * 60 * 1000;
 
@@ -69,6 +77,17 @@ export const L2_MAINNET_GAS_PRICE_WEI: Partial<Record<ChainKey, bigint>> = {
   baseSepolia: 5_000_000n,
   zksyncSepolia: 50_000_000n,
 };
+
+/**
+ * Seed for randomized revoke leaf selection. Default is the literal
+ * "univerify-phase-2" so a fresh `git clone` reproduces the committed run;
+ * override via `BENCH_RANDOM_SEED` for a perturbation study.
+ */
+export const BENCH_RANDOM_SEED = process.env.BENCH_RANDOM_SEED ?? "univerify-phase-2";
+
+/** Optional metadata: RPC provider name and POP/region, recorded in meta.json. */
+export const RPC_PROVIDER = process.env.RPC_PROVIDER ?? "unspecified";
+export const RPC_REGION = process.env.RPC_REGION ?? "unspecified";
 
 /** Faucet URLs shown to the user on underfunded-wallet errors. */
 export const FAUCETS: Record<ChainKey, string> = {

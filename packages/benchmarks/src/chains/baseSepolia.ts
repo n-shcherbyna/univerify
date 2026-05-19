@@ -42,7 +42,7 @@ export function createBaseSepoliaAdapter(init: BaseSepoliaAdapterInit): ChainAda
 
   const walletClient = createWalletClient({
     chain: baseSepolia,
-    transport: http(init.rpcUrl),
+    transport: http(init.rpcUrl, { retryCount: 0 }),
     account: init.account,
   }) as WalletClient;
 
