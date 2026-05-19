@@ -43,7 +43,7 @@ export function createZkSyncSepoliaAdapter(
 
   const walletClient = createWalletClient({
     chain: zksyncSepolia,
-    transport: http(init.rpcUrl),
+    transport: http(init.rpcUrl, { retryCount: 0 }),
     account: init.account,
   }) as WalletClient;
 
