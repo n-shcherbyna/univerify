@@ -303,6 +303,70 @@ export function writeFigBasefeeScenarios(
   return datPath;
 }
 
+/**
+ * Sensitivity to ETH/USD: total USD cost scales linearly with the exchange
+ * rate. Reports issueBatch(1000) at p50 basefee under three rate scenarios.
+ */
+export function writeSensitivityEthUsd(
+  run: RunResults,
+  prices: PriceHistory,
+  outDir: string
+): string {
+  const { basefee, blobBasefee } = derivePercentiles(prices);
+  const q50: PriceQuote = { basefeeWei: basefee.p50, blobBasefeeWei: blobBasefee.p50 };
+  const csvPath = path.join(outDir, "table-sensitivity-eth-usd.csv");
+  const rates = [2000, 3500, 5000];
+  const header = ["chain", ...rates.map((r) => `usd_${r}`)].join(",");
+  const rows: string[] = [];
+  for (const [chain, data] of Object.entries(run.chains)) {
+    const m = data.issueBatch.find((x) => x.tag === "main" && x.batchSize === 1000);
+    if (!m) continue;
+    const totalEth = Number(totalCostWei(m, q50)) / 1e18;
+    rows.push([chain, ...rates.map((r) => (totalEth * r).toFixed(6))].join(","));
+  }
+  fs.writeFileSync(csvPath, [header, ...rows].join("\n") + "\n");
+  return csvPath;
+}
+
+/**
+ * Sensitivity to L2 sequencer gas price: only the exec component scales,
+ * the L1 data component (blob basefee × calldata) is unchanged. Reports
+ * issueBatch(1000) at p50 basefee, ETH=ETH_USD, under three L2-price
+ * multipliers relative to the snapshot in config.ts. Sepolia omitted —
+ * as L1 it has no sequencer-price concept.
+ */
+export function writeSensitivityL2Price(
+  run: RunResults,
+  prices: PriceHistory,
+  outDir: string
+): string {
+  const { basefee, blobBasefee } = derivePercentiles(prices);
+  const q50: PriceQuote = { basefeeWei: basefee.p50, blobBasefeeWei: blobBasefee.p50 };
+  const csvPath = path.join(outDir, "table-sensitivity-l2-price.csv");
+  const multipliers = [
+    { label: "usd_05x", numerator: 50n },
+    { label: "usd_10x", numerator: 100n },
+    { label: "usd_20x", numerator: 200n },
+  ];
+  const header = ["chain", ...multipliers.map((m) => m.label)].join(",");
+  const rows: string[] = [];
+  for (const [chain, data] of Object.entries(run.chains)) {
+    if (chain === "sepolia") continue;
+    const m = data.issueBatch.find((x) => x.tag === "main" && x.batchSize === 1000);
+    if (!m) continue;
+    const model = getCostModel(chain);
+    const execWei = model.exec(m, q50);
+    const l1Wei = model.l1Data(m, q50);
+    const cols = multipliers.map(({ numerator }) => {
+      const scaled = (execWei * numerator) / 100n + l1Wei;
+      return weiToUsd(scaled).toFixed(6);
+    });
+    rows.push([chain, ...cols].join(","));
+  }
+  fs.writeFileSync(csvPath, [header, ...rows].join("\n") + "\n");
+  return csvPath;
+}
+
 export function writeMeta(
   run: RunResults,
   pricePath: string,
@@ -354,9 +418,11 @@ export function stageExport(opts: StageExportOpts = {}): void {
   writeFigGasVsL1Data(run, outDir, prices);
   writeFigReadLatencyCdf(run, outDir);
   writeFigBasefeeScenarios(run, prices, outDir);
+  writeSensitivityEthUsd(run, prices, outDir);
+  writeSensitivityL2Price(run, prices, outDir);
   writeMeta(run, pricesPath, outDir);
   writeMeasuredAt(run, outDir);
-  console.log(`[export] wrote 11 files under ${outDir}`);
+  console.log(`[export] wrote 13 files under ${outDir}`);
 }
 
 function newestResultsPath(): string | null {

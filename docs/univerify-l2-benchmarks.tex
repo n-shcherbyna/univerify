@@ -111,7 +111,9 @@ rozkład wartości na sieci Sepolia jest wyraźnie skupiony wokół
 wielokrotności czasu bloku ($\approx 12$ s), co potwierdza powyższą
 interpretację.
 
-\section{Wyniki: wrażliwość na scenariusze basefee}
+\section{Wyniki: analizy wrażliwości}
+
+\subsection{Scenariusze basefee L1}
 \begin{figure}[H]
   \centering
   \begin{tikzpicture}
@@ -133,6 +135,30 @@ interpretację.
   \end{tikzpicture}
   \caption{Rys. 4: Koszt \texttt{issueBatch(1000)} przy scenariuszach basefee p10/p50/p90.}
 \end{figure}
+
+\subsection{Wrażliwość na kurs ETH/USD}
+
+Koszt w USD jest liniową funkcją kursu ETH/USD: $C(r) = C_{3500} \cdot r/3500$, gdzie $C_{3500}$ to wartość bazowa zaraportowana przy snapshocie z dnia 2026-05-13 ($r=3500$). Tabela~6 pokazuje koszt \texttt{issueBatch(1000)} przy scenariuszu basefee p50 dla trzech zakotwiczonych poziomów rynkowych.
+
+\begin{table}[H]
+  \centering
+  \caption{Tabela 6: Wrażliwość kosztu \texttt{issueBatch(1000)} na kurs ETH/USD (basefee p50).}
+  \csvautotabular{\DataDir/table-sensitivity-eth-usd.csv}
+\end{table}
+
+\subsection{Wrażliwość na ceny gazu sekwensera L2}
+
+Cena gazu ustalana przez operatora sekwensera L2 jest niezależna od L1 basefee. Model kosztu rozkłada się addytywnie:
+\[
+C_{\text{total}} = C_{\text{exec}} + C_{\text{L1 data}},
+\]
+gdzie $C_{\text{exec}} = \texttt{gasUsed} \cdot p_{\text{L2}}$ skaluje się liniowo z ceną sekwensera $p_{\text{L2}}$, natomiast $C_{\text{L1 data}}$ pochodzi z blob basefee na L1 i pozostaje stała. Tabela~7 pokazuje koszt \texttt{issueBatch(1000)} przy trzech mnożnikach względem snapshotu cen w \texttt{packages/benchmarks/src/config.ts} (Arbitrum 0.1\,gwei, Base 0.005\,gwei, zkSync 0.05\,gwei). Sepolia pominięta --- jako sieć L1 nie ma ceny sekwensera.
+
+\begin{table}[H]
+  \centering
+  \caption{Tabela 7: Wrażliwość kosztu \texttt{issueBatch(1000)} na cenę gazu sekwensera L2 (ETH/USD=3500, basefee p50; mnożniki względem snapshotu z \texttt{config.ts}).}
+  \csvautotabular{\DataDir/table-sensitivity-l2-price.csv}
+\end{table}
 
 \section{Dyskusja}
 
