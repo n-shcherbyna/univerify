@@ -27,8 +27,24 @@ export async function runRevokeBurst(
     nextBatchId,
   });
 
-  // 2. Deterministically rebuild docHashes + leaves + proofs
+  // 2. Wait for the seed batch to be visible to the read endpoint. Multi-node
+  // RPC providers can briefly serve reads from a node behind the writer, which
+  // would make the first revokeFromBatch revert as NotIssuerOfBatch.
   const issuer = adapter.walletClient.account!.address as Address;
+  const deadline = now() + 60_000;
+  while (true) {
+    const root = (await adapter.publicClient.readContract({
+      address: adapter.registryAddress,
+      abi: DiplomaRegistryAbi,
+      functionName: "getBatch",
+      args: [issuer, nextBatchId],
+    })) as Hex;
+    if (root !== "0x0000000000000000000000000000000000000000000000000000000000000000") break;
+    if (now() > deadline) throw new Error(`seed batch ${nextBatchId} not visible after 60s`);
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+
+  // 3. Deterministically rebuild docHashes + leaves + proofs
   const docHashes = makeSyntheticDocHashes(SEED_BATCH_SIZE, batchSeed(adapter, nextBatchId));
   const leaves = computeBatchLeaves({
     registry: adapter.registryAddress,
