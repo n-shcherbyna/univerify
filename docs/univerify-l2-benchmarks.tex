@@ -50,16 +50,58 @@ zebrano 30 próbek przeciwko paczce seed o rozmiarze 40.
 Dla \texttt{statusWithProof} zebrano 100 próbek czasu odpowiedzi RPC.
 
 \section{Wyniki: koszt \texttt{issueBatch}}
+
 \begin{table}[H]
   \centering
-  \caption{Tabela 1: Koszt \texttt{issueBatch} według sieci i rozmiaru paczki.}
-  \csvautotabular{\DataDir/table-issue-cost.csv}
+  \caption{Tabela 1a: Zużycie gazu \texttt{issueBatch} według sieci i rozmiaru paczki. Wartości deterministyczne (pojedyncza próbka per (sieć, rozmiar)).}
+  \pgfplotstabletypeset[
+    col sep=comma,
+    string type,
+    every head row/.style={before row=\toprule, after row=\midrule},
+    every last row/.style={after row=\bottomrule},
+    columns={chain,gas_1,gas_10,gas_100,gas_1000,gas_10000},
+    columns/chain/.style={column name=Sieć, column type=l},
+    columns/gas_1/.style={column name={$n{=}1$}, column type=r},
+    columns/gas_10/.style={column name={$n{=}10$}, column type=r},
+    columns/gas_100/.style={column name={$n{=}100$}, column type=r},
+    columns/gas_1000/.style={column name={$n{=}1000$}, column type=r},
+    columns/gas_10000/.style={column name={$n{=}10000$}, column type=r},
+  ]{\DataDir/table-issue-cost.csv}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \caption{Tabela 1b: Koszt \texttt{issueBatch} w USD (scenariusz p50, $\text{ETH}/\text{USD}{=}3500$). Pełna zmienność scenariuszy p10/p50/p90 dla $n{=}1000$ na Rys.~4.}
+  \pgfplotstabletypeset[
+    col sep=comma,
+    string type,
+    every head row/.style={before row=\toprule, after row=\midrule},
+    every last row/.style={after row=\bottomrule},
+    columns={chain,usd_p50_1,usd_p50_10,usd_p50_100,usd_p50_1000,usd_p50_10000},
+    columns/chain/.style={column name=Sieć, column type=l},
+    columns/usd_p50_1/.style={column name={$n{=}1$}, column type=r},
+    columns/usd_p50_10/.style={column name={$n{=}10$}, column type=r},
+    columns/usd_p50_100/.style={column name={$n{=}100$}, column type=r},
+    columns/usd_p50_1000/.style={column name={$n{=}1000$}, column type=r},
+    columns/usd_p50_10000/.style={column name={$n{=}10000$}, column type=r},
+  ]{\DataDir/table-issue-cost.csv}
 \end{table}
 
 \begin{table}[H]
   \centering
   \caption{Tabela 2: Koszt na dyplom (amortyzacja paczki) w USD, scenariusz p50.}
-  \csvautotabular{\DataDir/table-issue-per-diploma.csv}
+  \pgfplotstabletypeset[
+    col sep=comma,
+    string type,
+    every head row/.style={before row=\toprule, after row=\midrule},
+    every last row/.style={after row=\bottomrule},
+    columns/chain/.style={column name=Sieć, column type=l},
+    columns/usd_p50_per_diploma_1/.style={column name={$n{=}1$}, column type=r},
+    columns/usd_p50_per_diploma_10/.style={column name={$n{=}10$}, column type=r},
+    columns/usd_p50_per_diploma_100/.style={column name={$n{=}100$}, column type=r},
+    columns/usd_p50_per_diploma_1000/.style={column name={$n{=}1000$}, column type=r},
+    columns/usd_p50_per_diploma_10000/.style={column name={$n{=}10000$}, column type=r},
+  ]{\DataDir/table-issue-per-diploma.csv}
 \end{table}
 
 \begin{figure}[H]
@@ -174,7 +216,8 @@ gdzie $C_{\text{exec}} = \texttt{gasUsed} \cdot p_{\text{L2}}$ skaluje się lini
 
 \section{Dyskusja}
 
-Wszystkie pomiary opisane w niniejszym rozdziale wykonano przez jednego dostawcę RPC w jednej lokalizacji POP, z $N{=}30$ powtórzeniami dla każdego pomiaru opóźnienia oraz losowym wyborem liści przy revoke. Wyniki to średnia $\pm\sigma$ z trzech niezależnych runów. Wszystkie parametry konfiguracyjne (ziarno losowości, dostawca, region, kurs ETH/USD) są zapisane w pliku \texttt{docs/l2-benchmarks/data/meta.json}.
+{\sloppy
+Wszystkie pomiary opisane w niniejszym rozdziale wykonano przez jednego dostawcę RPC w jednej lokalizacji POP, z $N{=}30$ powtórzeniami dla każdego pomiaru opóźnienia oraz losowym wyborem liści przy revoke. Wyniki to średnia $\pm\sigma$ z trzech niezależnych runów. Wszystkie parametry konfiguracyjne (ziarno losowości, dostawca, region, kurs ETH/USD) są zapisane w pliku \texttt{\DataDir/meta.json}.\par}
 
 \subsection{Ograniczenia pomiaru}
 
