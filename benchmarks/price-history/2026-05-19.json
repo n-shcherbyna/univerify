@@ -1,0 +1,457 @@
+{
+  "source": "eth_feeHistory",
+  "fetchedAt": "2026-05-19T21:04:44.490Z",
+  "windowDays": 90,
+  "samples": [
+    {
+      "blockNumber": 25131841,
+      "baseFeePerGas": "114327747",
+      "blobBaseFeePerGas": "7152652"
+    },
+    {
+      "blockNumber": 25124641,
+      "baseFeePerGas": "159157391",
+      "blobBaseFeePerGas": "9259350"
+    },
+    {
+      "blockNumber": 25117441,
+      "baseFeePerGas": "135947657",
+      "blobBaseFeePerGas": "7855812"
+    },
+    {
+      "blockNumber": 25110241,
+      "baseFeePerGas": "91790992",
+      "blobBaseFeePerGas": "5188012"
+    },
+    {
+      "blockNumber": 25103041,
+      "baseFeePerGas": "294687526",
+      "blobBaseFeePerGas": "15871043"
+    },
+    {
+      "blockNumber": 25095841,
+      "baseFeePerGas": "572370078",
+      "blobBaseFeePerGas": "23593993"
+    },
+    {
+      "blockNumber": 25088641,
+      "baseFeePerGas": "116706369",
+      "blobBaseFeePerGas": "6520022"
+    },
+    {
+      "blockNumber": 25081441,
+      "baseFeePerGas": "213332683",
+      "blobBaseFeePerGas": "12085158"
+    },
+    {
+      "blockNumber": 25074241,
+      "baseFeePerGas": "202778246",
+      "blobBaseFeePerGas": "12223294"
+    },
+    {
+      "blockNumber": 25067041,
+      "baseFeePerGas": "308696972",
+      "blobBaseFeePerGas": "19147742"
+    },
+    {
+      "blockNumber": 25059841,
+      "baseFeePerGas": "136300546",
+      "blobBaseFeePerGas": "7353028"
+    },
+    {
+      "blockNumber": 25052641,
+      "baseFeePerGas": "353028246",
+      "blobBaseFeePerGas": "20795609"
+    },
+    {
+      "blockNumber": 25045441,
+      "baseFeePerGas": "208954128",
+      "blobBaseFeePerGas": "12696351"
+    },
+    {
+      "blockNumber": 25038241,
+      "baseFeePerGas": "897621725",
+      "blobBaseFeePerGas": "50084835"
+    },
+    {
+      "blockNumber": 25031041,
+      "baseFeePerGas": "299528561",
+      "blobBaseFeePerGas": "10223839"
+    },
+    {
+      "blockNumber": 25023841,
+      "baseFeePerGas": "370721545",
+      "blobBaseFeePerGas": "21519355"
+    },
+    {
+      "blockNumber": 25016641,
+      "baseFeePerGas": "310915465",
+      "blobBaseFeePerGas": "16690388"
+    },
+    {
+      "blockNumber": 25009441,
+      "baseFeePerGas": "264503271",
+      "blobBaseFeePerGas": "14213469"
+    },
+    {
+      "blockNumber": 25002241,
+      "baseFeePerGas": "315998963",
+      "blobBaseFeePerGas": "16820445"
+    },
+    {
+      "blockNumber": 24995041,
+      "baseFeePerGas": "1672779209",
+      "blobBaseFeePerGas": "77059134"
+    },
+    {
+      "blockNumber": 24987841,
+      "baseFeePerGas": "763539428",
+      "blobBaseFeePerGas": "39317586"
+    },
+    {
+      "blockNumber": 24980641,
+      "baseFeePerGas": "1042624137",
+      "blobBaseFeePerGas": "58014296"
+    },
+    {
+      "blockNumber": 24973441,
+      "baseFeePerGas": "1711218259",
+      "blobBaseFeePerGas": "104363998"
+    },
+    {
+      "blockNumber": 24966241,
+      "baseFeePerGas": "1245158511",
+      "blobBaseFeePerGas": "72355733"
+    },
+    {
+      "blockNumber": 24959041,
+      "baseFeePerGas": "231916757",
+      "blobBaseFeePerGas": "12813727"
+    },
+    {
+      "blockNumber": 24951841,
+      "baseFeePerGas": "2387788975",
+      "blobBaseFeePerGas": "115501203"
+    },
+    {
+      "blockNumber": 24944641,
+      "baseFeePerGas": "665112299",
+      "blobBaseFeePerGas": "36516800"
+    },
+    {
+      "blockNumber": 24937441,
+      "baseFeePerGas": "1627065468",
+      "blobBaseFeePerGas": "96553462"
+    },
+    {
+      "blockNumber": 24930241,
+      "baseFeePerGas": "397473225",
+      "blobBaseFeePerGas": "23939744"
+    },
+    {
+      "blockNumber": 24923041,
+      "baseFeePerGas": "1771646333",
+      "blobBaseFeePerGas": "93036185"
+    },
+    {
+      "blockNumber": 24915841,
+      "baseFeePerGas": "1060896128",
+      "blobBaseFeePerGas": "59630866"
+    },
+    {
+      "blockNumber": 24908641,
+      "baseFeePerGas": "373100692",
+      "blobBaseFeePerGas": "24584997"
+    },
+    {
+      "blockNumber": 24901441,
+      "baseFeePerGas": "237464632",
+      "blobBaseFeePerGas": "15293291"
+    },
+    {
+      "blockNumber": 24894241,
+      "baseFeePerGas": "222982517",
+      "blobBaseFeePerGas": "13170683"
+    },
+    {
+      "blockNumber": 24887041,
+      "baseFeePerGas": "50937100",
+      "blobBaseFeePerGas": "2729070"
+    },
+    {
+      "blockNumber": 24879841,
+      "baseFeePerGas": "179801067",
+      "blobBaseFeePerGas": "8411379"
+    },
+    {
+      "blockNumber": 24872641,
+      "baseFeePerGas": "95208347",
+      "blobBaseFeePerGas": "5745017"
+    },
+    {
+      "blockNumber": 24865441,
+      "baseFeePerGas": "178354803",
+      "blobBaseFeePerGas": "9554379"
+    },
+    {
+      "blockNumber": 24858241,
+      "baseFeePerGas": "163401374",
+      "blobBaseFeePerGas": "9772558"
+    },
+    {
+      "blockNumber": 24851041,
+      "baseFeePerGas": "138742110",
+      "blobBaseFeePerGas": "7839036"
+    },
+    {
+      "blockNumber": 24843841,
+      "baseFeePerGas": "101081176",
+      "blobBaseFeePerGas": "5394327"
+    },
+    {
+      "blockNumber": 24836641,
+      "baseFeePerGas": "216299463",
+      "blobBaseFeePerGas": "11482226"
+    },
+    {
+      "blockNumber": 24829441,
+      "baseFeePerGas": "145680117",
+      "blobBaseFeePerGas": "8233035"
+    },
+    {
+      "blockNumber": 24822241,
+      "baseFeePerGas": "145795968",
+      "blobBaseFeePerGas": "8203486"
+    },
+    {
+      "blockNumber": 24815041,
+      "baseFeePerGas": "94135985",
+      "blobBaseFeePerGas": "5582125"
+    },
+    {
+      "blockNumber": 24807841,
+      "baseFeePerGas": "111983406",
+      "blobBaseFeePerGas": "6339809"
+    },
+    {
+      "blockNumber": 24800641,
+      "baseFeePerGas": "134787969",
+      "blobBaseFeePerGas": "7905878"
+    },
+    {
+      "blockNumber": 24793441,
+      "baseFeePerGas": "192764619",
+      "blobBaseFeePerGas": "9640060"
+    },
+    {
+      "blockNumber": 24786241,
+      "baseFeePerGas": "199056473",
+      "blobBaseFeePerGas": "10312614"
+    },
+    {
+      "blockNumber": 24779041,
+      "baseFeePerGas": "639479428",
+      "blobBaseFeePerGas": "38462686"
+    },
+    {
+      "blockNumber": 24771841,
+      "baseFeePerGas": "124911418",
+      "blobBaseFeePerGas": "6914091"
+    },
+    {
+      "blockNumber": 24764641,
+      "baseFeePerGas": "128638096",
+      "blobBaseFeePerGas": "7019248"
+    },
+    {
+      "blockNumber": 24757441,
+      "baseFeePerGas": "43250350",
+      "blobBaseFeePerGas": "2746349"
+    },
+    {
+      "blockNumber": 24750241,
+      "baseFeePerGas": "112143350",
+      "blobBaseFeePerGas": "6252781"
+    },
+    {
+      "blockNumber": 24743041,
+      "baseFeePerGas": "171196262",
+      "blobBaseFeePerGas": "10476802"
+    },
+    {
+      "blockNumber": 24735841,
+      "baseFeePerGas": "104805644",
+      "blobBaseFeePerGas": "6161646"
+    },
+    {
+      "blockNumber": 24728641,
+      "baseFeePerGas": "94440757",
+      "blobBaseFeePerGas": "5529230"
+    },
+    {
+      "blockNumber": 24721441,
+      "baseFeePerGas": "190227040",
+      "blobBaseFeePerGas": "11594617"
+    },
+    {
+      "blockNumber": 24714241,
+      "baseFeePerGas": "43630023",
+      "blobBaseFeePerGas": "2139527"
+    },
+    {
+      "blockNumber": 24707041,
+      "baseFeePerGas": "57951905",
+      "blobBaseFeePerGas": "3029675"
+    },
+    {
+      "blockNumber": 24699841,
+      "baseFeePerGas": "221670260",
+      "blobBaseFeePerGas": "11996354"
+    },
+    {
+      "blockNumber": 24692641,
+      "baseFeePerGas": "190996284",
+      "blobBaseFeePerGas": "10565658"
+    },
+    {
+      "blockNumber": 24685441,
+      "baseFeePerGas": "251749601",
+      "blobBaseFeePerGas": "13126260"
+    },
+    {
+      "blockNumber": 24678241,
+      "baseFeePerGas": "378213606",
+      "blobBaseFeePerGas": "19881666"
+    },
+    {
+      "blockNumber": 24671041,
+      "baseFeePerGas": "304036516",
+      "blobBaseFeePerGas": "18245744"
+    },
+    {
+      "blockNumber": 24663841,
+      "baseFeePerGas": "47816467",
+      "blobBaseFeePerGas": "2942795"
+    },
+    {
+      "blockNumber": 24656641,
+      "baseFeePerGas": "52756896",
+      "blobBaseFeePerGas": "2998743"
+    },
+    {
+      "blockNumber": 24649441,
+      "baseFeePerGas": "600047693",
+      "blobBaseFeePerGas": "36318886"
+    },
+    {
+      "blockNumber": 24642241,
+      "baseFeePerGas": "252113741",
+      "blobBaseFeePerGas": "15486148"
+    },
+    {
+      "blockNumber": 24635041,
+      "baseFeePerGas": "276090922",
+      "blobBaseFeePerGas": "16443143"
+    },
+    {
+      "blockNumber": 24627841,
+      "baseFeePerGas": "471629173",
+      "blobBaseFeePerGas": "25470677"
+    },
+    {
+      "blockNumber": 24620641,
+      "baseFeePerGas": "177068463",
+      "blobBaseFeePerGas": "10191699"
+    },
+    {
+      "blockNumber": 24613441,
+      "baseFeePerGas": "41473461",
+      "blobBaseFeePerGas": "2208680"
+    },
+    {
+      "blockNumber": 24606241,
+      "baseFeePerGas": "43503307",
+      "blobBaseFeePerGas": "2143883"
+    },
+    {
+      "blockNumber": 24599041,
+      "baseFeePerGas": "385312083",
+      "blobBaseFeePerGas": "20060684"
+    },
+    {
+      "blockNumber": 24591841,
+      "baseFeePerGas": "123641339",
+      "blobBaseFeePerGas": "7674743"
+    },
+    {
+      "blockNumber": 24584641,
+      "baseFeePerGas": "284546810",
+      "blobBaseFeePerGas": "15329902"
+    },
+    {
+      "blockNumber": 24577441,
+      "baseFeePerGas": "117993750",
+      "blobBaseFeePerGas": "6487859"
+    },
+    {
+      "blockNumber": 24570241,
+      "baseFeePerGas": "179009394",
+      "blobBaseFeePerGas": "11369536"
+    },
+    {
+      "blockNumber": 24563041,
+      "baseFeePerGas": "74738707",
+      "blobBaseFeePerGas": "4465045"
+    },
+    {
+      "blockNumber": 24555841,
+      "baseFeePerGas": "52144333",
+      "blobBaseFeePerGas": "2548593"
+    },
+    {
+      "blockNumber": 24548641,
+      "baseFeePerGas": "154785664",
+      "blobBaseFeePerGas": "8986894"
+    },
+    {
+      "blockNumber": 24541441,
+      "baseFeePerGas": "92626915",
+      "blobBaseFeePerGas": "5425527"
+    },
+    {
+      "blockNumber": 24534241,
+      "baseFeePerGas": "171948460",
+      "blobBaseFeePerGas": "10131918"
+    },
+    {
+      "blockNumber": 24527041,
+      "baseFeePerGas": "110118771",
+      "blobBaseFeePerGas": "6641507"
+    },
+    {
+      "blockNumber": 24519841,
+      "baseFeePerGas": "36973215",
+      "blobBaseFeePerGas": "2131460"
+    },
+    {
+      "blockNumber": 24512641,
+      "baseFeePerGas": "43030536",
+      "blobBaseFeePerGas": "2589267"
+    },
+    {
+      "blockNumber": 24505441,
+      "baseFeePerGas": "45491674",
+      "blobBaseFeePerGas": "2728791"
+    },
+    {
+      "blockNumber": 24498241,
+      "baseFeePerGas": "51740876",
+      "blobBaseFeePerGas": "3169446"
+    },
+    {
+      "blockNumber": 24491041,
+      "baseFeePerGas": "77874214",
+      "blobBaseFeePerGas": "4764794"
+    }
+  ]
+}

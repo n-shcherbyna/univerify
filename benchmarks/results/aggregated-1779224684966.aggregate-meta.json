@@ -1,0 +1,8 @@
+{
+  "runs": 3,
+  "sources": [
+    "/home/nazar/projects/univerify/benchmarks/results/run-1/20260519T080428-2ff3.json",
+    "/home/nazar/projects/univerify/benchmarks/results/run-2/20260519T093540-7712.json",
+    "/home/nazar/projects/univerify/benchmarks/results/run-3/20260519T195136-aca0.json"
+  ]
+}
