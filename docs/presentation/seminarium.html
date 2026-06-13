@@ -7,268 +7,345 @@
   <link rel="stylesheet" href="https://unpkg.com/reveal.js@5.1.0/dist/reset.css">
   <link rel="stylesheet" href="https://unpkg.com/reveal.js@5.1.0/dist/reveal.css">
   <style>
-    /* ── Base ── */
+    /* ════════ Tokens ════════ */
     :root {
       --bg:      #0d1117;
       --surface: #161b22;
-      --border:  #21262d;
+      --border:  #283039;
       --white:   #f0f6fc;
-      --muted:   #7d8590;
-      --dim:     #484f58;
-      --blue:    #4493f8;
-      --blue-bg: rgba(68,147,248,0.10);
-      --green:   #3fb950;
-      --red:     #f85149;
+      --text:    #c4cdd8;
+      --muted:   #8b949e;
+      --dim:     #5a636d;
+      --blue:    #58a6ff;
+      --blue-bg: rgba(88,166,255,0.09);
+      --green:   #56d364;
+      --red:     #f0726b;
     }
 
     .reveal-viewport { background: var(--bg); }
-    .reveal { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
-    .reveal .slides section {
+    .reveal {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-weight: 400;
+      color: var(--text);
+    }
+
+    /* ════════ Full-height slide frame ════════ */
+    .reveal .slides { height: 720px; }
+    .reveal .slides > section {
+      display: flex !important;
+      flex-direction: column;
+      height: 720px !important;
+      box-sizing: border-box;
+      padding: 3.4rem 3.8rem 2.8rem;
       text-align: left;
-      padding: 0 2.6rem;
-      color: var(--white);
     }
 
-    /* ── Typography ── */
-    .reveal h1, .reveal h2, .reveal h3, .reveal h4 {
-      text-transform: none;
-      font-weight: 600;
-      color: var(--white);
-      margin: 0;
-      line-height: 1.2;
-    }
-    .reveal h1 { font-size: 3.2em; font-weight: 700; letter-spacing: -0.03em; }
-    .reveal h2 { font-size: 1.55em; letter-spacing: -0.02em; }
-    .reveal p, .reveal li { color: #b0bbc9; line-height: 1.7; font-size: 0.88em; }
-    .reveal strong { color: var(--white); font-weight: 600; }
-
-    /* ── Label above title ── */
-    .label {
+    .head { flex-shrink: 0; }
+    .head .label {
       display: block;
-      font-size: 0.6em;
+      font-size: 0.62rem;
       font-weight: 600;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.16em;
       text-transform: uppercase;
       color: var(--blue);
-      margin-bottom: 0.6rem;
+      margin-bottom: 0.7rem;
     }
-
-    /* ── Divider ── */
-    .rule {
-      border: none;
+    .head h2 {
+      font-size: 1.62rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: var(--white);
+      line-height: 1.18;
+      margin: 0;
+      text-transform: none;
+    }
+    .head::after {
+      content: '';
+      display: block;
       border-top: 1px solid var(--border);
-      margin: 1rem 0 1.3rem;
+      margin-top: 1.3rem;
     }
 
-    /* ── Two-column ── */
-    .split {
-      display: grid;
-      gap: 3rem;
-      align-items: start;
+    .body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 0;
+      padding-top: 0.4rem;
     }
-    .split-2  { grid-template-columns: 1fr 1fr; }
-    .split-3  { grid-template-columns: 1fr 1fr 1fr; }
-    .split-60 { grid-template-columns: 60fr 40fr; }
+    /* content-bearing slides flow from just under the title */
+    .body.flush { justify-content: flex-start; padding-top: 2.2rem; }
 
-    /* ── Lists ── */
-    .reveal ul {
+    /* ════════ Cover slide ════════ */
+    .cover {
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+    }
+    .cover .kicker {
+      font-size: 0.72rem;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin: 0 0 2rem;
+    }
+    .cover h1 {
+      font-size: 3.4rem;
+      font-weight: 700;
+      letter-spacing: -0.035em;
+      color: var(--white);
+      margin: 0;
+      text-transform: none;
+    }
+    .cover .tagline {
+      font-size: 1.12rem;
+      color: var(--text);
+      font-weight: 400;
+      margin: 0.9rem 0 0;
+    }
+    .cover .author {
+      margin-top: 2.6rem;
+      font-size: 0.82rem;
+      color: var(--muted);
+    }
+
+    /* ════════ Columns ════════ */
+    .grid { display: grid; gap: 3.4rem; align-items: center; }
+    .grid-2  { grid-template-columns: 1fr 1fr; }
+    .grid-58 { grid-template-columns: 58fr 42fr; }
+    .grid-2.top { align-items: start; }
+
+    /* ════════ Section caption ════════ */
+    .cap {
+      font-size: 0.66rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 0.9rem;
+    }
+
+    /* ════════ Lists ════════ */
+    .reveal ul.list {
       list-style: none;
       margin: 0;
       padding: 0;
     }
-    .reveal ul li {
-      padding: 0.45rem 0;
-      padding-left: 1.1rem;
-      border-bottom: 1px solid var(--border);
+    .reveal ul.list li {
       position: relative;
+      padding: 0.62rem 0 0.62rem 1.2rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.92rem;
+      line-height: 1.45;
+      color: var(--text);
     }
-    .reveal ul li:last-child { border-bottom: none; }
-    .reveal ul li::before {
+    .reveal ul.list li:last-child { border-bottom: none; }
+    .reveal ul.list li::before {
       content: '';
       position: absolute;
-      left: 0;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 4px;
-      height: 4px;
+      left: 0; top: 1.08rem;
+      width: 5px; height: 5px;
       border-radius: 50%;
       background: var(--blue);
     }
+    .reveal strong { color: var(--white); font-weight: 600; }
 
-    /* ── Large stat ── */
-    .stat-row {
-      display: flex;
-      gap: 2.5rem;
-      margin: 0.8rem 0;
+    /* ════════ Compare blocks ════════ */
+    .compare + .compare { margin-top: 1.5rem; }
+    .compare .tag {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      margin-bottom: 0.45rem;
     }
-    .stat-block { flex: 1; }
-    .stat-num {
-      font-size: 2.8em;
-      font-weight: 700;
-      color: var(--white);
-      letter-spacing: -0.04em;
-      line-height: 1;
+    .compare .tag.bad  { color: var(--red); }
+    .compare .tag.good { color: var(--green); }
+    .compare p {
+      margin: 0;
+      font-size: 0.92rem;
+      line-height: 1.5;
+      color: var(--text);
     }
-    .stat-num.blue { color: var(--blue); }
-    .stat-num.green { color: var(--green); }
-    .stat-sub {
-      font-size: 0.75em;
+    .compare .note {
+      margin-top: 0.5rem;
+      font-size: 0.82rem;
       color: var(--muted);
-      margin-top: 0.3rem;
     }
 
-    /* ── Table ── */
+    /* ════════ Table ════════ */
     .reveal table {
       width: 100%;
       border-collapse: collapse;
-      font-size: 0.84em;
-    }
-    .reveal table thead tr {
-      border-bottom: 1px solid var(--border);
+      font-size: 0.92rem;
     }
     .reveal table th {
+      font-size: 0.66rem;
       font-weight: 600;
-      color: var(--muted);
-      font-size: 0.82em;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.06em;
       text-transform: uppercase;
-      padding: 0.5rem 0.8rem;
+      color: var(--muted);
+      padding: 0 0.6rem 0.7rem;
       text-align: right;
       border: none;
       background: none;
     }
+    .reveal table thead tr { border-bottom: 1px solid var(--border); }
     .reveal table th:first-child { text-align: left; }
     .reveal table td {
-      padding: 0.55rem 0.8rem;
+      padding: 0.62rem 0.6rem;
       border: none;
       border-bottom: 1px solid var(--border);
-      color: #b0bbc9;
       text-align: right;
+      color: var(--text);
       background: none;
     }
     .reveal table td:first-child { text-align: left; color: var(--white); }
     .reveal table tr:last-child td { border-bottom: none; }
+    .reveal table tr.muted td { color: var(--dim); }
     .reveal table tr.hl td { color: var(--white); font-weight: 600; }
     .reveal table tr.hl td.win { color: var(--green); }
-    .reveal table tr.dim td { color: var(--dim); }
 
-    /* ── Callout box ── */
+    /* ════════ Stats ════════ */
+    .stats { display: flex; flex-direction: column; gap: 1.6rem; }
+    .stat .num {
+      font-size: 2.7rem;
+      font-weight: 700;
+      letter-spacing: -0.04em;
+      line-height: 1;
+    }
+    .stat .num.green { color: var(--green); }
+    .stat .num.blue  { color: var(--blue); }
+    .stat .cap2 {
+      font-size: 0.8rem;
+      color: var(--muted);
+      margin-top: 0.4rem;
+    }
+
+    /* ════════ Callout ════════ */
     .callout {
-      border-left: 3px solid var(--blue);
-      padding: 0.75rem 1rem;
+      border-left: 2px solid var(--blue);
       background: var(--blue-bg);
       border-radius: 0 6px 6px 0;
-      margin-top: 1.4rem;
+      padding: 0.85rem 1.1rem;
     }
     .callout p {
       margin: 0;
-      color: #b0bbc9;
-      font-size: 0.85em;
-      line-height: 1.6;
+      font-size: 0.88rem;
+      line-height: 1.55;
+      color: var(--text);
     }
 
-    /* ── Section heading (within slide) ── */
-    .sh {
-      font-size: 0.72em;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--muted);
-      margin-bottom: 0.5rem;
-    }
-
-    /* ── Comparison pair ── */
-    .compare-item {
-      padding: 0.9rem 0;
-      border-bottom: 1px solid var(--border);
-    }
-    .compare-item:last-child { border-bottom: none; }
-    .compare-label {
-      font-size: 0.72em;
-      font-weight: 600;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      margin-bottom: 0.3rem;
-    }
-    .compare-label.bad  { color: var(--red); }
-    .compare-label.good { color: var(--green); }
-    .compare-item p { margin: 0; font-size: 0.85em; }
-
-    /* ── Code ── */
+    /* ════════ Code ════════ */
     .reveal code {
-      font-family: "SF Mono", "Fira Mono", monospace;
-      font-size: 0.85em;
+      font-family: "SF Mono", "JetBrains Mono", "Fira Mono", monospace;
+      font-size: 0.86em;
       color: #e3b341;
-      background: rgba(255,255,255,0.06);
-      padding: 0.1em 0.4em;
+      background: rgba(255,255,255,0.05);
+      padding: 0.08em 0.4em;
       border-radius: 4px;
     }
 
-    /* ── Network list ── */
-    .net-list {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-    }
-    .net-row {
-      display: flex;
-      align-items: baseline;
-      gap: 0.8rem;
-      padding: 0.6rem 0;
-      border-bottom: 1px solid var(--border);
-    }
-    .net-row:last-child { border-bottom: none; }
-    .net-name { font-size: 0.88em; font-weight: 600; color: var(--white); width: 10rem; flex-shrink: 0; }
-    .net-desc { font-size: 0.82em; color: var(--muted); }
-    .net-row.best .net-name { color: var(--green); }
-
-    /* ── Contribution rows ── */
-    .contrib {
-      display: flex;
-      flex-direction: column;
-      gap: 0;
-    }
-    .contrib-row {
-      display: grid;
-      grid-template-columns: 2rem 1fr;
-      gap: 1rem;
-      align-items: start;
-      padding: 0.9rem 0;
-      border-bottom: 1px solid var(--border);
-    }
-    .contrib-row:last-child { border-bottom: none; }
-    .contrib-n { font-size: 0.85em; font-weight: 700; color: var(--blue); padding-top: 0.05rem; }
-    .contrib-text h4 { font-size: 0.9em; font-weight: 600; color: var(--white); margin: 0 0 0.2rem; }
-    .contrib-text p  { font-size: 0.82em; color: var(--muted); margin: 0; line-height: 1.5; }
-
-    /* ── Merkle SVG ── */
-    .merkle { display: flex; justify-content: center; align-items: center; }
-
-    /* ── Flow steps ── */
+    /* ════════ Flow (privacy) ════════ */
     .flow {
       display: grid;
       grid-template-columns: 1fr auto 1fr auto 1fr;
+      align-items: stretch;
       gap: 0;
-      align-items: center;
-      margin: 0.8rem 0;
     }
-    .flow-step { padding: 0.8rem 0; }
-    .flow-step .fs-label { font-size: 0.7em; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--blue); margin-bottom: 0.25rem; }
-    .flow-step .fs-title { font-size: 0.88em; font-weight: 600; color: var(--white); }
-    .flow-step .fs-desc  { font-size: 0.78em; color: var(--muted); margin-top: 0.2rem; line-height: 1.4; }
-    .flow-arrow { color: var(--dim); font-size: 1.2em; padding: 0 0.6rem; align-self: center; }
+    .flow .step { padding: 0 1.4rem; }
+    .flow .step:first-child { padding-left: 0; }
+    .flow .step:last-child  { padding-right: 0; }
+    .flow .step .n {
+      font-size: 0.66rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--blue);
+      margin-bottom: 0.5rem;
+    }
+    .flow .step h4 {
+      font-size: 0.98rem;
+      font-weight: 600;
+      color: var(--white);
+      margin: 0 0 0.5rem;
+    }
+    .flow .step p {
+      font-size: 0.84rem;
+      line-height: 1.5;
+      color: var(--muted);
+      margin: 0;
+    }
+    .flow .arrow {
+      align-self: center;
+      color: var(--dim);
+      font-size: 1.3rem;
+    }
+    .formula {
+      margin-top: 0.6rem;
+      font-family: "SF Mono", monospace;
+      font-size: 0.76rem;
+      line-height: 1.7;
+      color: #e3b341;
+      background: rgba(0,0,0,0.25);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.55rem 0.7rem;
+    }
 
-    /* ── Title slide ── */
-    #s-title { justify-content: center !important; }
+    /* ════════ Network rows ════════ */
+    .nets { margin: 0; padding: 0; list-style: none; }
+    .nets li {
+      display: flex;
+      align-items: baseline;
+      gap: 1rem;
+      padding: 0.62rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .nets li:last-child { border-bottom: none; }
+    .nets .name { width: 8.5rem; flex-shrink: 0; font-weight: 600; color: var(--white); font-size: 0.92rem; }
+    .nets .desc { color: var(--muted); font-size: 0.86rem; }
+    .nets li.best .name { color: var(--green); }
 
-    /* ── Slide number ── */
-    .reveal .slide-number { color: var(--dim); font-size: 0.65em; }
+    /* ════════ Contributions ════════ */
+    .contrib { display: flex; flex-direction: column; }
+    .contrib .row {
+      display: grid;
+      grid-template-columns: 2.4rem 1fr;
+      gap: 1.2rem;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .contrib .row:last-child { border-bottom: none; }
+    .contrib .idx {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: var(--blue);
+      padding-top: 0.1rem;
+    }
+    .contrib h4 { font-size: 0.98rem; font-weight: 600; color: var(--white); margin: 0 0 0.3rem; }
+    .contrib p  { font-size: 0.85rem; line-height: 1.5; color: var(--muted); margin: 0; }
 
-    .reveal .progress { background: var(--border); }
-    .reveal .progress span { background: var(--blue); }
+    /* ════════ Footer line ════════ */
+    .repo {
+      margin-top: 2rem;
+      font-size: 0.74rem;
+      color: var(--dim);
+      letter-spacing: 0.02em;
+    }
 
-    /* ── Fragment ── */
-    .reveal .fragment { opacity: 0.15; }
+    /* ════════ Reveal chrome ════════ */
+    .reveal .slide-number {
+      background: none;
+      color: var(--dim);
+      font-size: 0.62rem;
+      right: 1.4rem; bottom: 1rem;
+    }
+    .reveal .progress { color: var(--blue); height: 2px; }
+
+    /* ════════ Fragments ════════ */
+    .reveal .fragment { opacity: 0.12; transition: opacity 0.25s; }
     .reveal .fragment.visible { opacity: 1; }
   </style>
 </head>
@@ -276,400 +353,293 @@
 <div class="reveal">
 <div class="slides">
 
-<!-- ════════════════════════════════════════════════════════
-  1 — Tytuł
-════════════════════════════════════════════════════════ -->
-<section id="s-title" style="text-align:center;">
-  <p style="font-size:0.72em; letter-spacing:0.1em; text-transform:uppercase; color:var(--muted); margin:0 0 1.6rem;">
-    Praca magisterska &nbsp;·&nbsp; Politechnika Warszawska &nbsp;·&nbsp; 2026
-  </p>
-
-  <h1>UniVerify</h1>
-
-  <p style="font-size:1.05em; color:#b0bbc9; margin:0.8rem 0 2.4rem; font-weight:400; letter-spacing:-0.01em;">
-    Weryfikacja dyplomów na blockchainie Ethereum
-  </p>
-
-  <p style="font-size:0.8em; color:var(--muted); margin:0;">Nazar Shcherbyna</p>
+<!-- ════ 1 · Cover ════ -->
+<section>
+  <div class="body cover">
+    <p class="kicker">Praca magisterska &nbsp;·&nbsp; Politechnika Warszawska &nbsp;·&nbsp; 2026</p>
+    <h1>UniVerify</h1>
+    <p class="tagline">Weryfikacja dyplomów na blockchainie Ethereum</p>
+    <p class="author">Nazar Shcherbyna</p>
+  </div>
 </section>
 
-<!-- ════════════════════════════════════════════════════════
-  2 — Problem
-════════════════════════════════════════════════════════ -->
+<!-- ════ 2 · Problem ════ -->
 <section>
-  <span class="label">Motywacja</span>
-  <h2>Problem weryfikacji dyplomów</h2>
-  <hr class="rule">
-
-  <div class="split split-2">
-    <div>
-      <p class="sh">Stan obecny</p>
-      <ul>
-        <li>Rynek fałszywych dyplomów wyceniany na <strong>~$1 mld/rok</strong> <span style="color:var(--dim)">(Ezell, 2012)</span></li>
-        <li>Weryfikacja wymaga kontaktu z uczelnią — tygodnie czekania</li>
-        <li>Cross-border: brak interoperacyjności między uczelniami</li>
-        <li>Weryfikator musi bezwarunkowo ufać uczelni</li>
-      </ul>
-    </div>
-
-    <div>
-      <p class="sh">Pytania badawcze</p>
-      <ul>
-        <li>Jak zminimalizować koszt przechowywania danych on-chain?</li>
-        <li>Jak chronić prywatność studenta zgodnie z RODO?</li>
-        <li>Która warstwa L2 oferuje najniższy koszt wdrożenia?</li>
-      </ul>
+  <div class="head">
+    <span class="label">Motywacja</span>
+    <h2>Problem weryfikacji dyplomów</h2>
+  </div>
+  <div class="body flush">
+    <div class="grid grid-2 top">
+      <div>
+        <p class="cap">Stan obecny</p>
+        <ul class="list">
+          <li>Rynek fałszywych dyplomów wyceniany na <strong>~$1 mld rocznie</strong></li>
+          <li>Weryfikacja wymaga kontaktu z uczelnią — tygodnie oczekiwania</li>
+          <li>Cross-border: brak interoperacyjności między uczelniami</li>
+          <li>Weryfikator musi bezwarunkowo ufać uczelni</li>
+        </ul>
+      </div>
+      <div>
+        <p class="cap">Pytania badawcze</p>
+        <ul class="list">
+          <li>Jak zminimalizować koszt przechowywania danych on-chain?</li>
+          <li>Jak chronić prywatność studenta zgodnie z RODO?</li>
+          <li>Która warstwa L2 oferuje najniższy koszt wdrożenia?</li>
+        </ul>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- ════════════════════════════════════════════════════════
-  3 — Architektura: Merkle vs per-record
-════════════════════════════════════════════════════════ -->
+<!-- ════ 3 · Q1 architektura ════ -->
 <section>
-  <span class="label">Pytanie 1 — Architektura</span>
-  <h2>Jak tanio przechowywać dyplomy on-chain?</h2>
-  <hr class="rule">
-
-  <div class="split split-60">
-    <div>
-      <div class="compare-item">
-        <p class="compare-label bad">Per-record storage</p>
-        <p>Każdy dyplom zapisany jako osobny slot w storage kontraktu. Koszt rośnie liniowo — <strong>n dyplomów = n transakcji</strong>.</p>
-      </div>
-      <div class="compare-item">
-        <p class="compare-label good">Merkle-batch issuance</p>
-        <p>Cały rocznik skompresowany do jednego <code>bytes32 merkleRoot</code>. Koszt stały niezależnie od n — <strong>n dyplomów = 1 transakcja</strong>.</p>
-        <p style="margin-top:0.4rem; font-size:0.82em; color:var(--muted);">
-          Weryfikacja: <code>statusWithProof(docHash, proof[])</code> &mdash; publiczna, bezpłatna.
-        </p>
-      </div>
-    </div>
-
-    <div class="merkle">
-      <svg width="200" height="190" viewBox="0 0 200 190" xmlns="http://www.w3.org/2000/svg">
-        <!-- root -->
-        <rect x="55" y="8" width="90" height="28" rx="5"
-              fill="var(--surface)" stroke="var(--blue)" stroke-width="1.5"/>
-        <text x="100" y="27" text-anchor="middle" fill="var(--blue)"
-              font-size="10" font-family="monospace" font-weight="600">merkleRoot</text>
-
-        <!-- mid nodes -->
-        <rect x="14"  y="68" width="72" height="26" rx="5"
-              fill="var(--surface)" stroke="var(--border)" stroke-width="1"/>
-        <text x="50" y="85" text-anchor="middle" fill="#7d8590"
-              font-size="9" font-family="monospace">hash(L, R)</text>
-
-        <rect x="114" y="68" width="72" height="26" rx="5"
-              fill="var(--surface)" stroke="var(--border)" stroke-width="1"/>
-        <text x="150" y="85" text-anchor="middle" fill="#7d8590"
-              font-size="9" font-family="monospace">hash(L, R)</text>
-
-        <!-- leaves -->
-        <rect x="2"   y="130" width="54" height="26" rx="5"
-              fill="var(--surface)" stroke="var(--border)" stroke-width="1"/>
-        <text x="29" y="147" text-anchor="middle" fill="#b0bbc9"
-              font-size="9" font-family="monospace">d₁</text>
-
-        <rect x="62"  y="130" width="54" height="26" rx="5"
-              fill="var(--surface)" stroke="var(--border)" stroke-width="1"/>
-        <text x="89" y="147" text-anchor="middle" fill="#b0bbc9"
-              font-size="9" font-family="monospace">d₂</text>
-
-        <rect x="84"  y="130" width="54" height="26" rx="5"
-              fill="var(--surface)" stroke="var(--border)" stroke-width="1"/>
-        <text x="111" y="147" text-anchor="middle" fill="#b0bbc9"
-              font-size="9" font-family="monospace">d₃</text>
-
-        <rect x="144" y="130" width="54" height="26" rx="5"
-              fill="var(--surface)" stroke="var(--border)" stroke-width="1"/>
-        <text x="171" y="147" text-anchor="middle" fill="#b0bbc9"
-              font-size="9" font-family="monospace">d₄</text>
-
-        <!-- connectors root→mid -->
-        <line x1="100" y1="36" x2="50"  y2="68" stroke="var(--border)" stroke-width="1"/>
-        <line x1="100" y1="36" x2="150" y2="68" stroke="var(--border)" stroke-width="1"/>
-        <!-- mid→leaves -->
-        <line x1="50"  y1="94" x2="29"  y2="130" stroke="var(--border)" stroke-width="1"/>
-        <line x1="50"  y1="94" x2="89"  y2="130" stroke="var(--border)" stroke-width="1"/>
-        <line x1="150" y1="94" x2="111" y2="130" stroke="var(--border)" stroke-width="1"/>
-        <line x1="150" y1="94" x2="171" y2="130" stroke="var(--border)" stroke-width="1"/>
-
-        <!-- on-chain label -->
-        <text x="100" y="178" text-anchor="middle" fill="var(--muted)"
-              font-size="8.5" font-style="italic">↑ tylko root trafia on-chain</text>
-      </svg>
-    </div>
+  <div class="head">
+    <span class="label">Pytanie 1 — Architektura</span>
+    <h2>Jak tanio przechowywać dyplomy on-chain?</h2>
   </div>
-</section>
-
-<!-- ════════════════════════════════════════════════════════
-  4 — Wynik Q1
-════════════════════════════════════════════════════════ -->
-<section>
-  <span class="label">Wynik 1 — Sepolia L1</span>
-  <h2>Merkle-batch: od −99% do −1000× oszczędności</h2>
-  <hr class="rule">
-
-  <div class="split split-2">
-    <div>
-      <table>
-        <thead>
-          <tr>
-            <th>Podejście</th>
-            <th>n = 100</th>
-            <th>n = 1 000</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr class="dim">
-            <td>Per-record</td>
-            <td>~$3,20</td>
-            <td>~$32,00</td>
-          </tr>
-          <tr class="hl">
-            <td>Merkle-batch</td>
-            <td class="win">~$0,032</td>
-            <td class="win">~$0,032</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <div class="callout">
-        <p>Model analityczny dekompozycji kosztu odtwarza wyniki pomiarów z błędem &lt;0,2%.<br>
-        <strong>Opublikowane: SITEE 2026.</strong></p>
-      </div>
-    </div>
-
-    <div>
-      <div class="stat-row" style="flex-direction:column; gap:1.4rem;">
-        <div class="stat-block">
-          <div class="stat-num green">−99%</div>
-          <div class="stat-sub">koszt przy n = 100</div>
+  <div class="body flush">
+    <div class="grid grid-58">
+      <div>
+        <div class="compare">
+          <p class="tag bad">Per-record storage</p>
+          <p>Każdy dyplom zapisany jako osobny slot w storage kontraktu. Koszt rośnie liniowo — <strong>n dyplomów = n transakcji</strong>.</p>
         </div>
-        <div class="stat-block">
-          <div class="stat-num green">1 000×</div>
-          <div class="stat-sub">taniej przy n = 1 000</div>
-        </div>
-        <div class="stat-block">
-          <div class="stat-num blue">&lt;0,2%</div>
-          <div class="stat-sub">błąd modelu analitycznego</div>
+        <div class="compare">
+          <p class="tag good">Merkle-batch issuance</p>
+          <p>Cały rocznik skompresowany do jednego <code>bytes32 merkleRoot</code>. Koszt stały niezależnie od n — <strong>n dyplomów = 1 transakcja</strong>.</p>
+          <p class="note">Weryfikacja: <code>statusWithProof(docHash, proof[])</code> — publiczna, bezpłatna.</p>
         </div>
       </div>
-    </div>
-  </div>
-</section>
 
-<!-- ════════════════════════════════════════════════════════
-  5 — Prywatność
-════════════════════════════════════════════════════════ -->
-<section>
-  <span class="label">Pytanie 2 — Prywatność</span>
-  <h2>Selektywne ujawnianie danych zgodne z RODO</h2>
-  <hr class="rule">
-
-  <div class="flow">
-    <div class="flow-step">
-      <div class="fs-label">Problem</div>
-      <div class="fs-title">Pełna ekspozycja danych</div>
-      <div class="fs-desc">Weryfikacja ujawnia wszystkie pola — imię, ocenę, nr dyplomu. Kolizja z zasadą minimalizacji danych (RODO art. 5).</div>
-    </div>
-
-    <div class="flow-arrow">→</div>
-
-    <div class="flow-step">
-      <div class="fs-label">Rozwiązanie</div>
-      <div class="fs-title">Commitments z solą</div>
-      <div class="fs-desc">
-        Każde z 4 pól zastąpione commitem:<br>
-        <code style="font-size:0.82em;">c<sub>i</sub> = keccak256(field<sub>i</sub> ‖ salt<sub>i</sub>)</code><br>
-        <code style="font-size:0.82em;">docHash = keccak256(c₁‖c₂‖c₃‖c₄)</code>
+      <div style="display:flex; justify-content:center;">
+        <svg width="252" height="200" viewBox="0 0 252 200" xmlns="http://www.w3.org/2000/svg"
+             font-family="'SF Mono','Fira Mono',monospace">
+          <!-- edges (drawn first, under boxes) -->
+          <g stroke="#283039" stroke-width="1.3">
+            <line x1="126" y1="44" x2="64"  y2="86"/>
+            <line x1="126" y1="44" x2="188" y2="86"/>
+            <line x1="64"  y1="116" x2="34"  y2="152"/>
+            <line x1="64"  y1="116" x2="94"  y2="152"/>
+            <line x1="188" y1="116" x2="158" y2="152"/>
+            <line x1="188" y1="116" x2="218" y2="152"/>
+          </g>
+          <!-- root -->
+          <rect x="56" y="10" width="140" height="34" rx="7" fill="#161b22" stroke="#58a6ff" stroke-width="1.6"/>
+          <text x="126" y="27" text-anchor="middle" dominant-baseline="central" fill="#58a6ff" font-size="12" font-weight="600">merkleRoot</text>
+          <!-- mids (centers 64, 188) -->
+          <rect x="20"  y="86" width="88" height="30" rx="6" fill="#161b22" stroke="#283039" stroke-width="1.2"/>
+          <text x="64"  y="101" text-anchor="middle" dominant-baseline="central" fill="#8b949e" font-size="11">h(L, R)</text>
+          <rect x="144" y="86" width="88" height="30" rx="6" fill="#161b22" stroke="#283039" stroke-width="1.2"/>
+          <text x="188" y="101" text-anchor="middle" dominant-baseline="central" fill="#8b949e" font-size="11">h(L, R)</text>
+          <!-- leaves (centers 34, 94, 158, 218) -->
+          <rect x="10"  y="152" width="48" height="30" rx="6" fill="#161b22" stroke="#283039" stroke-width="1.2"/>
+          <text x="34"  y="167" text-anchor="middle" dominant-baseline="central" fill="#c4cdd8" font-size="11">d1</text>
+          <rect x="70"  y="152" width="48" height="30" rx="6" fill="#161b22" stroke="#283039" stroke-width="1.2"/>
+          <text x="94"  y="167" text-anchor="middle" dominant-baseline="central" fill="#c4cdd8" font-size="11">d2</text>
+          <rect x="134" y="152" width="48" height="30" rx="6" fill="#161b22" stroke="#283039" stroke-width="1.2"/>
+          <text x="158" y="167" text-anchor="middle" dominant-baseline="central" fill="#c4cdd8" font-size="11">d3</text>
+          <rect x="194" y="152" width="48" height="30" rx="6" fill="#161b22" stroke="#283039" stroke-width="1.2"/>
+          <text x="218" y="167" text-anchor="middle" dominant-baseline="central" fill="#c4cdd8" font-size="11">d4</text>
+          <!-- caption -->
+          <text x="126" y="195" text-anchor="middle" fill="#5a636d" font-size="10" font-style="italic" font-family="-apple-system,sans-serif">tylko root trafia on-chain</text>
+        </svg>
       </div>
     </div>
-
-    <div class="flow-arrow">→</div>
-
-    <div class="flow-step">
-      <div class="fs-label">Efekt</div>
-      <div class="fs-title">Wybór ujawnianych pól</div>
-      <div class="fs-desc">Student ujawnia tylko te pola, które są konieczne. Weryfikator potwierdza ich autentyczność bez wiedzy o pozostałych.</div>
-    </div>
-  </div>
-
-  <div class="callout">
-    <p>Kontrakt <strong>bez żadnych zmian</strong> — cała logika prywatności off-chain. Nowa trasa <code>/present</code> w aplikacji webowej.</p>
   </div>
 </section>
 
-<!-- ════════════════════════════════════════════════════════
-  6 — L2 Setup
-════════════════════════════════════════════════════════ -->
+<!-- ════ 4 · Wynik Q1 ════ -->
 <section>
-  <span class="label">Pytanie 3 — Benchmarki L2</span>
-  <h2>Które L2 jest najtańsze?</h2>
-  <hr class="rule">
-
-  <div class="split split-2">
-    <div>
-      <p class="sh">Badane sieci</p>
-      <div class="net-list">
-        <div class="net-row">
-          <span class="net-name">Sepolia</span>
-          <span class="net-desc">Ethereum L1 — punkt odniesienia</span>
-        </div>
-        <div class="net-row">
-          <span class="net-name">Arbitrum</span>
-          <span class="net-desc">Nitro, optimistic rollup</span>
-        </div>
-        <div class="net-row best">
-          <span class="net-name">Base</span>
-          <span class="net-desc">OP-Stack (Coinbase)</span>
-        </div>
-        <div class="net-row">
-          <span class="net-name">zkSync Era</span>
-          <span class="net-desc">ZK rollup</span>
+  <div class="head">
+    <span class="label">Wynik 1 — Sepolia (L1)</span>
+    <h2>Merkle-batch: od −99% do −1000× kosztu</h2>
+  </div>
+  <div class="body flush">
+    <div class="grid grid-2">
+      <div>
+        <table>
+          <thead>
+            <tr><th>Podejście</th><th>n = 100</th><th>n = 1 000</th></tr>
+          </thead>
+          <tbody>
+            <tr class="muted"><td>Per-record</td><td>~$3,20</td><td>~$32,00</td></tr>
+            <tr class="hl"><td>Merkle-batch</td><td class="win">~$0,032</td><td class="win">~$0,032</td></tr>
+          </tbody>
+        </table>
+        <div class="callout" style="margin-top:1.6rem;">
+          <p>Model analityczny dekompozycji kosztu odtwarza wyniki pomiarów z błędem <strong>poniżej 0,2%</strong>.</p>
         </div>
       </div>
-    </div>
-
-    <div>
-      <p class="sh">Metodologia</p>
-      <ul>
-        <li><strong>3</strong> niezależne uruchomienia pipeline, zagregowane</li>
-        <li>Rozmiary paczki: n ∈ {1, 10, 100, 1 000, 10 000}</li>
-        <li>Koszt USD: model z 90-dniowej historii baseFee (p10/p50/p90)</li>
-        <li>N=30 pomiarów latencji z raportowanym σ</li>
-        <li>Osobny model kosztów L1 per sieć (EIP-4844 / Ecotone / Arbitrum blob)</li>
-      </ul>
+      <div class="stats">
+        <div class="stat"><div class="num green">−99%</div><div class="cap2">koszt przy n = 100</div></div>
+        <div class="stat"><div class="num green">1000×</div><div class="cap2">taniej przy n = 1 000</div></div>
+        <div class="stat"><div class="num blue">&lt;0,2%</div><div class="cap2">błąd modelu analitycznego</div></div>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- ════════════════════════════════════════════════════════
-  7 — Wynik Q3
-════════════════════════════════════════════════════════ -->
+<!-- ════ 5 · Q2 prywatność ════ -->
 <section>
-  <span class="label">Wynik 3 — p50, ETH/USD = 3 500</span>
-  <h2>Base jest 35× tańszy niż Ethereum L1 przy n = 10 000</h2>
-  <hr class="rule">
-
-  <div class="split split-2">
-    <div>
-      <table>
-        <thead>
-          <tr>
-            <th>Sieć</th>
-            <th>USD / dyplom, n=10k</th>
-            <th>vs. L1</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>Sepolia (L1)</td>
-            <td>$3,2 × 10⁻⁶</td>
-            <td style="color:var(--muted);">—</td>
-          </tr>
-          <tr>
-            <td>Arbitrum</td>
-            <td>$1,8 × 10⁻⁶</td>
-            <td>1,8×</td>
-          </tr>
-          <tr>
-            <td>zkSync Era</td>
-            <td>$2,3 × 10⁻⁶</td>
-            <td>1,4×</td>
-          </tr>
-          <tr class="hl">
-            <td>Base</td>
-            <td class="win">$9 × 10⁻⁸</td>
-            <td class="win">35×</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div>
-      <div class="stat-block" style="margin-bottom:1.4rem;">
-        <div class="stat-num green">35×</div>
-        <div class="stat-sub">Base taniej niż L1 przy n = 10 000</div>
+  <div class="head">
+    <span class="label">Pytanie 2 — Prywatność</span>
+    <h2>Selektywne ujawnianie danych zgodne z RODO</h2>
+  </div>
+  <div class="body flush">
+    <div class="flow">
+      <div class="step">
+        <div class="n">Problem</div>
+        <h4>Pełna ekspozycja danych</h4>
+        <p>Weryfikacja ujawnia wszystkie pola — imię, ocenę, numer dyplomu. Kolizja z zasadą minimalizacji danych (RODO).</p>
       </div>
-
-      <ul>
-        <li>Base wygrywa przy <strong>każdym</strong> rozmiarze paczki</li>
-        <li>Wynik stabilny przy ±2× zmianach kursu ETH/USD</li>
-        <li>Stabilny przy ±2× zmianie ceny sequencera L2</li>
-      </ul>
+      <div class="arrow">→</div>
+      <div class="step">
+        <div class="n">Rozwiązanie</div>
+        <h4>Commitments z solą</h4>
+        <p>Każde z 4 pól zastąpione zobowiązaniem kryptograficznym:</p>
+        <div class="formula">cᵢ = keccak256(fieldᵢ ‖ saltᵢ)<br>docHash = keccak256(c₁‖c₂‖c₃‖c₄)</div>
+      </div>
+      <div class="arrow">→</div>
+      <div class="step">
+        <div class="n">Efekt</div>
+        <h4>Wybór ujawnianych pól</h4>
+        <p>Student ujawnia tylko niezbędne pola. Weryfikator potwierdza ich autentyczność bez wiedzy o pozostałych.</p>
+      </div>
+    </div>
+    <div class="callout" style="margin-top:2rem;">
+      <p>Kontrakt <strong>bez żadnych zmian</strong> — cała logika prywatności off-chain. Nowa trasa <code>/present</code> w aplikacji webowej.</p>
     </div>
   </div>
 </section>
 
-<!-- ════════════════════════════════════════════════════════
-  8 — Phase 3
-════════════════════════════════════════════════════════ -->
+<!-- ════ 6 · Q3 setup ════ -->
 <section>
-  <span class="label">Co zostało</span>
-  <h2>Phase 3: benchmarki kosztu prywatności off-chain</h2>
-  <hr class="rule">
-
-  <div class="split split-2">
-    <div>
-      <p class="sh">Już wiadomo</p>
-      <ul>
-        <li>Gaz on-chain <strong>identyczny</strong> dla schematu privacy i plain</li>
-        <li>Kontrakt nie widzi różnicy między commitmentem a zwykłym hashem</li>
-        <li>Null-result jest sam w sobie wynikiem wartym raportowania</li>
-      </ul>
-    </div>
-
-    <div>
-      <p class="sh">Do zmierzenia (~1 dzień)</p>
-      <ul>
-        <li>Czas budowania koperty z commitmentami vs. plain hash</li>
-        <li>Czas weryfikacji selektywnej vs. pełnej</li>
-        <li>Rozmiar danych: pełne vs. selektywne ujawnienie</li>
-      </ul>
-      <p style="margin-top:0.9rem; font-size:0.8em; color:var(--muted);">
-        Reużywa pipeline <code>@univerify/benchmarks</code> — 3 nowe operacje w <code>src/ops/</code>.
-      </p>
+  <div class="head">
+    <span class="label">Pytanie 3 — Benchmarki L2</span>
+    <h2>Które L2 jest najtańsze?</h2>
+  </div>
+  <div class="body flush">
+    <div class="grid grid-2 top">
+      <div>
+        <p class="cap">Badane sieci</p>
+        <ul class="nets">
+          <li><span class="name">Sepolia</span><span class="desc">Ethereum L1 — punkt odniesienia</span></li>
+          <li><span class="name">Arbitrum</span><span class="desc">Nitro, optimistic rollup</span></li>
+          <li class="best"><span class="name">Base</span><span class="desc">OP-Stack (Coinbase)</span></li>
+          <li><span class="name">zkSync Era</span><span class="desc">ZK rollup</span></li>
+        </ul>
+      </div>
+      <div>
+        <p class="cap">Metodologia</p>
+        <ul class="list">
+          <li><strong>3</strong> niezależne uruchomienia pipeline, zagregowane</li>
+          <li>Rozmiary paczki: n ∈ {1, 10, 100, 1 000, 10 000}</li>
+          <li>Koszt USD modelowany z 90-dniowej historii baseFee</li>
+          <li>N = 30 pomiarów latencji z raportowanym σ</li>
+          <li>Osobny model kosztów L1 per sieć</li>
+        </ul>
+      </div>
     </div>
   </div>
 </section>
 
-<!-- ════════════════════════════════════════════════════════
-  9 — Podsumowanie
-════════════════════════════════════════════════════════ -->
+<!-- ════ 7 · Wynik Q3 ════ -->
 <section>
-  <span class="label">Podsumowanie</span>
-  <h2>UniVerify — wkład pracy</h2>
-  <hr class="rule">
-
-  <div class="contrib">
-    <div class="contrib-row fragment fade-up">
-      <div class="contrib-n">01</div>
-      <div class="contrib-text">
-        <h4>Architektura Merkle-batch</h4>
-        <p>Redukcja kosztu o <strong>3 rzędy wielkości</strong> przy n = 1 000 w porównaniu do per-record storage. Model analityczny z błędem &lt;0,2%. <strong>Opublikowane: SITEE 2026.</strong></p>
+  <div class="head">
+    <span class="label">Wynik 3 — scenariusz p50</span>
+    <h2>Base: 35× taniej niż Ethereum L1 przy n = 10 000</h2>
+  </div>
+  <div class="body flush">
+    <div class="grid grid-2">
+      <div>
+        <table>
+          <thead>
+            <tr><th>Sieć</th><th>USD / dyplom</th><th>vs. L1</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Sepolia (L1)</td><td>$3,2 × 10⁻⁶</td><td style="color:var(--dim)">—</td></tr>
+            <tr><td>Arbitrum</td><td>$1,8 × 10⁻⁶</td><td>1,8×</td></tr>
+            <tr><td>zkSync Era</td><td>$2,3 × 10⁻⁶</td><td>1,4×</td></tr>
+            <tr class="hl"><td>Base</td><td class="win">$9 × 10⁻⁸</td><td class="win">35×</td></tr>
+          </tbody>
+        </table>
       </div>
-    </div>
-    <div class="contrib-row fragment fade-up">
-      <div class="contrib-n">02</div>
-      <div class="contrib-text">
-        <h4>Selektywne ujawnianie danych (RODO)</h4>
-        <p>Salt-commitment scheme dla 4 pól. <strong>Zero zmian w smart kontrakcie</strong> — prywatność jako czysto off-chain rozszerzenie.</p>
-      </div>
-    </div>
-    <div class="contrib-row fragment fade-up">
-      <div class="contrib-n">03</div>
-      <div class="contrib-text">
-        <h4>Benchmarki L2: Base 35× taniej niż Ethereum L1</h4>
-        <p>3-run pipeline na 4 sieciach testowych, modele kosztów EIP-4844. <strong>Wynik stabilny</strong> na analizę wrażliwości ETH/USD i ceny sequencera.</p>
+      <div>
+        <div class="stat" style="margin-bottom:1.8rem;">
+          <div class="num green">35×</div>
+          <div class="cap2">Base taniej niż L1 przy n = 10 000</div>
+        </div>
+        <ul class="list">
+          <li>Base wygrywa przy <strong>każdym</strong> rozmiarze paczki</li>
+          <li>Wynik stabilny przy ±2× zmianie kursu ETH/USD</li>
+          <li>Stabilny przy ±2× zmianie ceny sequencera L2</li>
+        </ul>
       </div>
     </div>
   </div>
+</section>
 
-  <p style="margin-top:1.4rem; font-size:0.75em; color:var(--dim);">
-    github.com/n-shcherbyna/univerify
-  </p>
+<!-- ════ 8 · Phase 3 ════ -->
+<section>
+  <div class="head">
+    <span class="label">Co zostało</span>
+    <h2>Benchmarki kosztu prywatności off-chain</h2>
+  </div>
+  <div class="body flush">
+    <div class="grid grid-2 top">
+      <div>
+        <p class="cap" style="color:var(--green)">Już wiadomo</p>
+        <ul class="list">
+          <li>Gaz on-chain <strong>identyczny</strong> dla schematu z prywatnością i bez niej</li>
+          <li>Kontrakt nie odróżnia commitmentu od zwykłego hasha</li>
+          <li>Ten wynik zerowy sam w sobie jest wart raportowania</li>
+        </ul>
+      </div>
+      <div>
+        <p class="cap" style="color:var(--blue)">Do zmierzenia</p>
+        <ul class="list">
+          <li>Czas budowania koperty: z commitmentami vs. plain hash</li>
+          <li>Czas weryfikacji selektywnej vs. pełnej</li>
+          <li>Rozmiar danych: pełne vs. selektywne ujawnienie</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════ 9 · Podsumowanie ════ -->
+<section>
+  <div class="head">
+    <span class="label">Podsumowanie</span>
+    <h2>UniVerify — wkład pracy</h2>
+  </div>
+  <div class="body flush">
+    <div class="contrib">
+      <div class="row">
+        <div class="idx">01</div>
+        <div>
+          <h4>Architektura Merkle-batch</h4>
+          <p>Redukcja kosztu o trzy rzędy wielkości przy n = 1 000 w porównaniu do per-record storage; model analityczny z błędem poniżej 0,2%.</p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="idx">02</div>
+        <div>
+          <h4>Selektywne ujawnianie danych (RODO)</h4>
+          <p>Schemat salt-commitment dla czterech pól. Zero zmian w smart kontrakcie — prywatność jako czysto off-chain rozszerzenie.</p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="idx">03</div>
+        <div>
+          <h4>Benchmarki L2: Base 35× taniej niż Ethereum L1</h4>
+          <p>Trzykrotnie powtórzony pipeline na czterech sieciach testowych; wynik stabilny na analizę wrażliwości kursu ETH/USD i ceny sequencera.</p>
+        </div>
+      </div>
+    </div>
+    <p class="repo">github.com/n-shcherbyna/univerify</p>
+  </div>
 </section>
 
 </div>
@@ -680,15 +650,17 @@
   Reveal.initialize({
     hash: true,
     slideNumber: 'c/t',
-    transition: 'none',
+    transition: 'fade',
+    transitionSpeed: 'fast',
     backgroundTransition: 'none',
     controls: false,
     progress: true,
     center: false,
     width: 1280,
     height: 720,
-    margin: 0.06,
-    plugins: []
+    margin: 0,
+    minScale: 0.2,
+    maxScale: 2.0
   });
 </script>
 </body>
