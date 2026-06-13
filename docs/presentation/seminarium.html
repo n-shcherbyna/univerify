@@ -340,10 +340,13 @@
     }
 
     /* ════════ L2 explainer ════════ */
+    .l2text {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 3.4rem;
+      margin-top: 2rem;
+    }
     .l2cap {
-      margin-top: 1.4rem;
+      margin: 0;
       font-size: 0.86rem; line-height: 1.55; color: var(--ink-2);
-      max-width: 64ch;
     }
     .l2cap .lead { font-family: var(--serif); color: var(--ink); font-weight: 600; }
 
@@ -598,12 +601,16 @@
       </svg>
     </div>
 
-    <p class="l2cap">
-      <span class="lead">Rollup</span> wykonuje transakcje poza łańcuchem głównym i publikuje na L1 jedynie skompresowaną paczkę danych wraz z dowodem poprawności. Koszt najdroższego zasobu — miejsca na dane w&nbsp;L1 — <strong>dzieli się na wszystkie transakcje w paczce</strong>, a od aktualizacji EIP-4844 dane trafiają do tanich „blobów”.
-    </p>
-    <p class="l2cap" style="margin-top:0.7rem;">
-      Dwie rodziny różnią się sposobem dowodzenia: <strong>optimistic rollup</strong> (Arbitrum, Base) zakłada poprawność i pozwala ją zakwestionować, <strong>ZK-rollup</strong> (zkSync) dołącza dowód z wiedzą zerową.
-    </p>
+    <div class="l2text">
+      <div>
+        <p class="cap">Dlaczego taniej</p>
+        <p class="l2cap"><span class="lead">Rollup</span> wykonuje transakcje poza łańcuchem głównym i publikuje na L1 jedynie skompresowaną paczkę danych z dowodem poprawności. Koszt najdroższego zasobu — miejsca na dane w&nbsp;L1 — <strong>dzieli się na wszystkie transakcje w paczce</strong>, a od EIP-4844 dane trafiają do tanich „blobów”.</p>
+      </div>
+      <div>
+        <p class="cap">Dwie rodziny rollupów</p>
+        <p class="l2cap"><strong>Optimistic rollup</strong> (Arbitrum, Base) zakłada poprawność transakcji i pozwala ją zakwestionować w okresie sporu. <strong>ZK-rollup</strong> (zkSync) dołącza kryptograficzny dowód z wiedzą zerową — poprawność jest gwarantowana od razu.</p>
+      </div>
+    </div>
   </div>
   <div class="foot"><span>UniVerify — Weryfikacja dyplomów na Ethereum</span><span class="pg"></span></div>
 </section>
