@@ -6,28 +6,29 @@
   <title>UniVerify — Prezentacja seminarium</title>
   <link rel="stylesheet" href="https://unpkg.com/reveal.js@5.1.0/dist/reset.css">
   <link rel="stylesheet" href="https://unpkg.com/reveal.js@5.1.0/dist/reveal.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    /* ════════ Tokens ════════ */
+    /* ════════ Tokens — classic paper theme ════════ */
     :root {
-      --bg:      #0d1117;
-      --surface: #161b22;
-      --border:  #283039;
-      --white:   #f0f6fc;
-      --text:    #c4cdd8;
-      --muted:   #8b949e;
-      --dim:     #5a636d;
-      --blue:    #58a6ff;
-      --blue-bg: rgba(88,166,255,0.09);
-      --green:   #56d364;
-      --red:     #f0726b;
+      --paper:  #faf8f3;
+      --panel:  #f2eee5;
+      --ink:    #201e1a;
+      --ink-2:  #4c463d;
+      --muted:  #8a8275;
+      --rule:   #e2dccf;
+      --rule-2: #cfc7b6;
+      --navy:   #1d3557;
+      --navy-2: #2f4d76;
+      --gold:   #9a6a1e;
+      --good:   #2c6e49;
+      --serif:  'Source Serif 4', Georgia, 'Times New Roman', serif;
+      --sans:   'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     }
 
-    .reveal-viewport { background: var(--bg); }
-    .reveal {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      font-weight: 400;
-      color: var(--text);
-    }
+    .reveal-viewport { background: var(--paper); }
+    .reveal { font-family: var(--sans); color: var(--ink-2); font-weight: 400; }
 
     /* ════════ Full-height slide frame ════════ */
     .reveal .slides { height: 720px; }
@@ -36,36 +37,40 @@
       flex-direction: column;
       height: 720px !important;
       box-sizing: border-box;
-      padding: 3.4rem 3.8rem 2.8rem;
+      padding: 3rem 4rem 1.8rem;
       text-align: left;
     }
 
+    /* ════════ Header ════════ */
     .head { flex-shrink: 0; }
     .head .label {
       display: block;
-      font-size: 0.62rem;
+      font-family: var(--sans);
+      font-size: 0.64rem;
       font-weight: 600;
-      letter-spacing: 0.16em;
+      letter-spacing: 0.17em;
       text-transform: uppercase;
-      color: var(--blue);
+      color: var(--navy);
       margin-bottom: 0.7rem;
     }
     .head h2 {
-      font-size: 1.62rem;
+      font-family: var(--serif);
+      font-size: 1.72rem;
       font-weight: 600;
-      letter-spacing: -0.02em;
-      color: var(--white);
-      line-height: 1.18;
+      letter-spacing: -0.01em;
+      color: var(--ink);
+      line-height: 1.16;
       margin: 0;
       text-transform: none;
     }
     .head::after {
       content: '';
       display: block;
-      border-top: 1px solid var(--border);
-      margin-top: 1.3rem;
+      border-top: 1px solid var(--rule);
+      margin-top: 1.15rem;
     }
 
+    /* ════════ Body / footer ════════ */
     .body {
       flex: 1;
       display: flex;
@@ -74,279 +79,308 @@
       min-height: 0;
       padding-top: 0.4rem;
     }
-    /* content-bearing slides flow from just under the title */
-    .body.flush { justify-content: flex-start; padding-top: 2.2rem; }
+    .body.flush { justify-content: flex-start; padding-top: 1.9rem; }
 
-    /* ════════ Cover slide ════════ */
+    .foot {
+      flex-shrink: 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-top: 1rem;
+      padding-top: 0.7rem;
+      border-top: 1px solid var(--rule);
+      font-family: var(--sans);
+      font-size: 0.6rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .foot .pg { font-variant-numeric: tabular-nums; }
+
+    /* ════════ Cover ════════ */
     .cover {
       align-items: center;
       justify-content: center;
       text-align: center;
     }
+    .cover .topline {
+      width: 64px;
+      border-top: 2px solid var(--navy);
+      margin: 0 0 2.2rem;
+    }
     .cover .kicker {
+      font-family: var(--sans);
       font-size: 0.72rem;
-      letter-spacing: 0.13em;
+      letter-spacing: 0.22em;
       text-transform: uppercase;
       color: var(--muted);
-      margin: 0 0 2rem;
+      margin: 0 0 1.6rem;
     }
     .cover h1 {
-      font-size: 3.4rem;
+      font-family: var(--serif);
+      font-size: 3rem;
       font-weight: 700;
-      letter-spacing: -0.035em;
-      color: var(--white);
+      letter-spacing: -0.02em;
+      color: var(--ink);
       margin: 0;
       text-transform: none;
     }
     .cover .tagline {
-      font-size: 1.12rem;
-      color: var(--text);
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 1.2rem;
+      color: var(--ink-2);
       font-weight: 400;
-      margin: 0.9rem 0 0;
+      margin: 0.7rem 0 0;
     }
-    .cover .author {
-      margin-top: 2.6rem;
-      font-size: 0.82rem;
+    .cover .byline {
+      margin-top: 2.4rem;
+      font-family: var(--sans);
+      font-size: 0.8rem;
+      letter-spacing: 0.04em;
+      color: var(--ink-2);
+    }
+    .cover .byline .sep { color: var(--rule-2); margin: 0 0.5rem; }
+    .cover .affil {
+      margin-top: 0.5rem;
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
       color: var(--muted);
     }
 
     /* ════════ Columns ════════ */
-    .grid { display: grid; gap: 3.4rem; align-items: center; }
+    .grid { display: grid; gap: 3.6rem; align-items: center; }
     .grid-2  { grid-template-columns: 1fr 1fr; }
-    .grid-58 { grid-template-columns: 58fr 42fr; }
+    .grid-58 { grid-template-columns: 56fr 44fr; }
     .grid-2.top { align-items: start; }
 
-    /* ════════ Section caption ════════ */
     .cap {
+      font-family: var(--sans);
       font-size: 0.66rem;
       font-weight: 600;
-      letter-spacing: 0.1em;
+      letter-spacing: 0.12em;
       text-transform: uppercase;
       color: var(--muted);
-      margin-bottom: 0.9rem;
+      margin-bottom: 0.95rem;
     }
 
     /* ════════ Lists ════════ */
-    .reveal ul.list {
-      list-style: none;
-      margin: 0;
-      padding: 0;
-    }
+    .reveal ul.list { list-style: none; margin: 0; padding: 0; }
     .reveal ul.list li {
       position: relative;
-      padding: 0.62rem 0 0.62rem 1.2rem;
-      border-bottom: 1px solid var(--border);
+      padding: 0.6rem 0 0.6rem 1.25rem;
+      border-bottom: 1px solid var(--rule);
       font-size: 0.92rem;
       line-height: 1.45;
-      color: var(--text);
+      color: var(--ink-2);
     }
     .reveal ul.list li:last-child { border-bottom: none; }
     .reveal ul.list li::before {
       content: '';
       position: absolute;
-      left: 0; top: 1.08rem;
-      width: 5px; height: 5px;
+      left: 0; top: 1.05rem;
+      width: 6px; height: 6px;
+      border: 1px solid var(--navy);
       border-radius: 50%;
-      background: var(--blue);
     }
-    .reveal strong { color: var(--white); font-weight: 600; }
+    .reveal strong { color: var(--ink); font-weight: 600; }
 
     /* ════════ Compare blocks ════════ */
-    .compare + .compare { margin-top: 1.5rem; }
+    .compare + .compare { margin-top: 1.6rem; }
     .compare .tag {
-      font-size: 0.7rem;
+      font-family: var(--sans);
+      font-size: 0.68rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+    .compare .tag::before {
+      content: ''; width: 14px; height: 2px; border-radius: 2px;
+    }
+    .compare .tag.bad  { color: var(--gold); }
+    .compare .tag.bad::before  { background: var(--gold); }
+    .compare .tag.good { color: var(--good); }
+    .compare .tag.good::before { background: var(--good); }
+    .compare p { margin: 0; font-size: 0.92rem; line-height: 1.5; color: var(--ink-2); }
+    .compare .note { margin-top: 0.5rem; font-size: 0.82rem; color: var(--muted); }
+
+    /* ════════ Table ════════ */
+    .reveal table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+    .reveal table th {
+      font-family: var(--sans);
+      font-size: 0.64rem;
       font-weight: 600;
       letter-spacing: 0.07em;
       text-transform: uppercase;
-      margin-bottom: 0.45rem;
-    }
-    .compare .tag.bad  { color: var(--red); }
-    .compare .tag.good { color: var(--green); }
-    .compare p {
-      margin: 0;
-      font-size: 0.92rem;
-      line-height: 1.5;
-      color: var(--text);
-    }
-    .compare .note {
-      margin-top: 0.5rem;
-      font-size: 0.82rem;
       color: var(--muted);
-    }
-
-    /* ════════ Table ════════ */
-    .reveal table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 0.92rem;
-    }
-    .reveal table th {
-      font-size: 0.66rem;
-      font-weight: 600;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-      color: var(--muted);
-      padding: 0 0.6rem 0.7rem;
+      padding: 0 0.7rem 0.6rem;
       text-align: right;
-      border: none;
-      background: none;
+      border: none; background: none;
     }
-    .reveal table thead tr { border-bottom: 1px solid var(--border); }
+    .reveal table thead tr { border-bottom: 1.5px solid var(--rule-2); }
     .reveal table th:first-child { text-align: left; }
     .reveal table td {
-      padding: 0.62rem 0.6rem;
+      font-family: var(--serif);
+      padding: 0.6rem 0.7rem;
       border: none;
-      border-bottom: 1px solid var(--border);
+      border-bottom: 1px solid var(--rule);
       text-align: right;
-      color: var(--text);
+      color: var(--ink-2);
       background: none;
+      font-variant-numeric: tabular-nums;
     }
-    .reveal table td:first-child { text-align: left; color: var(--white); }
+    .reveal table td:first-child { text-align: left; color: var(--ink); font-weight: 600; }
     .reveal table tr:last-child td { border-bottom: none; }
-    .reveal table tr.muted td { color: var(--dim); }
-    .reveal table tr.hl td { color: var(--white); font-weight: 600; }
-    .reveal table tr.hl td.win { color: var(--green); }
+    .reveal table tr.muted td { color: var(--muted); }
+    .reveal table tr.hl td { color: var(--ink); font-weight: 700; }
+    .reveal table tr.hl td.win { color: var(--good); }
 
-    /* ════════ Stats ════════ */
-    .stats { display: flex; flex-direction: column; gap: 1.6rem; }
-    .stat .num {
-      font-size: 2.7rem;
-      font-weight: 700;
-      letter-spacing: -0.04em;
+    /* ════════ Figures (refined numbers) ════════ */
+    .figures { display: flex; margin-top: 0.4rem; }
+    .figures .fig { padding: 0 1.8rem; }
+    .figures .fig:first-child { padding-left: 0; }
+    .figures .fig + .fig { border-left: 1px solid var(--rule); }
+    .figures .v {
+      display: block;
+      font-family: var(--serif);
+      font-size: 1.7rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: var(--navy);
       line-height: 1;
+      font-variant-numeric: tabular-nums;
     }
-    .stat .num.green { color: var(--green); }
-    .stat .num.blue  { color: var(--blue); }
-    .stat .cap2 {
-      font-size: 0.8rem;
+    .figures .v.good { color: var(--good); }
+    .figures .k {
+      display: block;
+      font-family: var(--sans);
+      font-size: 0.72rem;
       color: var(--muted);
       margin-top: 0.4rem;
+      line-height: 1.3;
     }
 
     /* ════════ Callout ════════ */
     .callout {
-      border-left: 2px solid var(--blue);
-      background: var(--blue-bg);
-      border-radius: 0 6px 6px 0;
-      padding: 0.85rem 1.1rem;
+      border-left: 2px solid var(--navy);
+      background: var(--panel);
+      padding: 0.8rem 1.1rem;
+      border-radius: 0 4px 4px 0;
     }
-    .callout p {
-      margin: 0;
-      font-size: 0.88rem;
-      line-height: 1.55;
-      color: var(--text);
-    }
+    .callout p { margin: 0; font-size: 0.86rem; line-height: 1.55; color: var(--ink-2); }
+    .callout p .lead { font-family: var(--serif); color: var(--ink); font-weight: 600; }
 
     /* ════════ Code ════════ */
     .reveal code {
-      font-family: "SF Mono", "JetBrains Mono", "Fira Mono", monospace;
-      font-size: 0.86em;
-      color: #e3b341;
-      background: rgba(255,255,255,0.05);
+      font-family: 'SF Mono', 'JetBrains Mono', 'Fira Mono', monospace;
+      font-size: 0.84em;
+      color: var(--navy);
+      background: var(--panel);
       padding: 0.08em 0.4em;
-      border-radius: 4px;
+      border-radius: 3px;
     }
 
     /* ════════ Flow (privacy) ════════ */
-    .flow {
-      display: grid;
-      grid-template-columns: 1fr auto 1fr auto 1fr;
-      align-items: stretch;
-      gap: 0;
-    }
-    .flow .step { padding: 0 1.4rem; }
+    .flow { display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: stretch; gap: 0; }
+    .flow .step { padding: 0 1.5rem; }
     .flow .step:first-child { padding-left: 0; }
     .flow .step:last-child  { padding-right: 0; }
     .flow .step .n {
-      font-size: 0.66rem;
-      font-weight: 600;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: var(--blue);
-      margin-bottom: 0.5rem;
+      font-family: var(--sans);
+      font-size: 0.64rem; font-weight: 600; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--navy); margin-bottom: 0.5rem;
     }
     .flow .step h4 {
-      font-size: 0.98rem;
-      font-weight: 600;
-      color: var(--white);
-      margin: 0 0 0.5rem;
+      font-family: var(--serif);
+      font-size: 1.02rem; font-weight: 600; color: var(--ink); margin: 0 0 0.5rem;
     }
-    .flow .step p {
-      font-size: 0.84rem;
-      line-height: 1.5;
-      color: var(--muted);
-      margin: 0;
-    }
-    .flow .arrow {
-      align-self: center;
-      color: var(--dim);
-      font-size: 1.3rem;
-    }
+    .flow .step p { font-size: 0.84rem; line-height: 1.5; color: var(--ink-2); margin: 0; }
+    .flow .arrow { align-self: center; color: var(--rule-2); font-size: 1.4rem; }
     .formula {
-      margin-top: 0.6rem;
-      font-family: "SF Mono", monospace;
-      font-size: 0.76rem;
-      line-height: 1.7;
-      color: #e3b341;
-      background: rgba(0,0,0,0.25);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 0.55rem 0.7rem;
+      margin-top: 0.65rem;
+      font-family: 'SF Mono', monospace;
+      font-size: 0.74rem; line-height: 1.8;
+      color: var(--navy);
+      background: var(--panel);
+      border: 1px solid var(--rule);
+      border-radius: 5px;
+      padding: 0.55rem 0.75rem;
     }
 
     /* ════════ Network rows ════════ */
     .nets { margin: 0; padding: 0; list-style: none; }
     .nets li {
-      display: flex;
-      align-items: baseline;
-      gap: 1rem;
-      padding: 0.62rem 0;
-      border-bottom: 1px solid var(--border);
+      display: flex; align-items: baseline; gap: 1rem;
+      padding: 0.6rem 0; border-bottom: 1px solid var(--rule);
     }
     .nets li:last-child { border-bottom: none; }
-    .nets .name { width: 8.5rem; flex-shrink: 0; font-weight: 600; color: var(--white); font-size: 0.92rem; }
-    .nets .desc { color: var(--muted); font-size: 0.86rem; }
-    .nets li.best .name { color: var(--green); }
+    .nets .name {
+      width: 8.5rem; flex-shrink: 0; font-weight: 600; color: var(--ink);
+      font-family: var(--serif); font-size: 0.96rem;
+    }
+    .nets .desc { color: var(--ink-2); font-size: 0.85rem; }
+    .nets li.best .name { color: var(--good); }
+    .nets .badge {
+      margin-left: auto; font-size: 0.62rem; letter-spacing: 0.06em;
+      text-transform: uppercase; color: var(--good); font-weight: 600;
+    }
+
+    /* ════════ L2 explainer ════════ */
+    .l2cap {
+      margin-top: 1.4rem;
+      font-size: 0.86rem; line-height: 1.55; color: var(--ink-2);
+      max-width: 64ch;
+    }
+    .l2cap .lead { font-family: var(--serif); color: var(--ink); font-weight: 600; }
 
     /* ════════ Contributions ════════ */
     .contrib { display: flex; flex-direction: column; }
     .contrib .row {
-      display: grid;
-      grid-template-columns: 2.4rem 1fr;
-      gap: 1.2rem;
-      padding: 1rem 0;
-      border-bottom: 1px solid var(--border);
+      display: grid; grid-template-columns: 2.6rem 1fr; gap: 1.3rem;
+      padding: 0.95rem 0; border-bottom: 1px solid var(--rule);
     }
     .contrib .row:last-child { border-bottom: none; }
     .contrib .idx {
-      font-size: 0.92rem;
-      font-weight: 700;
-      color: var(--blue);
-      padding-top: 0.1rem;
+      font-family: var(--serif); font-size: 1.15rem; font-weight: 600;
+      color: var(--navy); padding-top: 0.05rem; font-variant-numeric: tabular-nums;
     }
-    .contrib h4 { font-size: 0.98rem; font-weight: 600; color: var(--white); margin: 0 0 0.3rem; }
-    .contrib p  { font-size: 0.85rem; line-height: 1.5; color: var(--muted); margin: 0; }
-
-    /* ════════ Footer line ════════ */
-    .repo {
-      margin-top: 2rem;
-      font-size: 0.74rem;
-      color: var(--dim);
-      letter-spacing: 0.02em;
-    }
+    .contrib h4 { font-family: var(--serif); font-size: 1.04rem; font-weight: 600; color: var(--ink); margin: 0 0 0.28rem; }
+    .contrib p  { font-size: 0.85rem; line-height: 1.5; color: var(--ink-2); margin: 0; }
 
     /* ════════ Reveal chrome ════════ */
-    .reveal .slide-number {
-      background: none;
-      color: var(--dim);
-      font-size: 0.62rem;
-      right: 1.4rem; bottom: 1rem;
-    }
-    .reveal .progress { color: var(--blue); height: 2px; }
+    .reveal .slide-number { display: none; }
+    .reveal .progress { color: var(--navy); height: 2px; }
+    .reveal .progress span { background: var(--navy); }
 
-    /* ════════ Fragments ════════ */
     .reveal .fragment { opacity: 0.12; transition: opacity 0.25s; }
     .reveal .fragment.visible { opacity: 1; }
+
+    /* SVG must render at intrinsic size — never shrink, stretch, or clip inside flex/grid */
+    .reveal .figbox { display: flex; justify-content: center; align-items: center; }
+    .reveal .figbox svg { flex: 0 0 auto; max-width: none; max-height: none; overflow: visible; }
+    .reveal .figbox.l2 svg { width: 600px; height: 190px; }
+
+    /* Merkle diagram: SVG shapes + HTML labels (reliable centering at any scale) */
+    .merkle-wrap { position: relative; width: 252px; height: 200px; margin: 0 auto; }
+    .merkle-wrap svg { position: absolute; inset: 0; width: 252px; height: 200px; }
+    .merkle-wrap .lbl {
+      position: absolute; transform: translate(-50%, -50%);
+      font-family: 'SF Mono','Fira Mono',monospace; font-size: 11px; line-height: 1;
+      color: var(--ink-2); white-space: nowrap;
+    }
+    .merkle-wrap .lbl.root { font-size: 12px; font-weight: 600; color: var(--navy); }
+    .merkle-wrap .lbl.mid  { color: var(--muted); }
+    .figcap {
+      text-align: center;
+      margin-top: 0.6rem;
+      font-family: var(--serif);
+      font-style: italic;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
   </style>
 </head>
 <body>
@@ -356,10 +390,12 @@
 <!-- ════ 1 · Cover ════ -->
 <section>
   <div class="body cover">
-    <p class="kicker">Praca magisterska &nbsp;·&nbsp; Politechnika Warszawska &nbsp;·&nbsp; 2026</p>
+    <div class="topline"></div>
+    <p class="kicker">Praca magisterska · 2026</p>
     <h1>UniVerify</h1>
     <p class="tagline">Weryfikacja dyplomów na blockchainie Ethereum</p>
-    <p class="author">Nazar Shcherbyna</p>
+    <p class="byline">Nazar Shcherbyna <span class="sep">·</span> promotor: dr hab. inż. Bartosz Sawicki</p>
+    <p class="affil">Politechnika Warszawska · Wydział Elektryczny</p>
   </div>
 </section>
 
@@ -390,6 +426,7 @@
       </div>
     </div>
   </div>
+  <div class="foot"><span>UniVerify — Weryfikacja dyplomów na Ethereum</span><span class="pg"></span></div>
 </section>
 
 <!-- ════ 3 · Q1 architektura ════ -->
@@ -412,72 +449,73 @@
         </div>
       </div>
 
-      <div style="display:flex; justify-content:center;">
-        <svg width="252" height="200" viewBox="0 0 252 200" xmlns="http://www.w3.org/2000/svg"
-             font-family="'SF Mono','Fira Mono',monospace">
-          <!-- edges (drawn first, under boxes) -->
-          <g stroke="#283039" stroke-width="1.3">
-            <line x1="126" y1="44" x2="64"  y2="86"/>
-            <line x1="126" y1="44" x2="188" y2="86"/>
-            <line x1="64"  y1="116" x2="34"  y2="152"/>
-            <line x1="64"  y1="116" x2="94"  y2="152"/>
-            <line x1="188" y1="116" x2="158" y2="152"/>
-            <line x1="188" y1="116" x2="218" y2="152"/>
-          </g>
-          <!-- root -->
-          <rect x="56" y="10" width="140" height="34" rx="7" fill="#161b22" stroke="#58a6ff" stroke-width="1.6"/>
-          <text x="126" y="27" text-anchor="middle" dominant-baseline="central" fill="#58a6ff" font-size="12" font-weight="600">merkleRoot</text>
-          <!-- mids (centers 64, 188) -->
-          <rect x="20"  y="86" width="88" height="30" rx="6" fill="#161b22" stroke="#283039" stroke-width="1.2"/>
-          <text x="64"  y="101" text-anchor="middle" dominant-baseline="central" fill="#8b949e" font-size="11">h(L, R)</text>
-          <rect x="144" y="86" width="88" height="30" rx="6" fill="#161b22" stroke="#283039" stroke-width="1.2"/>
-          <text x="188" y="101" text-anchor="middle" dominant-baseline="central" fill="#8b949e" font-size="11">h(L, R)</text>
-          <!-- leaves (centers 34, 94, 158, 218) -->
-          <rect x="10"  y="152" width="48" height="30" rx="6" fill="#161b22" stroke="#283039" stroke-width="1.2"/>
-          <text x="34"  y="167" text-anchor="middle" dominant-baseline="central" fill="#c4cdd8" font-size="11">d1</text>
-          <rect x="70"  y="152" width="48" height="30" rx="6" fill="#161b22" stroke="#283039" stroke-width="1.2"/>
-          <text x="94"  y="167" text-anchor="middle" dominant-baseline="central" fill="#c4cdd8" font-size="11">d2</text>
-          <rect x="134" y="152" width="48" height="30" rx="6" fill="#161b22" stroke="#283039" stroke-width="1.2"/>
-          <text x="158" y="167" text-anchor="middle" dominant-baseline="central" fill="#c4cdd8" font-size="11">d3</text>
-          <rect x="194" y="152" width="48" height="30" rx="6" fill="#161b22" stroke="#283039" stroke-width="1.2"/>
-          <text x="218" y="167" text-anchor="middle" dominant-baseline="central" fill="#c4cdd8" font-size="11">d4</text>
-          <!-- caption -->
-          <text x="126" y="195" text-anchor="middle" fill="#5a636d" font-size="10" font-style="italic" font-family="-apple-system,sans-serif">tylko root trafia on-chain</text>
-        </svg>
+      <div style="display:flex; flex-direction:column;">
+      <div class="figbox">
+        <div class="merkle-wrap">
+          <svg viewBox="0 0 252 200" xmlns="http://www.w3.org/2000/svg">
+            <g stroke="#cfc7b6" stroke-width="1.3">
+              <line x1="126" y1="44" x2="64"  y2="86"/>
+              <line x1="126" y1="44" x2="188" y2="86"/>
+              <line x1="64"  y1="116" x2="34"  y2="152"/>
+              <line x1="64"  y1="116" x2="94"  y2="152"/>
+              <line x1="188" y1="116" x2="158" y2="152"/>
+              <line x1="188" y1="116" x2="218" y2="152"/>
+            </g>
+            <rect x="50" y="10" width="152" height="34" rx="6" fill="#fff" stroke="#1d3557" stroke-width="1.6"/>
+            <rect x="20"  y="86" width="88" height="30" rx="5" fill="#fff" stroke="#cfc7b6" stroke-width="1.2"/>
+            <rect x="144" y="86" width="88" height="30" rx="5" fill="#fff" stroke="#cfc7b6" stroke-width="1.2"/>
+            <rect x="10"  y="152" width="48" height="30" rx="5" fill="#f2eee5" stroke="#cfc7b6" stroke-width="1.2"/>
+            <rect x="70"  y="152" width="48" height="30" rx="5" fill="#f2eee5" stroke="#cfc7b6" stroke-width="1.2"/>
+            <rect x="134" y="152" width="48" height="30" rx="5" fill="#f2eee5" stroke="#cfc7b6" stroke-width="1.2"/>
+            <rect x="194" y="152" width="48" height="30" rx="5" fill="#f2eee5" stroke="#cfc7b6" stroke-width="1.2"/>
+          </svg>
+          <span class="lbl root" style="left:50%;  top:13.5%;">merkleRoot</span>
+          <span class="lbl mid"  style="left:25.4%; top:50.5%;">h(L, R)</span>
+          <span class="lbl mid"  style="left:74.6%; top:50.5%;">h(L, R)</span>
+          <span class="lbl" style="left:13.5%; top:83.5%;">d1</span>
+          <span class="lbl" style="left:37.3%; top:83.5%;">d2</span>
+          <span class="lbl" style="left:62.7%; top:83.5%;">d3</span>
+          <span class="lbl" style="left:86.5%; top:83.5%;">d4</span>
+        </div>
+      </div>
+      <p class="figcap">tylko root trafia on-chain</p>
       </div>
     </div>
   </div>
+  <div class="foot"><span>UniVerify — Weryfikacja dyplomów na Ethereum</span><span class="pg"></span></div>
 </section>
 
 <!-- ════ 4 · Wynik Q1 ════ -->
 <section>
   <div class="head">
     <span class="label">Wynik 1 — Sepolia (L1)</span>
-    <h2>Merkle-batch: od −99% do −1000× kosztu</h2>
+    <h2>Batching Merkle: od −99% do −1000× kosztu</h2>
   </div>
   <div class="body flush">
-    <div class="grid grid-2">
+    <div class="grid grid-2" style="align-items:start;">
       <div>
         <table>
-          <thead>
-            <tr><th>Podejście</th><th>n = 100</th><th>n = 1 000</th></tr>
-          </thead>
+          <thead><tr><th>Podejście</th><th>n = 100</th><th>n = 1 000</th></tr></thead>
           <tbody>
             <tr class="muted"><td>Per-record</td><td>~$3,20</td><td>~$32,00</td></tr>
             <tr class="hl"><td>Merkle-batch</td><td class="win">~$0,032</td><td class="win">~$0,032</td></tr>
           </tbody>
         </table>
-        <div class="callout" style="margin-top:1.6rem;">
-          <p>Model analityczny dekompozycji kosztu odtwarza wyniki pomiarów z błędem <strong>poniżej 0,2%</strong>.</p>
+        <div class="callout" style="margin-top:1.5rem;">
+          <p><span class="lead">Model analityczny</span> dekompozycji kosztu odtwarza wyniki pomiarów z&nbsp;błędem poniżej 0,2%.</p>
         </div>
       </div>
-      <div class="stats">
-        <div class="stat"><div class="num green">−99%</div><div class="cap2">koszt przy n = 100</div></div>
-        <div class="stat"><div class="num green">1000×</div><div class="cap2">taniej przy n = 1 000</div></div>
-        <div class="stat"><div class="num blue">&lt;0,2%</div><div class="cap2">błąd modelu analitycznego</div></div>
+      <div>
+        <p class="cap">Kluczowe liczby</p>
+        <div class="figures">
+          <div class="fig"><span class="v good">−99%</span><span class="k">koszt<br>przy n = 100</span></div>
+          <div class="fig"><span class="v good">1000×</span><span class="k">taniej<br>przy n = 1 000</span></div>
+          <div class="fig"><span class="v">&lt;0,2%</span><span class="k">błąd<br>modelu</span></div>
+        </div>
       </div>
     </div>
   </div>
+  <div class="foot"><span>UniVerify — Weryfikacja dyplomów na Ethereum</span><span class="pg"></span></div>
 </section>
 
 <!-- ════ 5 · Q2 prywatność ════ -->
@@ -497,7 +535,7 @@
       <div class="step">
         <div class="n">Rozwiązanie</div>
         <h4>Commitments z solą</h4>
-        <p>Każde z 4 pól zastąpione zobowiązaniem kryptograficznym:</p>
+        <p>Każde z czterech pól zastąpione zobowiązaniem kryptograficznym:</p>
         <div class="formula">cᵢ = keccak256(fieldᵢ ‖ saltᵢ)<br>docHash = keccak256(c₁‖c₂‖c₃‖c₄)</div>
       </div>
       <div class="arrow">→</div>
@@ -508,12 +546,58 @@
       </div>
     </div>
     <div class="callout" style="margin-top:2rem;">
-      <p>Kontrakt <strong>bez żadnych zmian</strong> — cała logika prywatności off-chain. Nowa trasa <code>/present</code> w aplikacji webowej.</p>
+      <p><span class="lead">Kontrakt bez żadnych zmian</span> — cała logika prywatności realizowana off-chain. Nowa trasa <code>/present</code> w aplikacji webowej.</p>
     </div>
   </div>
+  <div class="foot"><span>UniVerify — Weryfikacja dyplomów na Ethereum</span><span class="pg"></span></div>
 </section>
 
-<!-- ════ 6 · Q3 setup ════ -->
+<!-- ════ 6 · Czym jest L2 ════ -->
+<section>
+  <div class="head">
+    <span class="label">Kontekst — Skalowanie Ethereum</span>
+    <h2>Czym jest warstwa 2 i dlaczego jest tańsza?</h2>
+  </div>
+  <div class="body flush">
+    <div class="figbox l2">
+      <svg viewBox="0 0 600 190" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" overflow="visible" font-family="'Inter',sans-serif">
+        <!-- L2 panel -->
+        <text x="14" y="20" fill="#8a8275" font-size="11" font-weight="600" letter-spacing="1.2">WARSTWA 2 — ROLLUP</text>
+        <rect x="14" y="30" width="200" height="146" rx="10" fill="#fff" stroke="#cfc7b6" stroke-width="1.3"/>
+        <g>
+          <rect x="34" y="46"  width="160" height="13" rx="3" fill="#eef0f4" stroke="#dfe3ea" stroke-width="0.8"/>
+          <rect x="34" y="65"  width="160" height="13" rx="3" fill="#eef0f4" stroke="#dfe3ea" stroke-width="0.8"/>
+          <rect x="34" y="84"  width="160" height="13" rx="3" fill="#eef0f4" stroke="#dfe3ea" stroke-width="0.8"/>
+          <rect x="34" y="103" width="160" height="13" rx="3" fill="#eef0f4" stroke="#dfe3ea" stroke-width="0.8"/>
+          <rect x="34" y="122" width="160" height="13" rx="3" fill="#eef0f4" stroke="#dfe3ea" stroke-width="0.8"/>
+        </g>
+        <text x="114" y="156" text-anchor="middle" fill="#8a8275" font-size="11" font-style="italic" font-family="'Source Serif 4',Georgia,serif">setki transakcji</text>
+
+        <!-- arrow + labels -->
+        <text x="300" y="78" text-anchor="middle" fill="#1d3557" font-size="11.5" font-weight="600" font-family="'Source Serif 4',Georgia,serif">zwija w jedną paczkę</text>
+        <line x1="232" y1="103" x2="360" y2="103" stroke="#1d3557" stroke-width="1.6"/>
+        <polygon points="360,103 350,98 350,108" fill="#1d3557"/>
+        <text x="300" y="128" text-anchor="middle" fill="#8a8275" font-size="10.5">+ dowód poprawności</text>
+
+        <!-- L1 panel -->
+        <text x="386" y="20" fill="#8a8275" font-size="11" font-weight="600" letter-spacing="1.2">WARSTWA 1 — ETHEREUM</text>
+        <rect x="386" y="74" width="200" height="58" rx="10" fill="#f2eee5" stroke="#1d3557" stroke-width="1.6"/>
+        <text x="486" y="98"  text-anchor="middle" fill="#20201a" font-size="13" font-weight="600" font-family="'Source Serif 4',Georgia,serif">jeden zapis danych</text>
+        <text x="486" y="117" text-anchor="middle" fill="#8a8275" font-size="10.5">najdroższy zasób w sieci</text>
+      </svg>
+    </div>
+
+    <p class="l2cap">
+      <span class="lead">Rollup</span> wykonuje transakcje poza łańcuchem głównym i publikuje na L1 jedynie skompresowaną paczkę danych wraz z dowodem poprawności. Koszt najdroższego zasobu — miejsca na dane w&nbsp;L1 — <strong>dzieli się na wszystkie transakcje w paczce</strong>, a od aktualizacji EIP-4844 dane trafiają do tanich „blobów”.
+    </p>
+    <p class="l2cap" style="margin-top:0.7rem;">
+      Dwie rodziny różnią się sposobem dowodzenia: <strong>optimistic rollup</strong> (Arbitrum, Base) zakłada poprawność i pozwala ją zakwestionować, <strong>ZK-rollup</strong> (zkSync) dołącza dowód z wiedzą zerową.
+    </p>
+  </div>
+  <div class="foot"><span>UniVerify — Weryfikacja dyplomów na Ethereum</span><span class="pg"></span></div>
+</section>
+
+<!-- ════ 7 · Q3 setup ════ -->
 <section>
   <div class="head">
     <span class="label">Pytanie 3 — Benchmarki L2</span>
@@ -525,9 +609,9 @@
         <p class="cap">Badane sieci</p>
         <ul class="nets">
           <li><span class="name">Sepolia</span><span class="desc">Ethereum L1 — punkt odniesienia</span></li>
-          <li><span class="name">Arbitrum</span><span class="desc">Nitro, optimistic rollup</span></li>
+          <li><span class="name">Arbitrum</span><span class="desc">Nitro · optimistic rollup</span></li>
           <li class="best"><span class="name">Base</span><span class="desc">OP-Stack (Coinbase)</span></li>
-          <li><span class="name">zkSync Era</span><span class="desc">ZK rollup</span></li>
+          <li><span class="name">zkSync Era</span><span class="desc">ZK-rollup</span></li>
         </ul>
       </div>
       <div>
@@ -537,28 +621,27 @@
           <li>Rozmiary paczki: n ∈ {1, 10, 100, 1 000, 10 000}</li>
           <li>Koszt USD modelowany z 90-dniowej historii baseFee</li>
           <li>N = 30 pomiarów latencji z raportowanym σ</li>
-          <li>Osobny model kosztów L1 per sieć</li>
+          <li>Osobny model kosztów L1 dla każdej rodziny rollupów</li>
         </ul>
       </div>
     </div>
   </div>
+  <div class="foot"><span>UniVerify — Weryfikacja dyplomów na Ethereum</span><span class="pg"></span></div>
 </section>
 
-<!-- ════ 7 · Wynik Q3 ════ -->
+<!-- ════ 8 · Wynik Q3 ════ -->
 <section>
   <div class="head">
-    <span class="label">Wynik 3 — scenariusz p50</span>
-    <h2>Base: 35× taniej niż Ethereum L1 przy n = 10 000</h2>
+    <span class="label">Wynik 3 — koszt / dyplom · n = 10 000 · scenariusz p50</span>
+    <h2>Base: 35× taniej niż Ethereum L1</h2>
   </div>
   <div class="body flush">
-    <div class="grid grid-2">
+    <div class="grid grid-2" style="align-items:start;">
       <div>
         <table>
-          <thead>
-            <tr><th>Sieć</th><th>USD / dyplom</th><th>vs. L1</th></tr>
-          </thead>
+          <thead><tr><th>Sieć</th><th>USD / dyplom</th><th>vs. L1</th></tr></thead>
           <tbody>
-            <tr><td>Sepolia (L1)</td><td>$3,2 × 10⁻⁶</td><td style="color:var(--dim)">—</td></tr>
+            <tr><td>Sepolia (L1)</td><td>$3,2 × 10⁻⁶</td><td>—</td></tr>
             <tr><td>Arbitrum</td><td>$1,8 × 10⁻⁶</td><td>1,8×</td></tr>
             <tr><td>zkSync Era</td><td>$2,3 × 10⁻⁶</td><td>1,4×</td></tr>
             <tr class="hl"><td>Base</td><td class="win">$9 × 10⁻⁸</td><td class="win">35×</td></tr>
@@ -566,30 +649,31 @@
         </table>
       </div>
       <div>
-        <div class="stat" style="margin-bottom:1.8rem;">
-          <div class="num green">35×</div>
-          <div class="cap2">Base taniej niż L1 przy n = 10 000</div>
-        </div>
+        <p class="cap">Interpretacja</p>
         <ul class="list">
           <li>Base wygrywa przy <strong>każdym</strong> rozmiarze paczki</li>
           <li>Wynik stabilny przy ±2× zmianie kursu ETH/USD</li>
           <li>Stabilny przy ±2× zmianie ceny sequencera L2</li>
         </ul>
+        <div class="callout" style="margin-top:1.3rem;">
+          <p>Na n = 10 000 dyplomów koszt jednostkowy na Base to <span class="lead">$0,00000009</span> — praktycznie pomijalny.</p>
+        </div>
       </div>
     </div>
   </div>
+  <div class="foot"><span>UniVerify — Weryfikacja dyplomów na Ethereum</span><span class="pg"></span></div>
 </section>
 
-<!-- ════ 8 · Phase 3 ════ -->
+<!-- ════ 9 · Phase 3 ════ -->
 <section>
   <div class="head">
-    <span class="label">Co zostało</span>
+    <span class="label">Co zostało do zrobienia</span>
     <h2>Benchmarki kosztu prywatności off-chain</h2>
   </div>
   <div class="body flush">
     <div class="grid grid-2 top">
       <div>
-        <p class="cap" style="color:var(--green)">Już wiadomo</p>
+        <p class="cap" style="color:var(--good);">Już ustalone</p>
         <ul class="list">
           <li>Gaz on-chain <strong>identyczny</strong> dla schematu z prywatnością i bez niej</li>
           <li>Kontrakt nie odróżnia commitmentu od zwykłego hasha</li>
@@ -597,7 +681,7 @@
         </ul>
       </div>
       <div>
-        <p class="cap" style="color:var(--blue)">Do zmierzenia</p>
+        <p class="cap" style="color:var(--navy);">Do zmierzenia</p>
         <ul class="list">
           <li>Czas budowania koperty: z commitmentami vs. plain hash</li>
           <li>Czas weryfikacji selektywnej vs. pełnej</li>
@@ -606,9 +690,10 @@
       </div>
     </div>
   </div>
+  <div class="foot"><span>UniVerify — Weryfikacja dyplomów na Ethereum</span><span class="pg"></span></div>
 </section>
 
-<!-- ════ 9 · Podsumowanie ════ -->
+<!-- ════ 10 · Podsumowanie ════ -->
 <section>
   <div class="head">
     <span class="label">Podsumowanie</span>
@@ -617,29 +702,29 @@
   <div class="body flush">
     <div class="contrib">
       <div class="row">
-        <div class="idx">01</div>
+        <div class="idx">I</div>
         <div>
           <h4>Architektura Merkle-batch</h4>
-          <p>Redukcja kosztu o trzy rzędy wielkości przy n = 1 000 w porównaniu do per-record storage; model analityczny z błędem poniżej 0,2%.</p>
+          <p>Redukcja kosztu o trzy rzędy wielkości przy n = 1 000 względem per-record storage; model analityczny z błędem poniżej 0,2%.</p>
         </div>
       </div>
       <div class="row">
-        <div class="idx">02</div>
+        <div class="idx">II</div>
         <div>
           <h4>Selektywne ujawnianie danych (RODO)</h4>
           <p>Schemat salt-commitment dla czterech pól. Zero zmian w smart kontrakcie — prywatność jako czysto off-chain rozszerzenie.</p>
         </div>
       </div>
       <div class="row">
-        <div class="idx">03</div>
+        <div class="idx">III</div>
         <div>
           <h4>Benchmarki L2: Base 35× taniej niż Ethereum L1</h4>
-          <p>Trzykrotnie powtórzony pipeline na czterech sieciach testowych; wynik stabilny na analizę wrażliwości kursu ETH/USD i ceny sequencera.</p>
+          <p>Trzykrotnie powtórzony pipeline na czterech sieciach; wynik stabilny na analizę wrażliwości kursu ETH/USD i ceny sequencera.</p>
         </div>
       </div>
     </div>
-    <p class="repo">github.com/n-shcherbyna/univerify</p>
   </div>
+  <div class="foot"><span>github.com/n-shcherbyna/univerify</span><span class="pg"></span></div>
 </section>
 
 </div>
@@ -649,7 +734,7 @@
 <script>
   Reveal.initialize({
     hash: true,
-    slideNumber: 'c/t',
+    slideNumber: false,
     transition: 'fade',
     transitionSpeed: 'fast',
     backgroundTransition: 'none',
@@ -662,6 +747,14 @@
     minScale: 0.2,
     maxScale: 2.0
   });
+  function updFoot() {
+    var cur = Reveal.getCurrentSlide();
+    if (!cur) return;
+    var pg = cur.querySelector('.pg');
+    if (pg) pg.textContent = (Reveal.getIndices().h + 1) + ' / ' + Reveal.getTotalSlides();
+  }
+  Reveal.on('ready', updFoot);
+  Reveal.on('slidechanged', updFoot);
 </script>
 </body>
 </html>
