@@ -1,0 +1,628 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UniVerify — Prezentacja seminarium</title>
+  <link rel="stylesheet" href="https://unpkg.com/reveal.js@5.1.0/dist/reset.css">
+  <link rel="stylesheet" href="https://unpkg.com/reveal.js@5.1.0/dist/reveal.css">
+  <link rel="stylesheet" href="https://unpkg.com/reveal.js@5.1.0/dist/theme/black.css">
+  <style>
+    :root {
+      --accent: #3b82f6;
+      --accent-light: #93c5fd;
+      --accent-dark: #1d4ed8;
+      --green: #22c55e;
+      --red: #ef4444;
+      --muted: #9ca3af;
+      --surface: rgba(255,255,255,0.05);
+      --border: rgba(255,255,255,0.12);
+    }
+
+    .reveal h1, .reveal h2, .reveal h3 {
+      color: #ffffff;
+      text-transform: none;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .reveal h2 { font-size: 1.5em; color: var(--accent-light); }
+    .reveal h3 { font-size: 1.1em; color: var(--muted); font-weight: 400; }
+
+    /* ── Slides ── */
+    .reveal section { font-size: 0.82em; }
+
+    /* ── Two-col layout ── */
+    .cols { display: grid; gap: 2rem; align-items: start; }
+    .cols-2 { grid-template-columns: 1fr 1fr; }
+    .cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+    /* ── Cards ── */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.1rem 1.3rem;
+    }
+    .card-blue  { border-color: var(--accent); background: rgba(59,130,246,0.08); }
+    .card-green { border-color: var(--green);  background: rgba(34,197,94,0.08); }
+    .card-red   { border-color: var(--red);    background: rgba(239,68,68,0.08); }
+
+    .card h4 { margin: 0 0 0.5rem; font-size: 1em; font-weight: 600; color: #fff; }
+    .card p, .card li { margin: 0.25rem 0; line-height: 1.5; color: #d1d5db; }
+    .card ul { margin: 0; padding-left: 1.2rem; }
+
+    /* ── Badge / chip ── */
+    .badge {
+      display: inline-block;
+      padding: 0.2em 0.7em;
+      border-radius: 999px;
+      font-size: 0.78em;
+      font-weight: 600;
+      background: var(--accent);
+      color: #fff;
+      margin-right: 0.3em;
+    }
+    .badge-gray { background: #374151; }
+
+    /* ── Tables ── */
+    .reveal table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9em;
+    }
+    .reveal table th {
+      background: rgba(59,130,246,0.25);
+      color: #fff;
+      padding: 0.5em 0.8em;
+      border: 1px solid var(--border);
+      text-align: center;
+    }
+    .reveal table td {
+      padding: 0.45em 0.8em;
+      border: 1px solid var(--border);
+      color: #d1d5db;
+      text-align: center;
+    }
+    .reveal table tr:nth-child(even) td { background: rgba(255,255,255,0.03); }
+    .highlight-row td { color: #fff !important; font-weight: 700; background: rgba(59,130,246,0.18) !important; }
+    td.win { color: var(--green) !important; font-weight: 700; }
+
+    /* ── Punchline ── */
+    .punchline {
+      margin-top: 1.4rem;
+      padding: 0.8rem 1.2rem;
+      border-left: 4px solid var(--accent);
+      background: rgba(59,130,246,0.1);
+      border-radius: 0 8px 8px 0;
+      color: #e2e8f0;
+      font-size: 0.95em;
+      font-style: italic;
+      line-height: 1.5;
+    }
+
+    /* ── Stat big ── */
+    .stat { text-align: center; padding: 0.6rem 0; }
+    .stat-num { font-size: 2.4em; font-weight: 800; color: var(--accent-light); line-height: 1; }
+    .stat-label { font-size: 0.82em; color: var(--muted); margin-top: 0.3rem; }
+
+    /* ── Code inline ── */
+    .reveal code {
+      background: rgba(255,255,255,0.1);
+      padding: 0.1em 0.4em;
+      border-radius: 4px;
+      font-size: 0.88em;
+      color: #fcd34d;
+    }
+
+    /* ── Network icons ── */
+    .net-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: 1rem; margin: 1rem 0; }
+    .net-card {
+      text-align: center;
+      padding: 0.8rem 0.5rem;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .net-card .net-icon { font-size: 2em; line-height: 1.2; }
+    .net-card .net-name { font-size: 0.8em; font-weight: 700; color: #fff; margin-top: 0.3rem; }
+    .net-card .net-sub  { font-size: 0.7em; color: var(--muted); }
+    .net-card.best { border-color: var(--green); background: rgba(34,197,94,0.08); }
+
+    /* ── Merkle SVG container ── */
+    .merkle-wrap { display: flex; justify-content: center; margin: 0.8rem 0; }
+
+    /* ── Title slide ── */
+    .title-slide h1 { font-size: 2.8em; line-height: 1.1; margin-bottom: 0.3em; }
+    .title-slide .subtitle { font-size: 1.1em; color: var(--muted); margin-bottom: 1.5rem; }
+    .title-slide .meta { font-size: 0.78em; color: var(--muted); }
+    .title-slide .tag {
+      display: inline-block;
+      border: 1px solid var(--accent);
+      color: var(--accent-light);
+      border-radius: 6px;
+      padding: 0.3em 0.9em;
+      font-size: 0.85em;
+      margin: 0.2em;
+    }
+
+    /* ── Contribution list ── */
+    .contrib-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      padding: 0.9rem 1rem;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      margin-bottom: 0.7rem;
+    }
+    .contrib-icon { font-size: 1.8em; flex-shrink: 0; line-height: 1.2; }
+    .contrib-body h4 { margin: 0 0 0.2rem; font-size: 0.95em; color: #fff; }
+    .contrib-body p  { margin: 0; font-size: 0.82em; color: var(--muted); }
+    .contrib-body strong { color: var(--accent-light); }
+
+    /* ── Phase 3 TODO ── */
+    .done-todo { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+
+    /* ── Q label ── */
+    .q-label {
+      display: inline-block;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.72em;
+      padding: 0.2em 0.7em;
+      border-radius: 4px;
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .reveal .slides > section { padding: 0 1rem; }
+
+    /* Slide number */
+    .reveal .slide-number { color: var(--muted); font-size: 0.7em; }
+  </style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+<!-- ══════════════════════════════════════════════════════════
+     Slajd 1 — Tytuł
+══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="title-slide" style="text-align:center; padding-top:0.5rem;">
+    <div style="margin-bottom:1rem;">
+      <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect width="64" height="64" rx="14" fill="#1d4ed8"/>
+        <path d="M32 14 L46 22 L46 38 L32 46 L18 38 L18 22 Z" stroke="#93c5fd" stroke-width="2.5" fill="none"/>
+        <circle cx="32" cy="30" r="6" fill="#3b82f6"/>
+        <path d="M32 24 L32 14 M26.8 27 L18 22 M37.2 27 L46 22 M26.8 33 L18 38 M37.2 33 L46 38" stroke="#93c5fd" stroke-width="1.5"/>
+      </svg>
+    </div>
+    <h1 class="r-fit-text">UniVerify</h1>
+    <p class="subtitle">Weryfikacja dyplomów na blockchainie Ethereum</p>
+    <div style="margin-bottom:1.5rem;">
+      <span class="tag">Praca magisterska</span>
+      <span class="tag">Politechnika Warszawska</span>
+      <span class="tag">2026</span>
+    </div>
+    <p class="meta"><strong style="color:#fff;">Nazar Shcherbyna</strong></p>
+    <p class="meta" style="margin-top:0.4rem;">
+      <span style="color:var(--muted);">github.com/n-shcherbyna/univerify</span>
+    </p>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     Slajd 2 — Problem
+══════════════════════════════════════════════════════════ -->
+<section>
+  <h2>Rynek fałszywych dyplomów — ~$1 mld/rok</h2>
+
+  <div class="cols cols-2" style="margin-top:1.2rem;">
+    <div>
+      <div class="card card-red">
+        <h4>🚨 Problem</h4>
+        <ul>
+          <li>Rynek podróbek wyceniany na <strong style="color:#fca5a5;">~$1 mld/rok</strong> (Ezell, 2012)</li>
+          <li>Weryfikacja = e-mail do uczelni + tygodnie oczekiwania</li>
+          <li>Cross-border: praktycznie niemożliwa</li>
+          <li>Brak jednolitego, otwartego rejestru</li>
+        </ul>
+      </div>
+
+      <div class="card" style="margin-top:0.9rem;">
+        <h4>📋 Status quo</h4>
+        <ul>
+          <li>Zцентралizowane bazy danych uczelni</li>
+          <li>Brak interoperacyjności</li>
+          <li>Weryfikator musi <em>ufać</em> uczelni</li>
+        </ul>
+      </div>
+    </div>
+
+    <div>
+      <div class="card card-blue">
+        <h4>🎯 Cel pracy</h4>
+        <ul>
+          <li>Każdy może zweryfikować dyplom <strong>bez kontaktu z uczelnią</strong></li>
+          <li>Wynik weryfikacji kryptograficznie gwarantowany</li>
+          <li>Ochrona danych studenta (RODO)</li>
+          <li>Koszt skalujący się do milionów dyplomów</li>
+        </ul>
+      </div>
+
+      <div class="punchline" style="margin-top:0.9rem;">
+        Jak zaprojektować taki rejestr <strong>tanio i zgodnie z RODO</strong>?
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     Slajd 3 — Q1: Architektura
+══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="q-label">Pytanie 1</div>
+  <h2>Jak tanio przechowywać dyplomy on-chain?</h2>
+
+  <div class="cols cols-2" style="margin-top:1rem;">
+    <div class="card card-red">
+      <h4>❌ Per-record storage</h4>
+      <p>Każdy dyplom → osobny slot w storage Ethereum</p>
+      <p style="margin-top:0.6rem;">Koszt rośnie <strong style="color:#fca5a5;">liniowo</strong> z liczbą dyplomów</p>
+      <p style="color:var(--muted); font-size:0.85em; margin-top:0.5rem;">n = 1 000 studentów → 1 000 transakcji</p>
+    </div>
+
+    <div class="card card-green">
+      <h4>✅ Merkle-batch issuance</h4>
+      <p>Cały rocznik → jeden <code>bytes32</code> merkleRoot</p>
+      <p style="margin-top:0.6rem;">Koszt <strong style="color:#86efac;">prawie stały</strong> niezależnie od n</p>
+      <p style="color:var(--muted); font-size:0.85em; margin-top:0.5rem;">n = 1 000 studentów → <strong>1 transakcja</strong></p>
+    </div>
+  </div>
+
+  <!-- Merkle diagram -->
+  <div class="merkle-wrap" style="margin-top:1rem;">
+    <svg width="520" height="140" viewBox="0 0 520 140" xmlns="http://www.w3.org/2000/svg">
+      <!-- Level 2: leaves -->
+      <rect x="30"  y="90" width="88" height="34" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+      <text x="74"  y="112" text-anchor="middle" fill="#93c5fd" font-size="11" font-family="monospace">dyplom₁</text>
+
+      <rect x="140" y="90" width="88" height="34" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+      <text x="184" y="112" text-anchor="middle" fill="#93c5fd" font-size="11" font-family="monospace">dyplom₂</text>
+
+      <rect x="292" y="90" width="88" height="34" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+      <text x="336" y="112" text-anchor="middle" fill="#93c5fd" font-size="11" font-family="monospace">dyplom₃</text>
+
+      <rect x="402" y="90" width="88" height="34" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+      <text x="446" y="112" text-anchor="middle" fill="#93c5fd" font-size="11" font-family="monospace">dyplom₄</text>
+
+      <!-- Level 1: intermediate -->
+      <rect x="85"  y="42" width="92" height="30" rx="6" fill="#1e3a8a" stroke="#60a5fa" stroke-width="1.5"/>
+      <text x="131" y="62" text-anchor="middle" fill="#bfdbfe" font-size="10" font-family="monospace">hash(L,R)</text>
+
+      <rect x="343" y="42" width="92" height="30" rx="6" fill="#1e3a8a" stroke="#60a5fa" stroke-width="1.5"/>
+      <text x="389" y="62" text-anchor="middle" fill="#bfdbfe" font-size="10" font-family="monospace">hash(L,R)</text>
+
+      <!-- Root -->
+      <rect x="195" y="4" width="130" height="30" rx="7" fill="#1d4ed8" stroke="#93c5fd" stroke-width="2"/>
+      <text x="260" y="24" text-anchor="middle" fill="#fff" font-size="11" font-weight="bold" font-family="monospace">merkleRoot</text>
+
+      <!-- Lines leaf→mid -->
+      <line x1="74"  y1="90" x2="131" y2="72" stroke="#60a5fa" stroke-width="1.2"/>
+      <line x1="184" y1="90" x2="131" y2="72" stroke="#60a5fa" stroke-width="1.2"/>
+      <line x1="336" y1="90" x2="389" y2="72" stroke="#60a5fa" stroke-width="1.2"/>
+      <line x1="446" y1="90" x2="389" y2="72" stroke="#60a5fa" stroke-width="1.2"/>
+      <!-- Lines mid→root -->
+      <line x1="131" y1="42" x2="230" y2="34" stroke="#93c5fd" stroke-width="1.5"/>
+      <line x1="389" y1="42" x2="290" y2="34" stroke="#93c5fd" stroke-width="1.5"/>
+
+      <!-- On-chain label -->
+      <rect x="195" y="130" width="130" height="8" rx="2" fill="#1d4ed8" opacity="0.4"/>
+      <text x="260" y="138" text-anchor="middle" fill="#60a5fa" font-size="9">↑ tylko to trafia on-chain</text>
+    </svg>
+  </div>
+
+  <p style="text-align:center; color:var(--muted); font-size:0.8em; margin-top:0.2rem;">
+    Weryfikacja: <code>issueBatch(merkleRoot)</code> on-chain &nbsp;|&nbsp; <code>statusWithProof(docHash, proof[])</code> publiczne
+  </p>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     Slajd 4 — Wynik Q1
+══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="q-label">Wynik 1</div>
+  <h2>Merkle-batch: −98,9% przy n=100, −1000× przy n=1000</h2>
+
+  <table style="margin-top:1.1rem;">
+    <thead>
+      <tr>
+        <th>Podejście</th>
+        <th>n = 1</th>
+        <th>n = 100</th>
+        <th>n = 1 000</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="text-align:left;">❌ Per-record</td>
+        <td>~$0,032</td>
+        <td style="color:var(--red);">~$3,20</td>
+        <td style="color:var(--red);">~$32,00</td>
+      </tr>
+      <tr class="highlight-row">
+        <td style="text-align:left;">✅ Merkle-batch</td>
+        <td>~$0,032</td>
+        <td class="win">~$0,032</td>
+        <td class="win">~$0,032</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="cols cols-3" style="margin-top:1.1rem;">
+    <div class="stat">
+      <div class="stat-num">−99%</div>
+      <div class="stat-label">koszt przy n=100</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">1 000×</div>
+      <div class="stat-label">taniej przy n=1 000</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">&lt;0,2%</div>
+      <div class="stat-label">błąd modelu analitycznego</div>
+    </div>
+  </div>
+
+  <div class="punchline">
+    Ceny na sieci Sepolia (L1). Model analityczny dekompozycji kosztu odtwarza pomiary z błędem &lt;0,2%.
+    <strong>Opublikowane: SITEE 2026.</strong>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     Slajd 5 — Q2: Prywatność
+══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="q-label">Pytanie 2</div>
+  <h2>Jak chronić dane studenta? (RODO)</h2>
+
+  <div class="cols cols-3" style="margin-top:1.1rem;">
+    <div class="card card-red fragment fade-up">
+      <h4>🔴 Problem</h4>
+      <p>Weryfikacja ujawnia <strong>wszystkie</strong> dane osobowe: imię, ocenę, nr dyplomu</p>
+      <p style="margin-top:0.5rem; color:var(--muted); font-size:0.85em;">→ kolizja z zasadą minimalizacji danych (RODO art. 5)</p>
+    </div>
+
+    <div class="card card-blue fragment fade-up">
+      <h4>🔵 Rozwiązanie</h4>
+      <p>Każde pole = commitment z solą:</p>
+      <p style="margin:0.5rem 0; font-family:monospace; font-size:0.78em; color:#fcd34d; background:rgba(0,0,0,0.3); padding:0.4rem 0.6rem; border-radius:5px; line-height:1.6;">
+        c<sub>i</sub> = keccak256(field<sub>i</sub> ‖ salt<sub>i</sub>)<br>
+        docHash = keccak256(c₁‖c₂‖c₃‖c₄)
+      </p>
+      <p style="color:var(--muted); font-size:0.82em;">4 pola: student, degree, issuedAt, diplomaNr</p>
+    </div>
+
+    <div class="card card-green fragment fade-up">
+      <h4>🟢 Efekt</h4>
+      <p>Student ujawnia <strong>tylko wybrane pola</strong> — np. stopień + data, bez nazwiska</p>
+      <p style="margin-top:0.5rem; color:#86efac; font-size:0.85em; font-weight:600;">Kontrakt bez zmian</p>
+      <p style="color:var(--muted); font-size:0.82em;">Cała logika prywatności off-chain. Nowa trasa <code>/present</code>.</p>
+    </div>
+  </div>
+
+  <div class="punchline fragment fade-up" style="margin-top:1.1rem;">
+    Zero zmian w smart kontrakcie — selektywne ujawnianie jako czysto off-chain rozszerzenie.
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     Slajd 6 — Q3: Setup L2
+══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="q-label">Pytanie 3</div>
+  <h2>Które L2 jest najtańsze i o ile?</h2>
+
+  <div class="net-grid" style="margin-top:1rem;">
+    <div class="net-card">
+      <div class="net-icon">⛓️</div>
+      <div class="net-name">Sepolia</div>
+      <div class="net-sub">L1 — punkt odniesienia</div>
+    </div>
+    <div class="net-card">
+      <div class="net-icon">🔵</div>
+      <div class="net-name">Arbitrum</div>
+      <div class="net-sub">Nitro / optimistic rollup</div>
+    </div>
+    <div class="net-card best">
+      <div class="net-icon">🟢</div>
+      <div class="net-name">Base</div>
+      <div class="net-sub">OP-Stack (Coinbase)</div>
+    </div>
+    <div class="net-card">
+      <div class="net-icon">⚡</div>
+      <div class="net-name">zkSync Era</div>
+      <div class="net-sub">ZK rollup</div>
+    </div>
+  </div>
+
+  <div class="cols cols-2" style="margin-top:1rem;">
+    <div class="card fragment fade-up">
+      <h4>📐 Metodologia</h4>
+      <ul>
+        <li><strong>3</strong> niezależne uruchomienia pipeline, zagregowane</li>
+        <li>Rozmiary paczki: n ∈ {1, 10, 100, 1 000, 10 000}</li>
+        <li>Koszt USD: model z 90-dniowej historii baseFee (p10/p50/p90)</li>
+        <li>N=30 pomiarów latencji issueBatch (σ raportowane)</li>
+      </ul>
+    </div>
+    <div class="card fragment fade-up">
+      <h4>⚙️ Modele kosztów L1</h4>
+      <ul>
+        <li><strong>Base:</strong> Ecotone scalars (snapshot blok 25087416)</li>
+        <li><strong>Arbitrum:</strong> blob basefee × bytes (mainnet fallback)</li>
+        <li><strong>zkSync:</strong> bundled gasUsed — tylko USD porównywalne</li>
+        <li>Seed PRNG, losowy wybór liści do revoke</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     Slajd 7 — Wynik Q3
+══════════════════════════════════════════════════════════ -->
+<section>
+  <div class="q-label">Wynik 3</div>
+  <h2>Base: ~35× taniej niż Ethereum L1 przy n=10 000</h2>
+
+  <table style="margin-top:1.1rem;">
+    <thead>
+      <tr>
+        <th style="text-align:left;">Sieć</th>
+        <th>USD/dyplom, p50, n=10 000</th>
+        <th>Vs. Sepolia (L1)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="text-align:left;">⛓️ Sepolia (L1)</td>
+        <td>$3,2 × 10⁻⁶</td>
+        <td style="color:var(--muted);">—</td>
+      </tr>
+      <tr>
+        <td style="text-align:left;">🔵 Arbitrum</td>
+        <td>$1,8 × 10⁻⁶</td>
+        <td>1,8×</td>
+      </tr>
+      <tr>
+        <td style="text-align:left;">⚡ zkSync Era</td>
+        <td>$2,3 × 10⁻⁶</td>
+        <td>1,4×</td>
+      </tr>
+      <tr class="highlight-row">
+        <td style="text-align:left;">🟢 <strong>Base</strong></td>
+        <td class="win">$9 × 10⁻⁸</td>
+        <td class="win"><strong>35×</strong></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="cols cols-2" style="margin-top:1rem;">
+    <div class="punchline" style="margin-top:0;">
+      Base wygrywa przy <strong>każdym</strong> rozmiarze paczki (n=1 do n=10 000).
+    </div>
+    <div class="card fragment fade-up" style="padding:0.7rem 1rem;">
+      <h4 style="font-size:0.85em;">🛡️ Analiza wrażliwości</h4>
+      <p style="font-size:0.82em;">Wynik stabilny przy ±2× zmianach:</p>
+      <ul style="font-size:0.82em;">
+        <li>kursu ETH/USD</li>
+        <li>ceny sequencera L2</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     Slajd 8 — Phase 3: Co zostało
+══════════════════════════════════════════════════════════ -->
+<section>
+  <h2>Co jeszcze: benchmarki kosztu prywatności off-chain</h2>
+
+  <div class="done-todo" style="margin-top:1.2rem;">
+    <div class="card card-green">
+      <h4>✅ Już wiadomo</h4>
+      <ul>
+        <li>Gaz on-chain <strong>identyczny</strong> dla schematu privacy i plain</li>
+        <li>Kontrakt nie widzi różnicy — zero overhead on-chain</li>
+        <li style="color:#86efac; font-weight:600; margin-top:0.4rem;">Sam w sobie jest to ważny wynik!</li>
+      </ul>
+    </div>
+
+    <div class="card" style="border-color:#f59e0b; background:rgba(245,158,11,0.08);">
+      <h4>⏳ TODO (~1 dzień)</h4>
+      <ul>
+        <li>Czas budowania envelope (z commitmentami vs plain hash)</li>
+        <li>Czas weryfikacji selektywnej vs pełnej</li>
+        <li>Rozmiar danych: pełne vs selektywne ujawnienie</li>
+      </ul>
+      <p style="margin-top:0.6rem; font-size:0.82em; color:var(--muted);">
+        Reużywa <code>@univerify/benchmarks</code> z Phase 2 — 3 nowe operacje w <code>src/ops/</code>
+      </p>
+    </div>
+  </div>
+
+  <div class="punchline" style="margin-top:1.1rem;">
+    Pipeline benchmarkowy gotowy — Phase 3 to rozszerzenie, nie przebudowa.
+  </div>
+</section>
+
+<!-- ══════════════════════════════════════════════════════════
+     Slajd 9 — Podsumowanie
+══════════════════════════════════════════════════════════ -->
+<section>
+  <h2>UniVerify — wkład pracy</h2>
+
+  <div style="margin-top:1.1rem;">
+    <div class="contrib-item fragment fade-up">
+      <div class="contrib-icon">⛓️</div>
+      <div class="contrib-body">
+        <h4>Architektura Merkle-batch</h4>
+        <p><strong>−3 rzędy wielkości</strong> kosztu przy n=1 000 vs. per-record storage &nbsp;·&nbsp; <span style="color:var(--muted);">Opublikowane: SITEE 2026</span></p>
+      </div>
+    </div>
+
+    <div class="contrib-item fragment fade-up">
+      <div class="contrib-icon">🔒</div>
+      <div class="contrib-body">
+        <h4>Selektywne ujawnianie danych (RODO)</h4>
+        <p><strong>Zero zmian w smart kontrakcie</strong> — prywatność jako czysto off-chain rozszerzenie · 4 pola jako salt-commitment</p>
+      </div>
+    </div>
+
+    <div class="contrib-item fragment fade-up">
+      <div class="contrib-icon">🚀</div>
+      <div class="contrib-body">
+        <h4>Benchmarki L2: Base 35× taniej niż Ethereum L1</h4>
+        <p><strong>Wynik stabilny</strong> na analizę wrażliwości · 4 sieci · 3-run pipeline · modele kosztów EIP-4844</p>
+      </div>
+    </div>
+  </div>
+
+  <div style="text-align:center; margin-top:1.4rem; padding-top:0.8rem; border-top:1px solid var(--border);">
+    <p style="color:var(--muted); font-size:0.8em; margin:0;">
+      <strong style="color:#fff;">github.com/n-shcherbyna/univerify</strong>
+      &nbsp;·&nbsp;
+      nazar.force@gmail.com
+    </p>
+    <p style="color:var(--accent-light); font-size:1.2em; font-weight:700; margin:0.6rem 0 0;">Pytania? 🙋</p>
+  </div>
+</section>
+
+</div><!-- /slides -->
+</div><!-- /reveal -->
+
+<script src="https://unpkg.com/reveal.js@5.1.0/dist/reveal.js"></script>
+<script>
+  Reveal.initialize({
+    hash: true,
+    slideNumber: 'c/t',
+    transition: 'slide',
+    transitionSpeed: 'default',
+    backgroundTransition: 'fade',
+    controls: true,
+    progress: true,
+    center: true,
+    width: 1280,
+    height: 720,
+    margin: 0.05,
+    plugins: []
+  });
+</script>
+</body>
+</html>
