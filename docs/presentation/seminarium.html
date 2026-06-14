@@ -395,6 +395,17 @@
       font-size: 0.78rem;
       color: var(--muted);
     }
+
+    /* quiet source / caveat attribution */
+    .src {
+      font-family: var(--sans);
+      font-size: 0.68rem;
+      font-weight: 400;
+      letter-spacing: 0.02em;
+      color: var(--muted);
+    }
+    .reveal ul.list li .src { margin-left: 0.45rem; }
+    p.src { margin: 0.7rem 0 0; line-height: 1.5; }
   </style>
 </head>
 <body>
@@ -424,7 +435,7 @@
       <div>
         <p class="cap">Stan obecny</p>
         <ul class="list">
-          <li>Rynek fałszywych dyplomów wyceniany na <strong>~$1 mld rocznie</strong></li>
+          <li>Rynek fałszywych dyplomów rzędu <strong>miliarda USD</strong><span class="src">Ezell &amp; Bear, 2012</span></li>
           <li>Weryfikacja wymaga kontaktu z uczelnią — tygodnie oczekiwania</li>
           <li>Cross-border: brak interoperacyjności między uczelniami</li>
           <li>Weryfikator musi bezwarunkowo ufać uczelni</li>
@@ -502,8 +513,8 @@
 <!-- ════ 4 · Wynik Q1 ════ -->
 <section>
   <div class="head">
-    <span class="label">Wynik 1 — Sepolia (L1)</span>
-    <h2>Batching Merkle: od −99% do −1000× kosztu</h2>
+    <span class="label">Wynik 1 — Sepolia L1 · ETH/USD = 3500 (2026-05-13)</span>
+    <h2>Batching Merkle: koszt jednostkowy niżej o trzy rzędy wielkości</h2>
   </div>
   <div class="body flush">
     <div class="grid grid-2" style="align-items:start;">
@@ -518,6 +529,7 @@
         <div class="callout" style="margin-top:1.5rem;">
           <p><span class="lead">Model analityczny</span> dekompozycji kosztu odtwarza wyniki pomiarów z&nbsp;błędem poniżej 0,2%.</p>
         </div>
+        <p class="src">Per-record = model n niezależnych transakcji; ceny z modelu dekompozycji gazu przy ustalonym kursie.</p>
       </div>
       <div>
         <p class="cap">Kluczowe liczby</p>
@@ -536,7 +548,7 @@
 <section>
   <div class="head">
     <span class="label">Pytanie 2 — Prywatność</span>
-    <h2>Selektywne ujawnianie danych zgodne z RODO</h2>
+    <h2>Selektywne ujawnianie danych — minimalizacja (RODO)</h2>
   </div>
   <div class="body flush">
     <div class="flow">
@@ -637,10 +649,11 @@
         <ul class="list">
           <li><strong>3</strong> niezależne uruchomienia pipeline, zagregowane</li>
           <li>Rozmiary paczki: n ∈ {1, 10, 100, 1 000, 10 000}</li>
-          <li>Koszt USD modelowany z 90-dniowej historii baseFee</li>
+          <li>Koszt USD modelowany z 90-dniowej historii baseFee (p10/p50/p90)</li>
           <li>N = 30 pomiarów latencji z raportowanym σ</li>
           <li>Osobny model kosztów L1 dla każdej rodziny rollupów</li>
         </ul>
+        <p class="src">Pomiary na sieciach testowych · snapshot cen 2026-05-13 · zkSync: porównywalny tylko koszt USD (gaz nieporównywalny między rodzinami rollupów).</p>
       </div>
     </div>
   </div>
@@ -650,7 +663,7 @@
 <!-- ════ 8 · Wynik Q3 ════ -->
 <section>
   <div class="head">
-    <span class="label">Wynik 3 — koszt / dyplom · n = 10 000 · scenariusz p50</span>
+    <span class="label">Wynik 3 — koszt / dyplom · n = 10 000 · p50 · ETH/USD = 3500 (2026-05-13)</span>
     <h2>Base: 35× taniej niż Ethereum L1</h2>
   </div>
   <div class="body flush">
@@ -665,6 +678,7 @@
             <tr class="hl"><td>Base</td><td class="win">$9 × 10⁻⁸</td><td class="win">35×</td></tr>
           </tbody>
         </table>
+        <p class="src">Sieci testowe; koszt USD = zmierzony gaz × model L1 + snapshot cen.</p>
       </div>
       <div>
         <p class="cap">Odporność wyniku (analiza wrażliwości)</p>
@@ -674,7 +688,7 @@
           <li>…oraz gdy cena sekwencera L2 zmienia się dwukrotnie w obie strony</li>
         </ul>
         <div class="callout" style="margin-top:1.3rem;">
-          <p>Wniosek nie zależy od przyjętych założeń — koszt jednostkowy na Base to <span class="lead">$0,00000009</span>, praktycznie pomijalny.</p>
+          <p>W całym zbadanym zakresie założeń ranking się nie zmienia — koszt na Base (<span class="lead">$0,00000009</span> / dyplom) pozostaje praktycznie pomijalny.</p>
         </div>
       </div>
     </div>
@@ -737,7 +751,7 @@
         <div class="idx">III</div>
         <div>
           <h4>Benchmarki L2: Base 35× taniej niż Ethereum L1</h4>
-          <p>Trzykrotnie powtórzony pipeline na czterech sieciach; wynik stabilny na analizę wrażliwości kursu ETH/USD i ceny sequencera.</p>
+          <p>Trzykrotnie powtórzony pipeline na czterech sieciach testowych; wynik stabilny na analizę wrażliwości kursu ETH/USD i ceny sekwencera.</p>
         </div>
       </div>
     </div>
