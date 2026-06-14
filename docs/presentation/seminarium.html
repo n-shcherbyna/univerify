@@ -433,52 +433,52 @@
     <p class="affil">Politechnika Warszawska · Wydział Elektryczny</p>
   </div>
   <aside class="notes">
-    Dzień dobry. Nazywam się Nazar Shcherbyna, przedstawię pracę magisterską „UniVerify — weryfikacja dyplomów na blockchainie Ethereum", realizowaną pod opieką dr. hab. inż. Bartosza Sawickiego.
-    Praca rozszerza mój artykuł konferencyjny: system pozwala każdemu samodzielnie zweryfikować autentyczność dyplomu, bez kontaktu z uczelnią.
-    Prezentację zbudowałem wokół trzech pytań badawczych — koszt przechowywania, prywatność i wybór warstwy L2. Na końcu pokażę, co jeszcze zostało do zrobienia. Plan na 15–20 minut.
+    Dzień dobry. Nazywam się Nazar Shcherbyna, przedstawię pracę magisterską „UniVerify — weryfikacja dyplomów na blockchainie Ethereum", pod opieką dr. hab. inż. Bartosza Sawickiego.
+    W skrócie: budujemy system, w którym każdy może sam sprawdzić, czy dyplom jest prawdziwy, bez dzwonienia i pisania do uczelni.
+    Całość opowiem wokół trzech pytań — jak robić to tanio, jak chronić dane studenta, i gdzie wychodzi najtaniej. Na końcu pokażę, co jeszcze zostało. Plan na 15–20 minut.
   </aside>
 </section>
 
 <!-- ════ 2 · Problem ════ -->
 <section>
   <div class="head">
-    <span class="label">Motywacja</span>
-    <h2>Problem weryfikacji dyplomów</h2>
+    <span class="label">Dlaczego</span>
+    <h2>Problem ze sprawdzaniem dyplomów</h2>
   </div>
   <div class="body flush">
     <div class="grid grid-2 top">
       <div>
-        <p class="cap">Stan obecny</p>
+        <p class="cap">Jak jest dziś</p>
         <ul class="list">
           <li>Rynek fałszywych dyplomów rzędu <strong>miliarda USD</strong><span class="src">Ezell &amp; Bear, 2012</span></li>
-          <li>Weryfikacja wymaga kontaktu z uczelnią — tygodnie oczekiwania</li>
-          <li>Cross-border: brak interoperacyjności między uczelniami</li>
-          <li>Weryfikator musi bezwarunkowo ufać uczelni</li>
+          <li>Trzeba pisać do uczelni i czekać — czasem tygodnie</li>
+          <li>Za granicą uczelnie nie wymieniają się danymi</li>
+          <li>Sprawdzający musi w ciemno ufać uczelni</li>
         </ul>
       </div>
       <div>
-        <p class="cap">Pytania badawcze</p>
+        <p class="cap">Trzy pytania</p>
         <ul class="list">
-          <li>Jak zminimalizować koszt przechowywania danych on-chain?</li>
-          <li>Jak chronić prywatność studenta zgodnie z RODO?</li>
-          <li>Która warstwa L2 oferuje najniższy koszt wdrożenia?</li>
+          <li>Jak tanio przechowywać dane w łańcuchu?</li>
+          <li>Jak chronić dane studenta (RODO)?</li>
+          <li>Która sieć L2 jest najtańsza?</li>
         </ul>
       </div>
     </div>
   </div>
   <div class="foot"><span>UniVerify — Weryfikacja dyplomów na Ethereum</span><span class="pg"></span></div>
   <aside class="notes">
-    Zacznijmy od problemu. Skala podróbek dyplomów to rząd miliarda dolarów — przytaczam to za książką Ezella i Beara z 2012 roku; to liczba motywująca skalę zjawiska, nie wynik mojej pracy.
-    Dziś weryfikacja oznacza mail do uczelni i tygodnie oczekiwania, a w skali międzynarodowej często jest niemożliwa. Weryfikator musi też bezwarunkowo ufać uczelni i jej bazie danych.
-    Z tego wyrastają trzy pytania badawcze: jak tanio przechowywać dane on-chain, jak chronić prywatność studenta zgodnie z RODO, i która warstwa L2 daje najniższy koszt. Te trzy pytania są osią całej prezentacji.
+    Zacznijmy od problemu. Fałszywych dyplomów jest dużo — skala rzędu miliarda dolarów. Tę liczbę biorę z książki Ezella i Beara z 2012 roku; pokazuje skalę problemu, ale to nie mój wynik.
+    Dziś, żeby sprawdzić dyplom, trzeba napisać do uczelni i czekać — czasem tygodniami. Za granicą często w ogóle się nie da. I za każdym razem trzeba w ciemno zaufać uczelni i jej bazie danych.
+    Stąd trzy pytania: jak tanio przechowywać dane w łańcuchu, jak chronić dane studenta zgodnie z RODO, i która sieć L2 jest najtańsza. To plan całej prezentacji.
   </aside>
 </section>
 
 <!-- ════ 3 · Q1 architektura ════ -->
 <section>
   <div class="head">
-    <span class="label">Pytanie 1 — Architektura</span>
-    <h2>Jak tanio przechowywać dyplomy on-chain?</h2>
+    <span class="label">Pytanie 1 — Przechowywanie</span>
+    <h2>Jak tanio przechowywać dyplomy w łańcuchu?</h2>
   </div>
   <div class="body flush">
     <div class="grid grid-58">
@@ -529,9 +529,9 @@
   </div>
   <div class="foot"><span>UniVerify — Weryfikacja dyplomów na Ethereum</span><span class="pg"></span></div>
   <aside class="notes">
-    Pierwsze pytanie: architektura składowania. Naiwne podejście „per-record" zapisuje każdy dyplom jako osobny wpis w stanie kontraktu — n dyplomów to n transakcji, koszt rośnie liniowo.
-    Moje podejście to „Merkle-batch": cały rocznik haszujemy w drzewo Merkle i on-chain trafia tylko jeden korzeń — 32 bajty. To jedna transakcja niezależnie od liczby dyplomów.
-    Diagram pokazuje cztery dyplomy łączone parami aż do korzenia. Weryfikacja jest publiczna i bezpłatna — funkcja statusWithProof sprawdza ścieżkę Merkle dla danego dyplomu. Kluczowa obserwacja: on-chain idzie tylko korzeń, cała reszta zostaje poza łańcuchem.
+    Pierwsze pytanie: jak to przechowywać. Najprostszy pomysł to zapisać każdy dyplom osobno — ale każdy taki zapis kosztuje. 1000 dyplomów to 1000 zapisów i 1000 razy płacisz.
+    Mój pomysł to „Merkle-batch": cały rocznik streszczam do jednego krótkiego odcisku palca — 32 bajty. Do łańcucha wrzucam tylko ten odcisk, raz, niezależnie od liczby dyplomów.
+    Na diagramie dyplomy łączą się parami, aż powstaje jeden wspólny odcisk. Sprawdzenie jest publiczne i darmowe — krótki dowód pokazuje, że dany dyplom należy do rocznika. Najważniejsze: w łańcuchu siedzi tylko odcisk, reszta zostaje poza nim.
   </aside>
 </section>
 
@@ -539,7 +539,7 @@
 <section>
   <div class="head">
     <span class="label">Wynik 1 — Sepolia L1 · ETH/USD = 3500 (2026-05-13)</span>
-    <h2>Batching Merkle: koszt jednostkowy niżej o trzy rzędy wielkości</h2>
+    <h2>Merkle-batch: koszt na dyplom tysiące razy niższy</h2>
   </div>
   <div class="body flush">
     <div class="grid grid-2" style="align-items:start;">
@@ -552,21 +552,21 @@
             <tr class="hl"><td>Merkle-batch</td><td class="win">~$0,032</td><td class="win">~$0,032</td></tr>
           </tbody>
         </table>
-        <p class="src">„Osobno" = model n niezależnych transakcji; ceny z modelu dekompozycji gazu przy ustalonym kursie.</p>
+        <p class="src">„Osobno" = wyliczone wzorem, nie 1000 realnych transakcji; ceny z jednego dnia.</p>
       </div>
       <div>
         <p class="cap">Dlaczego koszt tak spada</p>
         <p class="why">Na blockchainie płacimy przede wszystkim za <strong>miejsce zajęte w łańcuchu</strong>. Podejście „osobno" kupuje to miejsce dla każdego dyplomu z osobna, więc rachunek rośnie wraz z ich liczbą.</p>
         <p class="why">Batching kupuje je <strong>raz</strong> — dla całego rocznika naraz (jeden odcisk palca). Dowody pojedynczych dyplomów powstają poza łańcuchem, za darmo. Dlatego przy większych paczkach koszt na dyplom niemal znika.</p>
-        <p class="why" style="color:var(--muted); font-size:0.92rem;">Model analityczny odtwarza pomiary z błędem &lt; 0,2% — wiadomo, skąd bierze się każdy składnik kosztu.</p>
+        <p class="why" style="color:var(--muted); font-size:0.92rem;">Mam też wzór, który rozkłada koszt na części — zgadza się z pomiarem z błędem &lt; 0,2%. Wiadomo, skąd bierze się każda złotówka.</p>
       </div>
     </div>
   </div>
   <div class="foot"><span>UniVerify — Weryfikacja dyplomów na Ethereum</span><span class="pg"></span></div>
   <aside class="notes">
-    Oto wynik. Przy stu dyplomach koszt jednostkowy spada o około 99 procent, a przy tysiącu — tysiąckrotnie. Te liczby są dla Sepolii L1, przy kursie ETH/USD 3500 ze snapshotu z 13 maja.
-    Najważniejsze jest „dlaczego". Koszt transakcji jest zdominowany przez zapis stanu i calldata na warstwie pierwszej. Per-record płaci ten koszt n razy; batching płaci go raz, bo on-chain idzie jeden korzeń. Reszta pracy — budowa dowodu — przenosi się do darmowego off-chain. Stąd asymptota O(1) zamiast O(n).
-    Zbudowałem też analityczny model dekompozycji kosztu — odtwarza pomiary z błędem poniżej 0,2 procenta, co znaczy, że rozumiemy, skąd bierze się każdy składnik kosztu. Zaznaczam: per-record to model n niezależnych transakcji, nie 1000 osobno wykonanych transakcji.
+    Oto wynik. Przy stu dyplomach koszt na sztukę spada o jakieś 99 procent, a przy tysiącu — robi się tysiąc razy tańszy. Liczby są dla sieci Sepolia, ceny z 13 maja.
+    Najważniejsze jest „dlaczego". W łańcuchu płaci się głównie za zajęte miejsce. Wariant „osobno" kupuje miejsce dla każdego dyplomu z osobna, więc rachunek rośnie z ich liczbą. Merkle-batch kupuje je raz, dla całego rocznika; resztę pracy robimy poza łańcuchem, za darmo. Dlatego przy dużych paczkach koszt na jeden dyplom prawie znika.
+    Mam też wzór, który rozkłada koszt na części — zgadza się z pomiarem z błędem poniżej 0,2 procenta. Czyli nie tylko mierzę, ale i rozumiem, skąd bierze się każda złotówka. Dodam: wariant „osobno" liczę wzorem, nie wykonuję realnie tysiąca transakcji.
   </aside>
 </section>
 
@@ -574,18 +574,18 @@
 <section>
   <div class="head">
     <span class="label">Pytanie 2 — Prywatność</span>
-    <h2>Selektywne ujawnianie danych — minimalizacja (RODO)</h2>
+    <h2>Pokazujemy tylko to, co potrzebne (RODO)</h2>
   </div>
   <div class="body flush">
     <div class="flow">
       <div class="step">
         <div class="n">Problem</div>
-        <h4>Pełna ekspozycja danych</h4>
-        <p>Weryfikacja ujawnia wszystkie pola — imię, ocenę, numer dyplomu. Kolizja z zasadą minimalizacji danych (RODO).</p>
+        <h4>Widać wszystko</h4>
+        <p>Zwykłe sprawdzenie pokazuje wszystkie pola — imię, oceny, numer. A RODO mówi: pokazuj tylko to, co konieczne.</p>
       </div>
       <div class="arrow">→</div>
       <div class="step">
-        <div class="n">Rozwiązanie</div>
+        <div class="n">Pomysł</div>
         <h4>Zapieczętowana koperta</h4>
         <p>Każde pole zamykamy jak w zapieczętowanej kopercie: można sprawdzić, że jest prawdziwe, ale nie widać treści. „Sól" to losowy dodatek, który blokuje zgadywanie.</p>
         <div class="formula">cᵢ = keccak256(fieldᵢ ‖ saltᵢ)<br>docHash = keccak256(c₁‖c₂‖c₃‖c₄)</div>
@@ -593,27 +593,27 @@
       <div class="arrow">→</div>
       <div class="step">
         <div class="n">Efekt</div>
-        <h4>Wybór ujawnianych pól</h4>
-        <p>Student ujawnia tylko niezbędne pola. Weryfikator potwierdza ich autentyczność bez wiedzy o pozostałych.</p>
+        <h4>Student wybiera</h4>
+        <p>Student pokazuje tylko potrzebne pola. Druga strona potwierdza, że są prawdziwe, nie znając reszty.</p>
       </div>
     </div>
     <div class="callout" style="margin-top:2rem;">
-      <p><span class="lead">Kontrakt bez żadnych zmian</span> — cała logika prywatności realizowana off-chain. Nowa trasa <code>/present</code> w aplikacji webowej.</p>
+      <p><span class="lead">Kontrakt nie zmienił się ani o linijkę</span> — cała prywatność dzieje się poza łańcuchem. Nowa strona <code>/present</code> w aplikacji.</p>
     </div>
   </div>
   <div class="foot"><span>UniVerify — Weryfikacja dyplomów na Ethereum</span><span class="pg"></span></div>
   <aside class="notes">
-    Drugie pytanie: prywatność. Naiwna weryfikacja na blockchainie ujawnia wszystko — imię, oceny, numer dyplomu — co kłóci się z zasadą minimalizacji danych z RODO.
-    Rozwiązanie w prostych słowach: każde pole zamykam jak w zapieczętowanej kopercie — kryptograficznym zobowiązaniu z losową solą. Można potwierdzić, że pole jest prawdziwe, nie widząc jego treści; sól, czyli losowy dodatek, blokuje zgadywanie. Na łańcuch trafia tylko skrót z czterech takich kopert.
-    Efekt: student ujawnia tylko wybrane pola — na przykład sam stopień i datę — a weryfikator potwierdza ich autentyczność, nie poznając pozostałych.
-    Co istotne inżyniersko: smart kontrakt nie wymaga żadnej zmiany — kontrakt nie odróżnia zobowiązania od zwykłego hasza. Cała logika prywatności jest off-chain, w nowej trasie /present aplikacji.
+    Drugie pytanie: prywatność. Gdyby sprawdzanie działało wprost, pokazywałoby wszystko — imię, oceny, numer. A RODO mówi: pokazuj tylko to, co konieczne.
+    Pomysł w obrazku: każde pole zamykam jak w zapieczętowanej kopercie. Z koperty można potwierdzić, że pole jest prawdziwe, ale nie widać, co w środku. Dorzucam „sól", czyli losowy dodatek, żeby nie dało się zgadnąć zawartości. Do łańcucha trafia tylko jeden skrót z czterech takich kopert.
+    Efekt: to student wybiera, co pokazać — na przykład sam stopień i datę — a druga strona i tak potwierdzi, że to prawda.
+    I rzecz najważniejsza po stronie kodu: kontrakt nie zmienił się ani o linijkę. Cała ta prywatność dzieje się poza łańcuchem, w nowej stronie /present.
   </aside>
 </section>
 
 <!-- ════ 6 · Czym jest L2 ════ -->
 <section>
   <div class="head">
-    <span class="label">Kontekst — Skalowanie Ethereum</span>
+    <span class="label">Tło — warstwy Ethereum</span>
     <h2>Czym jest warstwa 2 i dlaczego jest tańsza?</h2>
   </div>
   <div class="body flush">
@@ -641,48 +641,48 @@
         <text x="386" y="20" fill="#82858d" font-size="11" font-weight="600" letter-spacing="1.2">WARSTWA 1 — ETHEREUM</text>
         <rect x="386" y="74" width="200" height="58" rx="10" fill="#1c2433" stroke="#6aa5ff" stroke-width="1.6"/>
         <text x="486" y="98"  text-anchor="middle" fill="#f1efe9" font-size="13" font-weight="600" font-family="'Source Serif 4',Georgia,serif">jeden zapis danych</text>
-        <text x="486" y="117" text-anchor="middle" fill="#82858d" font-size="10.5">najdroższy zasób w sieci</text>
+        <text x="486" y="117" text-anchor="middle" fill="#82858d" font-size="10.5">najdroższe miejsce w sieci</text>
       </svg>
     </div>
 
     <div class="l2text">
       <div>
         <p class="cap">Dlaczego taniej</p>
-        <p class="l2cap"><span class="lead">Rollup</span> wykonuje transakcje poza głównym łańcuchem i publikuje na nim tylko skompresowaną paczkę z dowodem poprawności. Koszt najdroższego zasobu — miejsca na dane — <strong>dzieli się na wszystkie transakcje w paczce</strong>. Od 2024&nbsp;r. dane trafiają dodatkowo do „blobów”: taniego, tymczasowego schowka na dane (EIP-4844).</p>
+        <p class="l2cap"><span class="lead">Rollup</span> robi transakcje z boku i wysyła na główny łańcuch tylko jedną ściśniętą paczkę z dowodem, że wszystko policzono uczciwie. Koszt najdroższej rzeczy — miejsca na dane — <strong>dzieli się wtedy na wszystkich z paczki</strong>. Od 2024&nbsp;r. dane idą dodatkowo do „blobów”: taniego, tymczasowego schowka (EIP-4844).</p>
       </div>
       <div>
-        <p class="cap">Dwie rodziny rollupów</p>
+        <p class="cap">Dwa rodzaje rollupów</p>
         <p class="l2cap"><strong>Optimistic rollup</strong> (Arbitrum, Base) zakłada, że jest dobrze, i daje czas na zgłoszenie oszustwa. <strong>ZK-rollup</strong> (zkSync) od razu dołącza matematyczny dowód poprawności — pewność natychmiast, ale kosztem dodatkowej pracy.</p>
       </div>
     </div>
   </div>
   <div class="foot"><span>UniVerify — Weryfikacja dyplomów na Ethereum</span><span class="pg"></span></div>
   <aside class="notes">
-    Zanim przejdę do trzeciego pytania — krótkie wprowadzenie, bo dotyczy warstw drugich. L1, czyli sam Ethereum, jest bezpieczny, ale drogi: każdy bajt danych konkuruje o miejsce w bloku.
-    Rollup wykonuje setki transakcji poza łańcuchem i publikuje na L1 tylko jedną skompresowaną paczkę z dowodem poprawności. Koszt najdroższego zasobu — miejsca na dane — dzieli się na wszystkie transakcje w paczce. Od aktualizacji EIP-4844 dane idą do tanich „blobów", co dodatkowo obniża koszt.
-    Są dwa rodzaje rollupów. Optimistic — Arbitrum, Base — zakłada, że jest dobrze, i daje czas na zgłoszenie oszustwa. ZK-rollup — zkSync — od razu dołącza matematyczny dowód poprawności; pewność natychmiast, ale kosztem dodatkowej pracy. Ta różnica wróci przy tłumaczeniu wyników.
+    Zanim przejdę do trzeciego pytania — krótkie tło, bo dalej mówię o „warstwach drugich". Samo Ethereum jest bezpieczne, ale drogie: w jednym bloku jest mało miejsca, więc wszyscy biją się o nie i cena rośnie.
+    Rollup załatwia setki transakcji z boku i wysyła do Ethereum tylko jedną ściśniętą paczkę z dowodem, że wszystko policzono uczciwie. Najdroższy koszt — miejsce na dane — dzieli się wtedy na wszystkich z paczki. Od 2024 roku te dane idą do tańszego schowka zwanego blobem.
+    Są dwa rodzaje rollupów. Optimistic — Arbitrum, Base — zakłada, że jest dobrze, i daje czas na zgłoszenie oszustwa. ZK-rollup — zkSync — od razu dołącza matematyczny dowód poprawności; pewność od razu, ale kosztem dodatkowej pracy. Ta różnica wróci, gdy będę tłumaczył wyniki.
   </aside>
 </section>
 
 <!-- ════ 7 · Q3 setup ════ -->
 <section>
   <div class="head">
-    <span class="label">Pytanie 3 — Benchmarki L2</span>
+    <span class="label">Pytanie 3 — Pomiary L2</span>
     <h2>Które L2 jest najtańsze?</h2>
   </div>
   <div class="body flush">
     <div class="grid grid-2 top">
       <div>
-        <p class="cap">Badane sieci</p>
+        <p class="cap">Sprawdzane sieci</p>
         <ul class="nets">
-          <li><span class="name">Sepolia</span><span class="desc">Ethereum L1 — punkt odniesienia</span></li>
+          <li><span class="name">Sepolia</span><span class="desc">Ethereum L1 — do porównania</span></li>
           <li><span class="name">Arbitrum</span><span class="desc">Nitro · optimistic rollup</span></li>
           <li class="best"><span class="name">Base</span><span class="desc">OP-Stack (Coinbase)</span></li>
           <li><span class="name">zkSync Era</span><span class="desc">ZK-rollup</span></li>
         </ul>
       </div>
       <div>
-        <p class="cap">Metodologia</p>
+        <p class="cap">Jak mierzyłem</p>
         <ul class="list">
           <li><strong>3</strong> niezależne uruchomienia całego procesu (uśrednione)</li>
           <li>Rozmiary paczki: n ∈ {1, 10, 100, 1 000, 10 000}</li>
@@ -690,15 +690,15 @@
           <li>30 pomiarów czasu reakcji (z odchyleniem standardowym)</li>
           <li>Osobny model cen dla każdego rodzaju sieci</li>
         </ul>
-        <p class="src">Pomiary na sieciach testowych · snapshot cen 2026-05-13 · zkSync: porównywalny tylko koszt USD (gaz nieporównywalny między rodzinami rollupów).</p>
+        <p class="src">Pomiary na sieciach testowych · ceny z jednego dnia (2026-05-13) · zkSync: porównuję tylko dolary (gaz liczy się inaczej w każdym rodzaju sieci).</p>
       </div>
     </div>
   </div>
   <div class="foot"><span>UniVerify — Weryfikacja dyplomów na Ethereum</span><span class="pg"></span></div>
   <aside class="notes">
-    Trzecie pytanie: które L2 jest najtańsze. Badam cztery sieci — Sepolię jako punkt odniesienia L1, Arbitrum i Base jako optimistic, oraz zkSync Era jako ZK-rollup.
-    O metodologii i o uczciwości pomiaru: pipeline uruchamiałem trzy razy niezależnie i agregowałem wyniki. Rozmiary paczek od 1 do 10 tysięcy. Latencję mierzyłem 30 razy z odchyleniem standardowym.
-    Ważne zastrzeżenie, które sam podkreślam: testowałem na sieciach testowych, a ceny w dolarach policzyłem z modelu — biorę zmierzone zużycie i mnożę przez cennik z konkretnego dnia (13 maja), osobny dla każdego rodzaju sieci, z 90-dniowej historii cen. Dodatkowo „gaz" w zkSync liczy się inaczej niż w pozostałych, więc między sieciami porównuję wyłącznie dolary, nigdy gaz. To celowy wybór, żeby wynik dało się powtórzyć.
+    Trzecie pytanie: które L2 jest najtańsze. Sprawdzam cztery sieci — Sepolię do porównania (to samo Ethereum), Arbitrum i Base jako optimistic, oraz zkSync Era jako ZK.
+    Jak mierzyłem: cały proces powtórzyłem trzy razy i uśredniłem. Paczki od 1 do 10 tysięcy dyplomów. Czas reakcji mierzyłem 30 razy.
+    I mówię to wprost: testowałem na sieciach testowych, a ceny w dolarach policzyłem z modelu — biorę zmierzone zużycie i mnożę przez cennik z jednego dnia, osobny dla każdego rodzaju sieci. Do tego „gaz" w zkSync liczy się inaczej niż w innych, więc między sieciami porównuję tylko dolary, nigdy gaz. To celowy wybór, żeby wynik dało się powtórzyć.
   </aside>
 </section>
 
@@ -720,25 +720,25 @@
             <tr class="hl"><td>Base</td><td class="win">$9 × 10⁻⁸</td><td class="win">35×</td></tr>
           </tbody>
         </table>
-        <p class="src">Sieci testowe; koszt USD = zmierzony gaz × model L1 + snapshot cen.</p>
+        <p class="src">Sieci testowe; koszt w dolarach = zmierzony gaz × cennik z jednego dnia.</p>
       </div>
       <div>
         <p class="cap">Dlaczego Base jest najtańszy</p>
-        <p class="why">Przy dużych paczkach koszt na dyplom sprowadza się do <strong>opłaty za dane na L1 ÷ n</strong>. Base (OP-Stack) agresywnie kompresuje paczkę i publikuje ją w tanich blobach EIP-4844, więc ten dominujący składnik jest u niej najniższy.</p>
-        <p class="why">zkSync dodatkowo płaci za swój matematyczny dowód i obsługę kont — to stały narzut, który przy takich rozmiarach paczek rozkłada się gorzej niż sama kompresja danych.</p>
-        <p class="cap" style="margin-top:1.4rem;">Odporność (analiza wrażliwości)</p>
+        <p class="why">Przy dużych paczkach prawie cały koszt to <strong>opłata za dane podzielona przez liczbę dyplomów</strong>. Base najmocniej ściska paczkę i wrzuca ją do tanich blobów, więc ten główny koszt jest u niej najniższy.</p>
+        <p class="why">zkSync dodatkowo płaci za swój matematyczny dowód i obsługę kont — to stały dodatkowy koszt, który przy takich paczkach rozkłada się gorzej niż samo ściskanie danych.</p>
+        <p class="cap" style="margin-top:1.4rem;">Czy wynik jest pewny (test założeń)</p>
         <ul class="list">
-          <li>Base najtańszy na <strong>każdym</strong> rozmiarze paczki (n = 1 … 10 000)</li>
-          <li>Ranking stabilny przy <strong>±2×</strong> zmianie kursu ETH/USD i ceny sekwencera</li>
+          <li>Base najtańszy przy <strong>każdym</strong> rozmiarze paczki (od 1 do 10 000)</li>
+          <li>Kolejność się nie zmienia, gdy <strong>podwoję albo zmniejszę o połowę</strong> kurs i cenę sieci</li>
         </ul>
       </div>
     </div>
   </div>
   <div class="foot"><span>UniVerify — Weryfikacja dyplomów na Ethereum</span><span class="pg"></span></div>
   <aside class="notes">
-    Wynik: Base jest około 35 razy tańszy niż Ethereum L1 — 9 razy 10 do minus ósmej dolara za dyplom wobec 3,2 razy 10 do minus szóstej na Sepolii. Arbitrum i zkSync są tańsze od L1 tylko 1,8 i 1,4 raza.
-    Dlaczego akurat Base? Przy dużych paczkach koszt na dyplom sprowadza się do opłaty za dane na L1 podzielonej przez n. Base na OP-Stack agresywnie kompresuje paczkę i publikuje ją w tanich blobach, więc ten dominujący składnik jest najniższy. zkSync musi dodatkowo zapłacić za swój matematyczny dowód i obsługę kont — i ten stały narzut przy takich rozmiarach paczek rozkłada się gorzej niż sama kompresja danych. To jest sedno interpretacji.
-    O odporności: świadomie nie mówię „wynik niezależny od założeń". Mówię dokładnie tyle, ile zmierzyłem — w zbadanym zakresie Base jest najtańszy na każdym rozmiarze paczki, a ranking nie zmienia się przy dwukrotnym wzroście lub spadku kursu ETH/USD oraz ceny sekwencera. To pokazują tabele wrażliwości w pracy.
+    Wynik: Base jest około 35 razy tańszy niż samo Ethereum. Arbitrum i zkSync są tańsze tylko 1,8 i 1,4 raza.
+    Dlaczego akurat Base? Przy dużych paczkach prawie cały koszt to opłata za dane podzielona przez liczbę dyplomów. Base najmocniej ściska paczkę i wrzuca ją do tanich blobów, więc ten główny koszt jest u niej najniższy. zkSync musi dodatkowo zapłacić za swój matematyczny dowód i obsługę kont — to stały dodatkowy koszt, który przy takich paczkach rozkłada się gorzej niż samo ściskanie danych. To jest sedno wyjaśnienia.
+    I ważne: nie mówię „wynik niezależny od wszystkiego". Mówię dokładnie tyle, ile sprawdziłem — Base jest najtańszy przy każdym rozmiarze paczki, a kolejność nie zmienia się, nawet gdy podwoję albo zmniejszę o połowę kurs i cenę sieci. To pokazują tabele w pracy.
   </aside>
 </section>
 
@@ -746,32 +746,32 @@
 <section>
   <div class="head">
     <span class="label">Co zostało do zrobienia</span>
-    <h2>Benchmarki kosztu prywatności off-chain</h2>
+    <h2>Ile kosztuje prywatność poza łańcuchem</h2>
   </div>
   <div class="body flush">
     <div class="grid grid-2 top">
       <div>
-        <p class="cap" style="color:var(--good);">Już ustalone</p>
+        <p class="cap" style="color:var(--good);">Już wiem</p>
         <ul class="list">
-          <li>Gaz on-chain <strong>identyczny</strong> dla schematu z prywatnością i bez niej</li>
-          <li>Kontrakt nie odróżnia commitmentu od zwykłego hasha</li>
-          <li>Ten wynik zerowy sam w sobie jest wart raportowania</li>
+          <li>Koszt w łańcuchu <strong>taki sam</strong> z prywatnością i bez niej</li>
+          <li>Kontrakt nie odróżnia zapieczętowanej koperty od zwykłego skrótu</li>
+          <li>To wynik zerowy, ale ważny — warto go pokazać</li>
         </ul>
       </div>
       <div>
         <p class="cap" style="color:var(--navy);">Do zmierzenia</p>
         <ul class="list">
-          <li>Czas budowania koperty: z commitmentami vs. plain hash</li>
-          <li>Czas weryfikacji selektywnej vs. pełnej</li>
-          <li>Rozmiar danych: pełne vs. selektywne ujawnienie</li>
+          <li>Czas składania koperty: z kopertami vs. zwykły skrót</li>
+          <li>Czas sprawdzania częściowego vs. pełnego</li>
+          <li>Rozmiar danych: pełne vs. częściowe pokazanie</li>
         </ul>
       </div>
     </div>
   </div>
   <div class="foot"><span>UniVerify — Weryfikacja dyplomów na Ethereum</span><span class="pg"></span></div>
   <aside class="notes">
-    Co jeszcze zostało — to ostatnia faza pracy. Jedną rzecz już ustaliłem: koszt gazu on-chain jest identyczny dla schematu z prywatnością i bez niej, bo kontrakt nie odróżnia zobowiązania od zwykłego hasza. To wynik zerowy, ale wart raportowania — pokazuje, że prywatność nie kosztuje nic na łańcuchu.
-    Do zmierzenia został narzut off-chain: czas budowania koperty, czas weryfikacji selektywnej kontra pełnej, oraz rozmiar danych przy pełnym i selektywnym ujawnieniu. Reużywam tu istniejącego pipeline z fazy benchmarków, więc szacuję to na około jeden dzień pracy. Te liczby zasilą rozdział ewaluacji w pracy.
+    Co jeszcze zostało — to ostatni etap pracy. Jedno już wiem: koszt w łańcuchu jest taki sam z prywatnością i bez niej, bo kontrakt nie odróżnia zapieczętowanej koperty od zwykłego skrótu. To wynik zerowy, ale ważny — pokazuje, że prywatność nic nie kosztuje na łańcuchu.
+    Zostało zmierzyć koszt poza łańcuchem: ile trwa złożenie takiej koperty, ile trwa sprawdzenie częściowe kontra pełne, oraz ile waży paczka danych przy pełnym i przy częściowym pokazaniu. Użyję tego samego narzędzia co wcześniej, więc to jakiś jeden dzień pracy. Wyniki trafią do rozdziału z oceną.
   </aside>
 </section>
 
@@ -786,30 +786,30 @@
       <div>
         <p class="cap" style="color:var(--gold);">Ograniczenia</p>
         <ul class="list">
-          <li>Schemat dowodzi <strong>autentyczności dyplomu</strong>, nie tożsamości okaziciela — wiązanie z osobą to osobna warstwa</li>
-          <li>Okazanie jest „na okaziciela": bez świeżości można je odtworzyć po przechwyceniu</li>
-          <li>Zaufanie przeniesione z bazy uczelni na jej klucz w łańcuchu — jawne i audytowalne, ale wciąż obecne</li>
-          <li>Koszty mierzone na sieciach testowych + model cen</li>
+          <li>Schemat dowodzi, że <strong>dyplom jest prawdziwy</strong> — ale nie, że należy do osoby, która go pokazuje (to osobna warstwa)</li>
+          <li>Pokazany dowód działa dla każdego, kto go ma — można go odtworzyć po przechwyceniu</li>
+          <li>Zaufanie przeniesione z bazy uczelni na jej klucz w łańcuchu — jawne i można je sprawdzić, ale wciąż obecne</li>
+          <li>Koszty mierzone na sieciach testowych + ceny z modelu</li>
         </ul>
       </div>
       <div>
         <p class="cap" style="color:var(--navy);">Dalsze prace</p>
         <ul class="list">
-          <li><strong>Wiązanie z tożsamością</strong>: podpis okazania kluczem studenta — zamyka lukę „na okaziciela", bez ZK</li>
-          <li><strong>Dowody ZK</strong> właściwości pól: „wydany po 2020", „stopień ∈ {licencjat, magister}" — bez ujawniania wartości</li>
-          <li>Zgodność z <strong>W3C Verifiable Credentials</strong> — interoperacyjność z tożsamością cyfrową</li>
+          <li><strong>Powiązanie z osobą</strong>: student podpisuje pokazany dowód swoim kluczem — wtedy kradzież koperty nie wystarczy, bez ZK</li>
+          <li><strong>Dowody ZK</strong> cech pól: „wydany po 2020", „stopień ∈ {licencjat, magister}" — bez pokazywania wartości</li>
+          <li>Zgodność z <strong>W3C Verifiable Credentials</strong> — współpraca z innymi systemami tożsamości</li>
         </ul>
-        <p class="src">Verkle tree — zbadane, odrzucone: przy tej skali dowody Merkle są już znikome (~0,5&nbsp;kB), Verkle dokłada złożoność bez realnej korzyści.</p>
+        <p class="src">Verkle tree — sprawdzone, odrzucone: tu dowody Merkle są już malutkie (~0,5&nbsp;kB), Verkle dokłada tylko komplikacji bez zysku.</p>
       </div>
     </div>
   </div>
   <div class="foot"><span>UniVerify — Weryfikacja dyplomów na Ethereum</span><span class="pg"></span></div>
   <aside class="notes">
-    Na koniec, uczciwie, o granicach. Najważniejsze ograniczenie: mój schemat dowodzi, że dyplom jest prawdziwy, ale sam z siebie nie dowodzi, że należy do osoby, która go pokazuje. Okazanie jest „na okaziciela" — kto je przechwyci, może je odtworzyć. W praktyce zamyka to weryfikator, żądając ujawnienia imienia i porównania z dowodem tożsamości.
-    Najbliższe i najsensowniejsze rozszerzenie: wiązanie z tożsamością. Student podpisuje okazanie swoim kluczem prywatnym, więc skradziona koperta przestaje wystarczać. To nie wymaga technologii ZK.
-    Bardziej ambitny kierunek to dowody z wiedzą zerową — pozwoliłyby udowodnić właściwość pola, na przykład „dyplom wydany po 2020 roku" albo „stopień jest jednym z dozwolonych", bez ujawniania dokładnej wartości. To wykracza poza zakres tej pracy i wymaga osobnej wiedzy.
-    Sprawdziłem też drzewa Verkle i świadomie je odrzucam: rozwiązują problem rozmiaru dowodu przy ogromnej skali, którego tu nie mam — moje dowody Merkle to około pół kilobajta. Verkle dokładałby tylko złożoność, bez korzyści.
-    Zostaje też powiązanie z normą W3C Verifiable Credentials, żeby dyplom rozumiał dowolny weryfikator na świecie.
+    Na koniec, uczciwie, o granicach. Najważniejsze: mój schemat dowodzi, że dyplom jest prawdziwy, ale sam z siebie nie dowodzi, że należy do osoby, która go pokazuje. Pokazany dowód działa dla każdego, kto go ma — kto przechwyci kopię, może ją odtworzyć. W praktyce zamyka to sprawdzający, prosząc o pokazanie imienia i porównanie z dowodem osobistym.
+    Najbliższy i najsensowniejszy krok: powiązanie z osobą. Student podpisuje pokazany dowód swoim tajnym kluczem, więc skradziona koperta przestaje wystarczać. To nie wymaga technologii ZK.
+    Bardziej ambitny kierunek to dowody z wiedzą zerową — pozwoliłyby udowodnić cechę pola, na przykład „dyplom wydany po 2020 roku" albo „stopień jest jednym z dozwolonych", bez pokazywania dokładnej wartości. To wykracza poza zakres tej pracy i wymaga osobnej wiedzy.
+    Sprawdziłem też drzewa Verkle i świadomie je odrzucam: pomagają, gdy dowód jest ogromny — a u mnie dowód to jakieś pół kilobajta. Verkle dokładałby tylko komplikacji, bez zysku.
+    Zostaje też dopasowanie do normy W3C Verifiable Credentials, żeby dyplom rozumiał dowolny sprawdzający na świecie.
   </aside>
 </section>
 
@@ -824,29 +824,29 @@
       <div class="row">
         <div class="idx">I</div>
         <div>
-          <h4>Tanie składowanie</h4>
-          <p>Dzięki architekturze Merkle-batch koszt przestaje rosnąć z liczbą dyplomów — z liniowego staje się praktycznie stały.</p>
+          <h4>Tanie przechowywanie</h4>
+          <p>Dzięki Merkle-batch koszt przestaje rosnąć z liczbą dyplomów — z rosnącego robi się prawie stały.</p>
         </div>
       </div>
       <div class="row">
         <div class="idx">II</div>
         <div>
           <h4>Prywatność po stronie studenta</h4>
-          <p>To student decyduje, które pola ujawnić. Ochronę dodano w pełni poza łańcuchem, bez ingerencji w działający kontrakt.</p>
+          <p>To student decyduje, które pola pokazać. Ochronę dodano w całości poza łańcuchem, bez ruszania działającego kontraktu.</p>
         </div>
       </div>
       <div class="row">
         <div class="idx">III</div>
         <div>
-          <h4>Wybór L2 oparty na danych</h4>
-          <p>Powtarzalny, jawny pomiar czterech sieci pokazał różnice kosztu rzędu wielkości — najtańszą okazała się Base.</p>
+          <h4>Wybór L2 na podstawie danych</h4>
+          <p>Powtarzalny, jawny pomiar czterech sieci pokazał ogromne różnice w koszcie — najtańsza okazała się Base.</p>
         </div>
       </div>
     </div>
   </div>
   <div class="foot"><span>github.com/n-shcherbyna/univerify</span><span class="pg"></span></div>
   <aside class="notes">
-    Podsumowując, praca wnosi trzy rzeczy. Po pierwsze — architekturę Merkle-batch, która obniża koszt o trzy rzędy wielkości przy tysiącu dyplomów, z modelem analitycznym o błędzie poniżej 0,2 procenta. Po drugie — selektywne ujawnianie danych zgodne z zasadą minimalizacji RODO, bez żadnej zmiany w smart kontrakcie. Po trzecie — benchmarki L2 pokazujące, że Base jest około 35 razy tańszy od Ethereum L1, z wynikiem stabilnym na analizę wrażliwości.
+    Podsumowując, praca daje trzy rzeczy. Po pierwsze — Merkle-batch, dzięki któremu koszt na dyplom spada tysiące razy, a wzór tłumaczy ten koszt z błędem poniżej 0,2 procenta. Po drugie — pokazywanie tylko wybranych pól, zgodne z RODO, bez żadnej zmiany w kontrakcie. Po trzecie — pomiary L2, z których wynika, że Base jest około 35 razy tańszy od samego Ethereum, a kolejność jest stabilna.
     Kod jest publiczny pod tym adresem. Dziękuję za uwagę — chętnie odpowiem na pytania.
   </aside>
 </section>

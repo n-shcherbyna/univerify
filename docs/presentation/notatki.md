@@ -52,7 +52,7 @@ Zbudowałem też **wzór**, który rozkłada koszt na składniki — zgadza się
 
 ## Slajd 5 — Pytanie 2: prywatność (ok. 1:45)
 
-Gdyby weryfikacja działała wprost, ujawniałaby **wszystko** — imię, oceny, numer dyplomu. To kłóci się z zasadą RODO: pokazuj **tylko to, co konieczne**.
+Gdyby sprawdzanie działało wprost, pokazywałoby **wszystko** — imię, oceny, numer dyplomu. To kłóci się z zasadą RODO: pokazuj **tylko to, co konieczne**.
 
 Rozwiązanie w obrazku: każde pole zamykamy jak w **zapieczętowanej kopercie**. Z koperty można potwierdzić, że pole jest prawdziwe, ale **nie widać, co w środku**. Dorzucamy „sól" — losowy dodatek — żeby nie dało się **zgadnąć** zawartości. (Formalnie: `cᵢ = keccak256(fieldᵢ ‖ saltᵢ)`.)
 
@@ -86,7 +86,7 @@ I mówię to wprost — **uczciwość pomiaru**: testowałem na **sieciach testo
 
 Wynik: **Base jest około 35× tańszy** niż samo Ethereum. Arbitrum i zkSync są tańsze tylko 1,8× i 1,4×.
 
-Dlaczego akurat Base? Przy dużych paczkach prawie cały koszt to **opłata za dane podzielona przez liczbę dyplomów**. Base najmocniej **ściska** paczkę i wrzuca ją do tanich blobów — więc ten główny koszt jest u niej najniższy. zkSync musi **dodatkowo** zapłacić za swój matematyczny dowód i obsługę kont — to **stały narzut**, który przy takich paczkach rozkłada się gorzej niż samo ściskanie danych. To jest sedno wyjaśnienia.
+Dlaczego akurat Base? Przy dużych paczkach prawie cały koszt to **opłata za dane podzielona przez liczbę dyplomów**. Base najmocniej **ściska** paczkę i wrzuca ją do tanich blobów — więc ten główny koszt jest u niej najniższy. zkSync musi **dodatkowo** zapłacić za swój matematyczny dowód i obsługę kont — to **stały dodatkowy koszt**, który przy takich paczkach rozkłada się gorzej niż samo ściskanie danych. To jest sedno wyjaśnienia.
 
 I ważne: **nie** mówię „wynik niezależny od wszystkiego". Mówię dokładnie tyle, ile sprawdziłem — Base jest najtańszy przy **każdym** rozmiarze paczki, a kolejność **nie zmienia się**, nawet gdy podwoję lub zmniejszę o połowę kurs i cenę sieci. To pokazują tabele w pracy.
 
@@ -96,7 +96,7 @@ I ważne: **nie** mówię „wynik niezależny od wszystkiego". Mówię dokładn
 
 Jedno już wiem: koszt **w łańcuchu jest taki sam** z prywatnością i bez niej — bo kontrakt nie odróżnia zapieczętowanej koperty od zwykłego skrótu. To **wynik „zerowy", ale ważny**: prywatność nic nie kosztuje na łańcuchu.
 
-Zostało zmierzyć koszt **poza łańcuchem**: ile trwa złożenie takiej koperty, ile trwa sprawdzenie, i ile waży paczka danych — przy pełnym i przy częściowym ujawnieniu. Użyję tego samego narzędzia co wcześniej, więc to jakiś **jeden dzień** pracy. Wyniki trafią do rozdziału z oceną.
+Zostało zmierzyć koszt **poza łańcuchem**: ile trwa złożenie takiej koperty, ile trwa sprawdzenie, i ile waży paczka danych — przy pełnym i przy częściowym pokazaniu. Użyję tego samego narzędzia co wcześniej, więc to jakiś **jeden dzień** pracy. Wyniki trafią do rozdziału z oceną.
 
 ---
 
@@ -105,13 +105,13 @@ Zostało zmierzyć koszt **poza łańcuchem**: ile trwa złożenie takiej kopert
 Mówię o granicach **uczciwie** — to wzmacnia, nie osłabia pracy.
 
 **Ograniczenia:**
-- Schemat dowodzi „**dyplom jest prawdziwy**", a nie „**to ty jesteś osobą z dyplomu**". Okazanie jest „na okaziciela": kto je przechwyci, może je odtworzyć. W praktyce zamyka to weryfikator, żądając odsłonięcia imienia i porównania z dowodem tożsamości.
-- Zaufanie przenosimy z bazy danych uczelni na jej **klucz w łańcuchu** — jest jawne i audytowalne, ale uczelni wciąż trzeba ufać.
-- Koszty mierzone na sieciach testowych + model cen (jak na slajdzie metodologii).
+- Schemat dowodzi „**dyplom jest prawdziwy**", a nie „**to ty jesteś osobą z dyplomu**". Pokazany dowód działa dla każdego, kto go ma: kto przechwyci kopię, może ją odtworzyć. W praktyce zamyka to sprawdzający, prosząc o pokazanie imienia i porównanie z dowodem osobistym.
+- Zaufanie przenosimy z bazy danych uczelni na jej **klucz w łańcuchu** — jest jawne i można je sprawdzić, ale uczelni wciąż trzeba ufać.
+- Koszty mierzone na sieciach testowych + ceny z modelu (jak na slajdzie o pomiarach).
 
 **Dalsze prace (od najbliższego):**
-1. **Wiązanie z tożsamością** — student podpisuje okazanie swoim kluczem prywatnym. Skradziona koperta przestaje wystarczać. Najbliższy, sensowny krok; **nie wymaga ZK**.
-2. **Dowody ZK właściwości pól** — udowodnić „wydany po 2020" albo „stopień ∈ {licencjat, magister}" bez ujawniania dokładnej wartości. Ambitne, wymaga osobnej wiedzy — poza zakresem tej pracy.
+1. **Powiązanie z osobą** — student podpisuje pokazany dowód swoim tajnym kluczem. Skradziona koperta przestaje wystarczać. Najbliższy, sensowny krok; **nie wymaga ZK**.
+2. **Dowody ZK cech pól** — udowodnić „wydany po 2020" albo „stopień ∈ {licencjat, magister}" bez pokazywania dokładnej wartości. Ambitne, wymaga osobnej wiedzy — poza zakresem tej pracy.
 3. **Zgodność z W3C Verifiable Credentials** — żeby dyplom rozumiał dowolny weryfikator na świecie.
 
 **Verkle tree — sprawdzone, świadomie odrzucone.** Verkle skracają dowód przy *ogromnej* skali stanu (roadmapa stateless Ethereum). Tu tego problemu nie ma: dowód Merkle dla 10 000 dyplomów to ~14 skrótów ≈ **0,5 kB**, nie trafia on-chain, a weryfikacja jest darmowa. Verkle dokłada trusted-setup/IPA i złożoność **bez korzyści**. (To, że rozważyłem i odrzuciłem z uzasadnieniem, jest mocniejsze niż dorzucenie buzzwordu.)
