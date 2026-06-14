@@ -28,35 +28,35 @@ Z tego wyrastają trzy pytania badawcze: jak tanio przechowywać dane on-chain, 
 
 ## Slajd 3 — Pytanie 1: architektura (ok. 1:45)
 
-Naiwne podejście „per-record" zapisuje każdy dyplom jako osobny wpis w stanie kontraktu — **n dyplomów to n transakcji**, koszt rośnie liniowo.
+Podejście naiwne zapisuje każdy dyplom **osobno** w pamięci łańcucha — a każdy wpis kosztuje. **n dyplomów to n transakcji**, rachunek rośnie wprost z ich liczbą.
 
-Moje podejście to **Merkle-batch**: cały rocznik haszujemy w drzewo Merkle i on-chain trafia tylko jeden korzeń — 32 bajty. To **jedna transakcja** niezależnie od liczby dyplomów.
+Moje podejście to **Merkle-batch**: cały rocznik streszczamy do jednego 32-bajtowego „odcisku palca" (korzenia drzewa Merkle). Na łańcuch trafia **tylko ten odcisk** — jedna transakcja niezależnie od liczby dyplomów.
 
-Diagram pokazuje cztery dyplomy łączone parami aż do korzenia. Weryfikacja jest publiczna i bezpłatna — funkcja `statusWithProof` sprawdza ścieżkę Merkle dla danego dyplomu. **Kluczowa obserwacja: on-chain idzie tylko korzeń, reszta zostaje poza łańcuchem.**
+Diagram: cztery dyplomy łączone parami aż do jednego korzenia. Sprawdzenie jest publiczne i darmowe — krótki dowód potwierdza, że dany dyplom należy do rocznika. **Kluczowa myśl: na łańcuch idzie tylko odcisk, reszta zostaje poza nim.**
 
 ---
 
 ## Slajd 4 — Wynik 1 (ok. 1:45)
 
-Przy stu dyplomach koszt jednostkowy spada o około **99 procent**, a przy tysiącu — **tysiąckrotnie**. Liczby są dla Sepolii L1, przy kursie ETH/USD 3500 ze snapshotu z 13 maja.
+Przy stu dyplomach koszt na dyplom spada o około **99 %**, a przy tysiącu — **tysiąckrotnie**. Liczby są dla Sepolii L1, kurs ETH/USD 3500, snapshot z 13 maja.
 
-Najważniejsze jest **„dlaczego"**. Koszt transakcji jest zdominowany przez zapis stanu i calldata na L1. Per-record płaci ten koszt n razy; batching płaci go raz, bo on-chain idzie jeden korzeń. Reszta pracy — budowa dowodu — przenosi się do **darmowego off-chain**. Stąd asymptota **O(1) zamiast O(n)**.
+Najważniejsze jest **„dlaczego"** — prostymi słowami. Na blockchainie płacimy głównie za **miejsce zajęte w łańcuchu**. Podejście „osobno" kupuje to miejsce dla każdego dyplomu z osobna, więc rachunek rośnie z ich liczbą. Batching kupuje je **raz**, dla całego rocznika naraz; dowody pojedynczych dyplomów powstają poza łańcuchem, za darmo. Dlatego przy większych paczkach koszt na dyplom **niemal znika**.
 
-Zbudowałem też analityczny model dekompozycji kosztu — odtwarza pomiary z **błędem poniżej 0,2 %**, co znaczy, że rozumiemy, skąd bierze się każdy składnik kosztu.
+Model analityczny odtwarza pomiary z **błędem < 0,2 %** — wiadomo, skąd bierze się każdy składnik kosztu.
 
-> Zastrzeżenie (jeśli ktoś dopyta): per-record to *model* n niezależnych transakcji, nie 1000 osobno wykonanych.
+> Zastrzeżenie (jeśli ktoś dopyta): „osobno" to *model* n niezależnych transakcji, nie 1000 osobno wykonanych.
 
 ---
 
 ## Slajd 5 — Pytanie 2: prywatność (ok. 1:45)
 
-Naiwna weryfikacja na blockchainie ujawnia **wszystko** — imię, oceny, numer dyplomu — co kłóci się z zasadą minimalizacji danych z RODO.
+Naiwna weryfikacja na blockchainie ujawniłaby **wszystko** — imię, oceny, numer dyplomu — co kłóci się z zasadą minimalizacji danych z RODO.
 
-Rozwiązanie: każde z czterech pól zastępuję **zobowiązaniem kryptograficznym z losową solą** — `cᵢ = keccak256(fieldᵢ ‖ saltᵢ)`. Hasz dokumentu to keccak z czterech zobowiązań. On-chain trafia tylko ten hasz.
+Rozwiązanie w prostych słowach: każde pole zamykamy jak w **zapieczętowanej kopercie**. Można potwierdzić, że pole jest prawdziwe, ale nie widać treści; „sól" — losowy dodatek — blokuje zgadywanie. Na łańcuch trafia tylko skrót z czterech takich kopert. (Formalnie: `cᵢ = keccak256(fieldᵢ ‖ saltᵢ)`.)
 
-Efekt: student ujawnia **tylko wybrane pola** — np. sam stopień i datę — a weryfikator potwierdza ich autentyczność, nie poznając pozostałych. Soli nie da się odwrócić, więc nieujawnione pola pozostają tajne.
+Efekt: **student sam decyduje, co ujawnić** — np. sam stopień i datę — a weryfikator potwierdza ich autentyczność, nie poznając pozostałych.
 
-Inżyniersko najważniejsze: **smart kontrakt nie wymaga żadnej zmiany** — nie odróżnia zobowiązania od zwykłego hasza. Cała logika prywatności jest off-chain, w nowej trasie `/present`.
+Inżyniersko najważniejsze: **smart kontrakt nie wymaga żadnej zmiany**. Cała logika prywatności jest poza łańcuchem, w nowej trasie `/present`.
 
 ---
 
@@ -64,7 +64,7 @@ Inżyniersko najważniejsze: **smart kontrakt nie wymaga żadnej zmiany** — ni
 
 Krótkie wprowadzenie, bo dotyczy warstw drugich. L1, czyli sam Ethereum, jest bezpieczny, ale **drogi**: każdy bajt danych konkuruje o miejsce w bloku.
 
-**Rollup** wykonuje setki transakcji poza łańcuchem i publikuje na L1 tylko jedną skompresowaną paczkę z dowodem poprawności. Koszt najdroższego zasobu — miejsca na dane — **dzieli się na wszystkie transakcje w paczce**. Od EIP-4844 dane idą do tanich „blobów", co dodatkowo obniża koszt.
+**Rollup** wykonuje setki transakcji poza łańcuchem i publikuje na nim tylko jedną skompresowaną paczkę z dowodem poprawności. Koszt najdroższego zasobu — miejsca na dane — **dzieli się na wszystkie transakcje w paczce**. Od 2024 r. (EIP-4844) dane idą dodatkowo do „blobów" — taniego, tymczasowego schowka — co jeszcze obniża koszt.
 
 Są dwie rodziny: **optimistic** (Arbitrum, Base) zakłada poprawność i pozwala ją zakwestionować w okresie sporu; **ZK-rollup** (zkSync) dołącza dowód z wiedzą zerową — poprawność gwarantowana od razu. **Ta różnica wróci przy interpretacji wyników.**
 
@@ -84,7 +84,7 @@ Metodologia: pipeline uruchamiałem **trzy razy niezależnie** i agregowałem. R
 
 Wynik: **Base jest ok. 35× tańszy** niż Ethereum L1 — `$9×10⁻⁸` za dyplom wobec `$3,2×10⁻⁶` na Sepolii. Arbitrum i zkSync są tańsze od L1 tylko 1,8× i 1,4×.
 
-**Dlaczego akurat Base?** Przy dużych paczkach koszt na dyplom sprowadza się do **opłaty za dane na L1 ÷ n**. Base na OP-Stack agresywnie kompresuje paczkę i publikuje ją w tanich blobach, więc ten dominujący składnik jest najniższy. zkSync musi dopłacić za **generowanie dowodu ZK i bootloader abstrakcji konta** — narzut, który przy takich rozmiarach amortyzuje się słabiej niż sama kompresja danych. **To jest sedno interpretacji.**
+**Dlaczego akurat Base?** Przy dużych paczkach koszt na dyplom sprowadza się do **opłaty za dane na L1 ÷ n**. Base na OP-Stack agresywnie kompresuje paczkę i publikuje ją w tanich blobach, więc ten dominujący składnik jest najniższy. zkSync musi dodatkowo zapłacić za **wygenerowanie kryptograficznego dowodu i obsługę kont** — to stały narzut, który przy takich rozmiarach paczek rozkłada się gorzej niż sama kompresja danych. **To jest sedno interpretacji.**
 
 O odporności: świadomie **nie** mówię „wynik niezależny od założeń". Mówię dokładnie tyle, ile zmierzyłem — w zbadanym zakresie Base jest najtańszy na każdym n, a ranking nie zmienia się przy **±2×** zmianie kursu ETH/USD i ceny sekwencera. Pokazują to tabele wrażliwości w pracy.
 

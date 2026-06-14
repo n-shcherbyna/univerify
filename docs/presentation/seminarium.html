@@ -484,13 +484,13 @@
     <div class="grid grid-58">
       <div>
         <div class="compare">
-          <p class="tag bad">Per-record storage</p>
-          <p>Każdy dyplom zapisany jako osobny slot w storage kontraktu. Koszt rośnie liniowo — <strong>n dyplomów = n transakcji</strong>.</p>
+          <p class="tag bad">Podejście naiwne — osobno</p>
+          <p>Każdy dyplom to osobny wpis w pamięci łańcucha, a <strong>każdy wpis kosztuje</strong>. Rachunek rośnie wprost z liczbą dyplomów: n dyplomów = n transakcji.</p>
         </div>
         <div class="compare">
-          <p class="tag good">Merkle-batch issuance</p>
-          <p>Cały rocznik skompresowany do jednego <code>bytes32 merkleRoot</code>. Koszt stały niezależnie od n — <strong>n dyplomów = 1 transakcja</strong>.</p>
-          <p class="note">Weryfikacja: <code>statusWithProof(docHash, proof[])</code> — publiczna, bezpłatna.</p>
+          <p class="tag good">Merkle-batch — wszystkie naraz</p>
+          <p>Cały rocznik streszczamy do jednego 32-bajtowego „odcisku palca" (<code>merkleRoot</code>). Na łańcuch trafia tylko on — <strong>n dyplomów = 1 transakcja</strong>.</p>
+          <p class="note">Sprawdzenie jest publiczne i darmowe: krótki dowód potwierdza, że dany dyplom należy do rocznika.</p>
         </div>
       </div>
 
@@ -523,7 +523,7 @@
           <span class="lbl" style="left:86.5%; top:83.5%;">d4</span>
         </div>
       </div>
-      <p class="figcap">tylko root trafia on-chain</p>
+      <p class="figcap">Jeden „odcisk palca" całego rocznika —<br>każdy dyplom dopinany niezależnie krótkim dowodem</p>
       </div>
     </div>
   </div>
@@ -544,25 +544,21 @@
   <div class="body flush">
     <div class="grid grid-2" style="align-items:start;">
       <div>
+        <p class="cap">Koszt wystawienia paczki (Sepolia L1)</p>
         <table>
           <thead><tr><th>Podejście</th><th>n = 100</th><th>n = 1 000</th></tr></thead>
           <tbody>
-            <tr class="muted"><td>Per-record</td><td>~$3,20</td><td>~$32,00</td></tr>
+            <tr class="muted"><td>Osobno</td><td>~$3,20</td><td>~$32,00</td></tr>
             <tr class="hl"><td>Merkle-batch</td><td class="win">~$0,032</td><td class="win">~$0,032</td></tr>
           </tbody>
         </table>
-        <div class="callout" style="margin-top:1.4rem;">
-          <p><span class="lead">Dlaczego batching wygrywa:</span> koszt jest zdominowany przez zapis stanu i&nbsp;calldata na L1. Per-record płaci ten koszt <strong>n&nbsp;razy</strong>; Merkle-batch — <strong>raz</strong>, publikując jeden 32-bajtowy korzeń całego rocznika. Reszta pracy (budowa dowodu) przenosi się do darmowego off-chain → koszt <strong>O(1)</strong> zamiast O(n).</p>
-        </div>
-        <p class="src">Per-record = model n niezależnych transakcji; ceny z modelu dekompozycji gazu przy ustalonym kursie.</p>
+        <p class="src">„Osobno" = model n niezależnych transakcji; ceny z modelu dekompozycji gazu przy ustalonym kursie.</p>
       </div>
       <div>
-        <p class="cap">Kluczowe liczby</p>
-        <div class="figures stack">
-          <div class="fig"><span class="v good">−99%</span><span class="k">koszt jednostkowy przy n = 100</span></div>
-          <div class="fig"><span class="v good">1000×</span><span class="k">taniej przy n = 1 000</span></div>
-          <div class="fig"><span class="v">&lt;0,2%</span><span class="k">błąd modelu analitycznego</span></div>
-        </div>
+        <p class="cap">Dlaczego koszt tak spada</p>
+        <p class="why">Na blockchainie płacimy przede wszystkim za <strong>miejsce zajęte w łańcuchu</strong>. Podejście „osobno" kupuje to miejsce dla każdego dyplomu z osobna, więc rachunek rośnie wraz z ich liczbą.</p>
+        <p class="why">Batching kupuje je <strong>raz</strong> — dla całego rocznika naraz (jeden odcisk palca). Dowody pojedynczych dyplomów powstają poza łańcuchem, za darmo. Dlatego przy większych paczkach koszt na dyplom niemal znika.</p>
+        <p class="why" style="color:var(--muted); font-size:0.92rem;">Model analityczny odtwarza pomiary z błędem &lt; 0,2% — wiadomo, skąd bierze się każdy składnik kosztu.</p>
       </div>
     </div>
   </div>
@@ -590,8 +586,8 @@
       <div class="arrow">→</div>
       <div class="step">
         <div class="n">Rozwiązanie</div>
-        <h4>Commitments z solą</h4>
-        <p>Każde z czterech pól zastąpione zobowiązaniem kryptograficznym:</p>
+        <h4>Zapieczętowana koperta</h4>
+        <p>Każde pole zamykamy jak w zapieczętowanej kopercie: można sprawdzić, że jest prawdziwe, ale nie widać treści. „Sól" to losowy dodatek, który blokuje zgadywanie.</p>
         <div class="formula">cᵢ = keccak256(fieldᵢ ‖ saltᵢ)<br>docHash = keccak256(c₁‖c₂‖c₃‖c₄)</div>
       </div>
       <div class="arrow">→</div>
@@ -608,8 +604,8 @@
   <div class="foot"><span>UniVerify — Weryfikacja dyplomów na Ethereum</span><span class="pg"></span></div>
   <aside class="notes">
     Drugie pytanie: prywatność. Naiwna weryfikacja na blockchainie ujawnia wszystko — imię, oceny, numer dyplomu — co kłóci się z zasadą minimalizacji danych z RODO.
-    Rozwiązanie: każde z czterech pól zastępuję zobowiązaniem kryptograficznym z losową solą — c równa się keccak z pola i soli. Hasz dokumentu to keccak z czterech zobowiązań. On-chain trafia tylko ten hasz.
-    Efekt: student ujawnia tylko wybrane pola — na przykład sam stopień i datę — a weryfikator potwierdza ich autentyczność, nie poznając pozostałych. Soli nie da się odwrócić, więc nieujawnione pola pozostają tajne.
+    Rozwiązanie w prostych słowach: każde pole zamykam jak w zapieczętowanej kopercie — kryptograficznym zobowiązaniu z losową solą. Można potwierdzić, że pole jest prawdziwe, nie widząc jego treści; sól, czyli losowy dodatek, blokuje zgadywanie. Na łańcuch trafia tylko skrót z czterech takich kopert.
+    Efekt: student ujawnia tylko wybrane pola — na przykład sam stopień i datę — a weryfikator potwierdza ich autentyczność, nie poznając pozostałych.
     Co istotne inżyniersko: smart kontrakt nie wymaga żadnej zmiany — kontrakt nie odróżnia zobowiązania od zwykłego hasza. Cała logika prywatności jest off-chain, w nowej trasie /present aplikacji.
   </aside>
 </section>
@@ -652,7 +648,7 @@
     <div class="l2text">
       <div>
         <p class="cap">Dlaczego taniej</p>
-        <p class="l2cap"><span class="lead">Rollup</span> wykonuje transakcje poza łańcuchem głównym i publikuje na L1 jedynie skompresowaną paczkę danych z dowodem poprawności. Koszt najdroższego zasobu — miejsca na dane w&nbsp;L1 — <strong>dzieli się na wszystkie transakcje w paczce</strong>, a od EIP-4844 dane trafiają do tanich „blobów”.</p>
+        <p class="l2cap"><span class="lead">Rollup</span> wykonuje transakcje poza głównym łańcuchem i publikuje na nim tylko skompresowaną paczkę z dowodem poprawności. Koszt najdroższego zasobu — miejsca na dane — <strong>dzieli się na wszystkie transakcje w paczce</strong>. Od 2024&nbsp;r. dane trafiają dodatkowo do „blobów”: taniego, tymczasowego schowka na dane (EIP-4844).</p>
       </div>
       <div>
         <p class="cap">Dwie rodziny rollupów</p>
@@ -729,7 +725,7 @@
       <div>
         <p class="cap">Dlaczego Base jest najtańszy</p>
         <p class="why">Przy dużych paczkach koszt na dyplom sprowadza się do <strong>opłaty za dane na L1 ÷ n</strong>. Base (OP-Stack) agresywnie kompresuje paczkę i publikuje ją w tanich blobach EIP-4844, więc ten dominujący składnik jest u niej najniższy.</p>
-        <p class="why">zkSync dopłaca za generowanie dowodu ZK i bootloader abstrakcji konta — narzut, który przy tych rozmiarach amortyzuje się słabiej niż czysta kompresja danych.</p>
+        <p class="why">zkSync dodatkowo płaci za wygenerowanie kryptograficznego dowodu i obsługę kont — to stały narzut, który przy takich rozmiarach paczek rozkłada się gorzej niż sama kompresja danych.</p>
         <p class="cap" style="margin-top:1.4rem;">Odporność (analiza wrażliwości)</p>
         <ul class="list">
           <li>Base najtańszy na <strong>każdym</strong> rozmiarze paczki (n = 1 … 10 000)</li>
@@ -741,7 +737,7 @@
   <div class="foot"><span>UniVerify — Weryfikacja dyplomów na Ethereum</span><span class="pg"></span></div>
   <aside class="notes">
     Wynik: Base jest około 35 razy tańszy niż Ethereum L1 — 9 razy 10 do minus ósmej dolara za dyplom wobec 3,2 razy 10 do minus szóstej na Sepolii. Arbitrum i zkSync są tańsze od L1 tylko 1,8 i 1,4 raza.
-    Dlaczego akurat Base? Przy dużych paczkach koszt na dyplom sprowadza się do opłaty za dane na L1 podzielonej przez n. Base na OP-Stack agresywnie kompresuje paczkę i publikuje ją w tanich blobach, więc ten dominujący składnik jest najniższy. zkSync musi dopłacić za generowanie dowodu ZK i bootloader abstrakcji konta — i ten narzut przy takich rozmiarach amortyzuje się słabiej niż sama kompresja danych. To jest sedno interpretacji.
+    Dlaczego akurat Base? Przy dużych paczkach koszt na dyplom sprowadza się do opłaty za dane na L1 podzielonej przez n. Base na OP-Stack agresywnie kompresuje paczkę i publikuje ją w tanich blobach, więc ten dominujący składnik jest najniższy. zkSync musi dodatkowo zapłacić za wygenerowanie kryptograficznego dowodu i obsługę kont — i ten stały narzut przy takich rozmiarach paczek rozkłada się gorzej niż sama kompresja danych. To jest sedno interpretacji.
     O odporności: świadomie nie mówię „wynik niezależny od założeń". Mówię dokładnie tyle, ile zmierzyłem — w zbadanym zakresie Base jest najtańszy na każdym rozmiarze paczki, a ranking nie zmienia się przy dwukrotnym wzroście lub spadku kursu ETH/USD oraz ceny sekwencera. To pokazują tabele wrażliwości w pracy.
   </aside>
 </section>
@@ -790,22 +786,22 @@
       <div class="row">
         <div class="idx">I</div>
         <div>
-          <h4>Architektura Merkle-batch</h4>
-          <p>Redukcja kosztu o trzy rzędy wielkości przy n = 1 000 względem per-record storage; model analityczny z błędem poniżej 0,2%.</p>
+          <h4>Tanie składowanie</h4>
+          <p>Dzięki architekturze Merkle-batch koszt przestaje rosnąć z liczbą dyplomów — z liniowego staje się praktycznie stały.</p>
         </div>
       </div>
       <div class="row">
         <div class="idx">II</div>
         <div>
-          <h4>Selektywne ujawnianie danych (RODO)</h4>
-          <p>Schemat salt-commitment dla czterech pól. Zero zmian w smart kontrakcie — prywatność jako czysto off-chain rozszerzenie.</p>
+          <h4>Prywatność po stronie studenta</h4>
+          <p>To student decyduje, które pola ujawnić. Ochronę dodano w pełni poza łańcuchem, bez ingerencji w działający kontrakt.</p>
         </div>
       </div>
       <div class="row">
         <div class="idx">III</div>
         <div>
-          <h4>Benchmarki L2: Base 35× taniej niż Ethereum L1</h4>
-          <p>Trzykrotnie powtórzony pipeline na czterech sieciach testowych; wynik stabilny na analizę wrażliwości kursu ETH/USD i ceny sekwencera.</p>
+          <h4>Wybór L2 oparty na danych</h4>
+          <p>Powtarzalny, jawny pomiar czterech sieci pokazał różnice kosztu rzędu wielkości — najtańszą okazała się Base.</p>
         </div>
       </div>
     </div>
