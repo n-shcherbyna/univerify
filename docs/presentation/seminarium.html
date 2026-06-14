@@ -775,7 +775,45 @@
   </aside>
 </section>
 
-<!-- ════ 10 · Podsumowanie ════ -->
+<!-- ════ 10 · Ograniczenia i dalsze prace ════ -->
+<section>
+  <div class="head">
+    <span class="label">Granice pracy</span>
+    <h2>Ograniczenia i dalsze prace</h2>
+  </div>
+  <div class="body flush">
+    <div class="grid grid-2 top">
+      <div>
+        <p class="cap" style="color:var(--gold);">Ograniczenia</p>
+        <ul class="list">
+          <li>Schemat dowodzi <strong>autentyczności dyplomu</strong>, nie tożsamości okaziciela — wiązanie z osobą to osobna warstwa</li>
+          <li>Okazanie jest „na okaziciela": bez świeżości można je odtworzyć po przechwyceniu</li>
+          <li>Zaufanie przeniesione z bazy uczelni na jej klucz w łańcuchu — jawne i audytowalne, ale wciąż obecne</li>
+          <li>Koszty mierzone na sieciach testowych + model cen</li>
+        </ul>
+      </div>
+      <div>
+        <p class="cap" style="color:var(--navy);">Dalsze prace</p>
+        <ul class="list">
+          <li><strong>Wiązanie z tożsamością</strong>: podpis okazania kluczem studenta — zamyka lukę „na okaziciela", bez ZK</li>
+          <li><strong>Dowody ZK</strong> właściwości pól: „wydany po 2020", „stopień ∈ {licencjat, magister}" — bez ujawniania wartości</li>
+          <li>Zgodność z <strong>W3C Verifiable Credentials</strong> — interoperacyjność z tożsamością cyfrową</li>
+        </ul>
+        <p class="src">Verkle tree — zbadane, odrzucone: przy tej skali dowody Merkle są już znikome (~0,5&nbsp;kB), Verkle dokłada złożoność bez realnej korzyści.</p>
+      </div>
+    </div>
+  </div>
+  <div class="foot"><span>UniVerify — Weryfikacja dyplomów na Ethereum</span><span class="pg"></span></div>
+  <aside class="notes">
+    Na koniec, uczciwie, o granicach. Najważniejsze ograniczenie: mój schemat dowodzi, że dyplom jest prawdziwy, ale sam z siebie nie dowodzi, że należy do osoby, która go pokazuje. Okazanie jest „na okaziciela" — kto je przechwyci, może je odtworzyć. W praktyce zamyka to weryfikator, żądając ujawnienia imienia i porównania z dowodem tożsamości.
+    Najbliższe i najsensowniejsze rozszerzenie: wiązanie z tożsamością. Student podpisuje okazanie swoim kluczem prywatnym, więc skradziona koperta przestaje wystarczać. To nie wymaga technologii ZK.
+    Bardziej ambitny kierunek to dowody z wiedzą zerową — pozwoliłyby udowodnić właściwość pola, na przykład „dyplom wydany po 2020 roku" albo „stopień jest jednym z dozwolonych", bez ujawniania dokładnej wartości. To wykracza poza zakres tej pracy i wymaga osobnej wiedzy.
+    Sprawdziłem też drzewa Verkle i świadomie je odrzucam: rozwiązują problem rozmiaru dowodu przy ogromnej skali, którego tu nie mam — moje dowody Merkle to około pół kilobajta. Verkle dokładałby tylko złożoność, bez korzyści.
+    Zostaje też powiązanie z normą W3C Verifiable Credentials, żeby dyplom rozumiał dowolny weryfikator na świecie.
+  </aside>
+</section>
+
+<!-- ════ 11 · Podsumowanie ════ -->
 <section>
   <div class="head">
     <span class="label">Podsumowanie</span>

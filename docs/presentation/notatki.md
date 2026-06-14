@@ -1,6 +1,6 @@
 # Notatki prelegenta — UniVerify (seminarium magisterskie)
 
-**Czas:** 15–20 minut · 10 slajdów · ~1,5–2 min na slajd
+**Czas:** 15–20 minut · 11 slajdów · ~1,5–2 min na slajd
 **Widok prelegenta:** otwórz `seminarium.html` i naciśnij **`S`** — te notatki są też wbudowane w deck.
 **Sterowanie:** strzałki / spacja = dalej · `Esc` = podgląd siatki · `F` = pełny ekran.
 
@@ -100,7 +100,25 @@ Zostało zmierzyć koszt **poza łańcuchem**: ile trwa złożenie takiej kopert
 
 ---
 
-## Slajd 10 — Podsumowanie (ok. 1:00)
+## Slajd 10 — Ograniczenia i dalsze prace (ok. 1:30)
+
+Mówię o granicach **uczciwie** — to wzmacnia, nie osłabia pracy.
+
+**Ograniczenia:**
+- Schemat dowodzi „**dyplom jest prawdziwy**", a nie „**to ty jesteś osobą z dyplomu**". Okazanie jest „na okaziciela": kto je przechwyci, może je odtworzyć. W praktyce zamyka to weryfikator, żądając odsłonięcia imienia i porównania z dowodem tożsamości.
+- Zaufanie przenosimy z bazy danych uczelni na jej **klucz w łańcuchu** — jest jawne i audytowalne, ale uczelni wciąż trzeba ufać.
+- Koszty mierzone na sieciach testowych + model cen (jak na slajdzie metodologii).
+
+**Dalsze prace (od najbliższego):**
+1. **Wiązanie z tożsamością** — student podpisuje okazanie swoim kluczem prywatnym. Skradziona koperta przestaje wystarczać. Najbliższy, sensowny krok; **nie wymaga ZK**.
+2. **Dowody ZK właściwości pól** — udowodnić „wydany po 2020" albo „stopień ∈ {licencjat, magister}" bez ujawniania dokładnej wartości. Ambitne, wymaga osobnej wiedzy — poza zakresem tej pracy.
+3. **Zgodność z W3C Verifiable Credentials** — żeby dyplom rozumiał dowolny weryfikator na świecie.
+
+**Verkle tree — sprawdzone, świadomie odrzucone.** Verkle skracają dowód przy *ogromnej* skali stanu (roadmapa stateless Ethereum). Tu tego problemu nie ma: dowód Merkle dla 10 000 dyplomów to ~14 skrótów ≈ **0,5 kB**, nie trafia on-chain, a weryfikacja jest darmowa. Verkle dokłada trusted-setup/IPA i złożoność **bez korzyści**. (To, że rozważyłem i odrzuciłem z uzasadnieniem, jest mocniejsze niż dorzucenie buzzwordu.)
+
+---
+
+## Slajd 11 — Podsumowanie (ok. 1:00)
 
 Trzy rzeczy, które wnosi praca:
 1. **Tanie składowanie** — koszt przestaje rosnąć z liczbą dyplomów (z rosnącego robi się prawie stały).
