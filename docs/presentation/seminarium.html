@@ -37,7 +37,7 @@
       flex-direction: column;
       height: 720px !important;
       box-sizing: border-box;
-      padding: 3rem 4rem 1.8rem;
+      padding: 2.7rem 3.1rem 1.5rem;
       text-align: left;
     }
 
@@ -46,7 +46,7 @@
     .head .label {
       display: block;
       font-family: var(--sans);
-      font-size: 0.64rem;
+      font-size: 0.7rem;
       font-weight: 600;
       letter-spacing: 0.17em;
       text-transform: uppercase;
@@ -55,11 +55,11 @@
     }
     .head h2 {
       font-family: var(--serif);
-      font-size: 1.72rem;
+      font-size: 2.05rem;
       font-weight: 600;
       letter-spacing: -0.01em;
       color: var(--ink);
-      line-height: 1.16;
+      line-height: 1.14;
       margin: 0;
       text-transform: none;
     }
@@ -158,7 +158,7 @@
 
     .cap {
       font-family: var(--sans);
-      font-size: 0.66rem;
+      font-size: 0.74rem;
       font-weight: 600;
       letter-spacing: 0.12em;
       text-transform: uppercase;
@@ -170,9 +170,9 @@
     .reveal ul.list { list-style: none; margin: 0; padding: 0; }
     .reveal ul.list li {
       position: relative;
-      padding: 0.82rem 0 0.82rem 1.25rem;
+      padding: 0.86rem 0 0.86rem 1.35rem;
       border-bottom: 1px solid var(--rule);
-      font-size: 0.92rem;
+      font-size: 1.02rem;
       line-height: 1.45;
       color: var(--ink-2);
     }
@@ -205,14 +205,15 @@
     .compare .tag.bad::before  { background: var(--gold); }
     .compare .tag.good { color: var(--good); }
     .compare .tag.good::before { background: var(--good); }
-    .compare p { margin: 0; font-size: 0.92rem; line-height: 1.5; color: var(--ink-2); }
-    .compare .note { margin-top: 0.5rem; font-size: 0.82rem; color: var(--muted); }
+    .compare p { margin: 0; font-size: 1.02rem; line-height: 1.5; color: var(--ink-2); }
+    .compare .note { margin-top: 0.5rem; font-size: 0.9rem; color: var(--muted); }
+    .compare .tag { font-size: 0.74rem; }
 
     /* ════════ Table ════════ */
-    .reveal table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+    .reveal table { width: 100%; border-collapse: collapse; font-size: 1.04rem; }
     .reveal table th {
       font-family: var(--sans);
-      font-size: 0.64rem;
+      font-size: 0.7rem;
       font-weight: 600;
       letter-spacing: 0.07em;
       text-transform: uppercase;
@@ -225,7 +226,7 @@
     .reveal table th:first-child { text-align: left; }
     .reveal table td {
       font-family: var(--serif);
-      padding: 0.6rem 0.7rem;
+      padding: 0.7rem 0.7rem;
       border: none;
       border-bottom: 1px solid var(--rule);
       text-align: right;
@@ -252,8 +253,8 @@
     }
     .figures.stack .fig:first-child { padding-top: 0.2rem; }
     .figures.stack .fig + .fig { border-left: none; border-top: 1px solid var(--rule); }
-    .figures.stack .v { font-size: 2rem; min-width: 5rem; }
-    .figures.stack .k { margin-top: 0; font-size: 0.86rem; }
+    .figures.stack .v { font-size: 2.35rem; min-width: 5.4rem; }
+    .figures.stack .k { margin-top: 0; font-size: 0.95rem; }
     .figures .v {
       display: block;
       font-family: var(--serif);
@@ -281,7 +282,8 @@
       padding: 0.8rem 1.1rem;
       border-radius: 0 4px 4px 0;
     }
-    .callout p { margin: 0; font-size: 0.86rem; line-height: 1.55; color: var(--ink-2); }
+    .callout { padding: 0.95rem 1.25rem; }
+    .callout p { margin: 0; font-size: 0.96rem; line-height: 1.55; color: var(--ink-2); }
     .callout p .lead { font-family: var(--serif); color: var(--ink); font-weight: 600; }
 
     /* ════════ Code ════════ */
@@ -306,14 +308,15 @@
     }
     .flow .step h4 {
       font-family: var(--serif);
-      font-size: 1.02rem; font-weight: 600; color: var(--ink); margin: 0 0 0.5rem;
+      font-size: 1.14rem; font-weight: 600; color: var(--ink); margin: 0 0 0.5rem;
     }
-    .flow .step p { font-size: 0.84rem; line-height: 1.5; color: var(--ink-2); margin: 0; }
-    .flow .arrow { align-self: center; color: var(--rule-2); font-size: 1.4rem; }
+    .flow .step p { font-size: 0.94rem; line-height: 1.5; color: var(--ink-2); margin: 0; }
+    .flow .step .n { font-size: 0.7rem; }
+    .flow .arrow { align-self: center; color: var(--rule-2); font-size: 1.5rem; }
     .formula {
       margin-top: 0.65rem;
       font-family: 'SF Mono', monospace;
-      font-size: 0.74rem; line-height: 1.8;
+      font-size: 0.82rem; line-height: 1.8;
       color: var(--navy);
       background: var(--panel);
       border: 1px solid var(--rule);
@@ -329,10 +332,10 @@
     }
     .nets li:last-child { border-bottom: none; }
     .nets .name {
-      width: 8.5rem; flex-shrink: 0; font-weight: 600; color: var(--ink);
-      font-family: var(--serif); font-size: 0.96rem;
+      width: 9rem; flex-shrink: 0; font-weight: 600; color: var(--ink);
+      font-family: var(--serif); font-size: 1.06rem;
     }
-    .nets .desc { color: var(--ink-2); font-size: 0.85rem; }
+    .nets .desc { color: var(--ink-2); font-size: 0.95rem; }
     .nets li.best .name { color: var(--good); }
     .nets .badge {
       margin-left: auto; font-size: 0.62rem; letter-spacing: 0.06em;
@@ -346,9 +349,15 @@
     }
     .l2cap {
       margin: 0;
-      font-size: 0.86rem; line-height: 1.55; color: var(--ink-2);
+      font-size: 0.96rem; line-height: 1.55; color: var(--ink-2);
     }
     .l2cap .lead { font-family: var(--serif); color: var(--ink); font-weight: 600; }
+
+    /* interpretation prose — "why this approach won" */
+    .why { margin: 0 0 0.85rem; font-size: 1.0rem; line-height: 1.58; color: var(--ink-2); }
+    .why:last-child { margin-bottom: 0; }
+    .why .lead { font-family: var(--serif); color: var(--ink); font-weight: 600; }
+    .why strong { color: var(--ink); font-weight: 600; }
 
     /* ════════ Contributions ════════ */
     .contrib { display: flex; flex-direction: column; }
@@ -361,8 +370,9 @@
       font-family: var(--serif); font-size: 1.15rem; font-weight: 600;
       color: var(--navy); padding-top: 0.05rem; font-variant-numeric: tabular-nums;
     }
-    .contrib h4 { font-family: var(--serif); font-size: 1.04rem; font-weight: 600; color: var(--ink); margin: 0 0 0.28rem; }
-    .contrib p  { font-size: 0.85rem; line-height: 1.5; color: var(--ink-2); margin: 0; }
+    .contrib h4 { font-family: var(--serif); font-size: 1.18rem; font-weight: 600; color: var(--ink); margin: 0 0 0.3rem; }
+    .contrib p  { font-size: 0.96rem; line-height: 1.5; color: var(--ink-2); margin: 0; }
+    .contrib .idx { font-size: 1.3rem; }
 
     /* ════════ Reveal chrome ════════ */
     .reveal .slide-number { display: none; }
@@ -422,6 +432,11 @@
     <p class="byline">Nazar Shcherbyna <span class="sep">·</span> promotor: dr hab. inż. Bartosz Sawicki</p>
     <p class="affil">Politechnika Warszawska · Wydział Elektryczny</p>
   </div>
+  <aside class="notes">
+    Dzień dobry. Nazywam się Nazar Shcherbyna, przedstawię pracę magisterską „UniVerify — weryfikacja dyplomów na blockchainie Ethereum", realizowaną pod opieką dr. hab. inż. Bartosza Sawickiego.
+    Praca rozszerza mój artykuł konferencyjny: system pozwala każdemu samodzielnie zweryfikować autentyczność dyplomu, bez kontaktu z uczelnią.
+    Prezentację zbudowałem wokół trzech pytań badawczych — koszt przechowywania, prywatność i wybór warstwy L2. Na końcu pokażę, co jeszcze zostało do zrobienia. Plan na 15–20 minut.
+  </aside>
 </section>
 
 <!-- ════ 2 · Problem ════ -->
@@ -452,6 +467,11 @@
     </div>
   </div>
   <div class="foot"><span>UniVerify — Weryfikacja dyplomów na Ethereum</span><span class="pg"></span></div>
+  <aside class="notes">
+    Zacznijmy od problemu. Skala podróbek dyplomów to rząd miliarda dolarów — przytaczam to za książką Ezella i Beara z 2012 roku; to liczba motywująca skalę zjawiska, nie wynik mojej pracy.
+    Dziś weryfikacja oznacza mail do uczelni i tygodnie oczekiwania, a w skali międzynarodowej często jest niemożliwa. Weryfikator musi też bezwarunkowo ufać uczelni i jej bazie danych.
+    Z tego wyrastają trzy pytania badawcze: jak tanio przechowywać dane on-chain, jak chronić prywatność studenta zgodnie z RODO, i która warstwa L2 daje najniższy koszt. Te trzy pytania są osią całej prezentacji.
+  </aside>
 </section>
 
 <!-- ════ 3 · Q1 architektura ════ -->
@@ -508,6 +528,11 @@
     </div>
   </div>
   <div class="foot"><span>UniVerify — Weryfikacja dyplomów na Ethereum</span><span class="pg"></span></div>
+  <aside class="notes">
+    Pierwsze pytanie: architektura składowania. Naiwne podejście „per-record" zapisuje każdy dyplom jako osobny wpis w stanie kontraktu — n dyplomów to n transakcji, koszt rośnie liniowo.
+    Moje podejście to „Merkle-batch": cały rocznik haszujemy w drzewo Merkle i on-chain trafia tylko jeden korzeń — 32 bajty. To jedna transakcja niezależnie od liczby dyplomów.
+    Diagram pokazuje cztery dyplomy łączone parami aż do korzenia. Weryfikacja jest publiczna i bezpłatna — funkcja statusWithProof sprawdza ścieżkę Merkle dla danego dyplomu. Kluczowa obserwacja: on-chain idzie tylko korzeń, cała reszta zostaje poza łańcuchem.
+  </aside>
 </section>
 
 <!-- ════ 4 · Wynik Q1 ════ -->
@@ -526,8 +551,8 @@
             <tr class="hl"><td>Merkle-batch</td><td class="win">~$0,032</td><td class="win">~$0,032</td></tr>
           </tbody>
         </table>
-        <div class="callout" style="margin-top:1.5rem;">
-          <p><span class="lead">Model analityczny</span> dekompozycji kosztu odtwarza wyniki pomiarów z&nbsp;błędem poniżej 0,2%.</p>
+        <div class="callout" style="margin-top:1.4rem;">
+          <p><span class="lead">Dlaczego batching wygrywa:</span> koszt jest zdominowany przez zapis stanu i&nbsp;calldata na L1. Per-record płaci ten koszt <strong>n&nbsp;razy</strong>; Merkle-batch — <strong>raz</strong>, publikując jeden 32-bajtowy korzeń całego rocznika. Reszta pracy (budowa dowodu) przenosi się do darmowego off-chain → koszt <strong>O(1)</strong> zamiast O(n).</p>
         </div>
         <p class="src">Per-record = model n niezależnych transakcji; ceny z modelu dekompozycji gazu przy ustalonym kursie.</p>
       </div>
@@ -542,6 +567,11 @@
     </div>
   </div>
   <div class="foot"><span>UniVerify — Weryfikacja dyplomów na Ethereum</span><span class="pg"></span></div>
+  <aside class="notes">
+    Oto wynik. Przy stu dyplomach koszt jednostkowy spada o około 99 procent, a przy tysiącu — tysiąckrotnie. Te liczby są dla Sepolii L1, przy kursie ETH/USD 3500 ze snapshotu z 13 maja.
+    Najważniejsze jest „dlaczego". Koszt transakcji jest zdominowany przez zapis stanu i calldata na warstwie pierwszej. Per-record płaci ten koszt n razy; batching płaci go raz, bo on-chain idzie jeden korzeń. Reszta pracy — budowa dowodu — przenosi się do darmowego off-chain. Stąd asymptota O(1) zamiast O(n).
+    Zbudowałem też analityczny model dekompozycji kosztu — odtwarza pomiary z błędem poniżej 0,2 procenta, co znaczy, że rozumiemy, skąd bierze się każdy składnik kosztu. Zaznaczam: per-record to model n niezależnych transakcji, nie 1000 osobno wykonanych transakcji.
+  </aside>
 </section>
 
 <!-- ════ 5 · Q2 prywatność ════ -->
@@ -576,6 +606,12 @@
     </div>
   </div>
   <div class="foot"><span>UniVerify — Weryfikacja dyplomów na Ethereum</span><span class="pg"></span></div>
+  <aside class="notes">
+    Drugie pytanie: prywatność. Naiwna weryfikacja na blockchainie ujawnia wszystko — imię, oceny, numer dyplomu — co kłóci się z zasadą minimalizacji danych z RODO.
+    Rozwiązanie: każde z czterech pól zastępuję zobowiązaniem kryptograficznym z losową solą — c równa się keccak z pola i soli. Hasz dokumentu to keccak z czterech zobowiązań. On-chain trafia tylko ten hasz.
+    Efekt: student ujawnia tylko wybrane pola — na przykład sam stopień i datę — a weryfikator potwierdza ich autentyczność, nie poznając pozostałych. Soli nie da się odwrócić, więc nieujawnione pola pozostają tajne.
+    Co istotne inżyniersko: smart kontrakt nie wymaga żadnej zmiany — kontrakt nie odróżnia zobowiązania od zwykłego hasza. Cała logika prywatności jest off-chain, w nowej trasie /present aplikacji.
+  </aside>
 </section>
 
 <!-- ════ 6 · Czym jest L2 ════ -->
@@ -625,6 +661,11 @@
     </div>
   </div>
   <div class="foot"><span>UniVerify — Weryfikacja dyplomów na Ethereum</span><span class="pg"></span></div>
+  <aside class="notes">
+    Zanim przejdę do trzeciego pytania — krótkie wprowadzenie, bo dotyczy warstw drugich. L1, czyli sam Ethereum, jest bezpieczny, ale drogi: każdy bajt danych konkuruje o miejsce w bloku.
+    Rollup wykonuje setki transakcji poza łańcuchem i publikuje na L1 tylko jedną skompresowaną paczkę z dowodem poprawności. Koszt najdroższego zasobu — miejsca na dane — dzieli się na wszystkie transakcje w paczce. Od aktualizacji EIP-4844 dane idą do tanich „blobów", co dodatkowo obniża koszt.
+    Są dwie rodziny rollupów. Optimistic — Arbitrum, Base — zakłada poprawność i pozwala ją zakwestionować w okresie sporu. ZK-rollup — zkSync — dołącza kryptograficzny dowód z wiedzą zerową, więc poprawność jest gwarantowana od razu. Ta różnica wróci przy interpretacji wyników.
+  </aside>
 </section>
 
 <!-- ════ 7 · Q3 setup ════ -->
@@ -658,6 +699,11 @@
     </div>
   </div>
   <div class="foot"><span>UniVerify — Weryfikacja dyplomów na Ethereum</span><span class="pg"></span></div>
+  <aside class="notes">
+    Trzecie pytanie: które L2 jest najtańsze. Badam cztery sieci — Sepolię jako punkt odniesienia L1, Arbitrum i Base jako optimistic, oraz zkSync Era jako ZK-rollup.
+    O metodologii i o uczciwości pomiaru: pipeline uruchamiałem trzy razy niezależnie i agregowałem wyniki. Rozmiary paczek od 1 do 10 tysięcy. Latencję mierzyłem 30 razy z odchyleniem standardowym.
+    Ważne zastrzeżenie, które sam podkreślam: pomiary są na sieciach testowych, a koszty w USD są modelowane — biorę zmierzone zużycie gazu i mnożę przez osobny model kosztów L1 dla każdej rodziny rollupów, z 90-dniowej historii baseFee i snapshotu cen z 13 maja. Dodatkowo gaz zkSync nie jest wprost porównywalny z EVM — między rodzinami porównuję wyłącznie koszt w dolarach. To świadomy wybór na rzecz reprodukowalności.
+  </aside>
 </section>
 
 <!-- ════ 8 · Wynik Q3 ════ -->
@@ -681,19 +727,23 @@
         <p class="src">Sieci testowe; koszt USD = zmierzony gaz × model L1 + snapshot cen.</p>
       </div>
       <div>
-        <p class="cap">Odporność wyniku (analiza wrażliwości)</p>
+        <p class="cap">Dlaczego Base jest najtańszy</p>
+        <p class="why">Przy dużych paczkach koszt na dyplom sprowadza się do <strong>opłaty za dane na L1 ÷ n</strong>. Base (OP-Stack) agresywnie kompresuje paczkę i publikuje ją w tanich blobach EIP-4844, więc ten dominujący składnik jest u niej najniższy.</p>
+        <p class="why">zkSync dopłaca za generowanie dowodu ZK i bootloader abstrakcji konta — narzut, który przy tych rozmiarach amortyzuje się słabiej niż czysta kompresja danych.</p>
+        <p class="cap" style="margin-top:1.4rem;">Odporność (analiza wrażliwości)</p>
         <ul class="list">
-          <li>Base jest najtańszy na <strong>każdym</strong> rozmiarze paczki — n = 1 … 10 000, nie tylko przy 10 000</li>
-          <li>Przewaga utrzymuje się, gdy kurs ETH/USD zmienia się <strong>dwukrotnie</strong> w górę lub w dół</li>
-          <li>…oraz gdy cena sekwencera L2 zmienia się dwukrotnie w obie strony</li>
+          <li>Base najtańszy na <strong>każdym</strong> rozmiarze paczki (n = 1 … 10 000)</li>
+          <li>Ranking stabilny przy <strong>±2×</strong> zmianie kursu ETH/USD i ceny sekwencera</li>
         </ul>
-        <div class="callout" style="margin-top:1.3rem;">
-          <p>W całym zbadanym zakresie założeń ranking się nie zmienia — koszt na Base (<span class="lead">$0,00000009</span> / dyplom) pozostaje praktycznie pomijalny.</p>
-        </div>
       </div>
     </div>
   </div>
   <div class="foot"><span>UniVerify — Weryfikacja dyplomów na Ethereum</span><span class="pg"></span></div>
+  <aside class="notes">
+    Wynik: Base jest około 35 razy tańszy niż Ethereum L1 — 9 razy 10 do minus ósmej dolara za dyplom wobec 3,2 razy 10 do minus szóstej na Sepolii. Arbitrum i zkSync są tańsze od L1 tylko 1,8 i 1,4 raza.
+    Dlaczego akurat Base? Przy dużych paczkach koszt na dyplom sprowadza się do opłaty za dane na L1 podzielonej przez n. Base na OP-Stack agresywnie kompresuje paczkę i publikuje ją w tanich blobach, więc ten dominujący składnik jest najniższy. zkSync musi dopłacić za generowanie dowodu ZK i bootloader abstrakcji konta — i ten narzut przy takich rozmiarach amortyzuje się słabiej niż sama kompresja danych. To jest sedno interpretacji.
+    O odporności: świadomie nie mówię „wynik niezależny od założeń". Mówię dokładnie tyle, ile zmierzyłem — w zbadanym zakresie Base jest najtańszy na każdym rozmiarze paczki, a ranking nie zmienia się przy dwukrotnym wzroście lub spadku kursu ETH/USD oraz ceny sekwencera. To pokazują tabele wrażliwości w pracy.
+  </aside>
 </section>
 
 <!-- ════ 9 · Phase 3 ════ -->
@@ -723,6 +773,10 @@
     </div>
   </div>
   <div class="foot"><span>UniVerify — Weryfikacja dyplomów na Ethereum</span><span class="pg"></span></div>
+  <aside class="notes">
+    Co jeszcze zostało — to ostatnia faza pracy. Jedną rzecz już ustaliłem: koszt gazu on-chain jest identyczny dla schematu z prywatnością i bez niej, bo kontrakt nie odróżnia zobowiązania od zwykłego hasza. To wynik zerowy, ale wart raportowania — pokazuje, że prywatność nie kosztuje nic na łańcuchu.
+    Do zmierzenia został narzut off-chain: czas budowania koperty, czas weryfikacji selektywnej kontra pełnej, oraz rozmiar danych przy pełnym i selektywnym ujawnieniu. Reużywam tu istniejącego pipeline z fazy benchmarków, więc szacuję to na około jeden dzień pracy. Te liczby zasilą rozdział ewaluacji w pracy.
+  </aside>
 </section>
 
 <!-- ════ 10 · Podsumowanie ════ -->
@@ -757,12 +811,17 @@
     </div>
   </div>
   <div class="foot"><span>github.com/n-shcherbyna/univerify</span><span class="pg"></span></div>
+  <aside class="notes">
+    Podsumowując, praca wnosi trzy rzeczy. Po pierwsze — architekturę Merkle-batch, która obniża koszt o trzy rzędy wielkości przy tysiącu dyplomów, z modelem analitycznym o błędzie poniżej 0,2 procenta. Po drugie — selektywne ujawnianie danych zgodne z zasadą minimalizacji RODO, bez żadnej zmiany w smart kontrakcie. Po trzecie — benchmarki L2 pokazujące, że Base jest około 35 razy tańszy od Ethereum L1, z wynikiem stabilnym na analizę wrażliwości.
+    Kod jest publiczny pod tym adresem. Dziękuję za uwagę — chętnie odpowiem na pytania.
+  </aside>
 </section>
 
 </div>
 </div>
 
 <script src="https://unpkg.com/reveal.js@5.1.0/dist/reveal.js"></script>
+<script src="https://unpkg.com/reveal.js@5.1.0/plugin/notes/notes.js"></script>
 <script>
   Reveal.initialize({
     hash: true,
@@ -777,7 +836,8 @@
     height: 720,
     margin: 0,
     minScale: 0.2,
-    maxScale: 2.0
+    maxScale: 2.0,
+    plugins: [ RevealNotes ]
   });
   function updFoot() {
     var cur = Reveal.getCurrentSlide();
