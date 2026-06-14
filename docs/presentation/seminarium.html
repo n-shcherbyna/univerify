@@ -652,7 +652,7 @@
       </div>
       <div>
         <p class="cap">Dwie rodziny rollupów</p>
-        <p class="l2cap"><strong>Optimistic rollup</strong> (Arbitrum, Base) zakłada poprawność transakcji i pozwala ją zakwestionować w okresie sporu. <strong>ZK-rollup</strong> (zkSync) dołącza kryptograficzny dowód z wiedzą zerową — poprawność jest gwarantowana od razu.</p>
+        <p class="l2cap"><strong>Optimistic rollup</strong> (Arbitrum, Base) zakłada, że jest dobrze, i daje czas na zgłoszenie oszustwa. <strong>ZK-rollup</strong> (zkSync) od razu dołącza matematyczny dowód poprawności — pewność natychmiast, ale kosztem dodatkowej pracy.</p>
       </div>
     </div>
   </div>
@@ -660,7 +660,7 @@
   <aside class="notes">
     Zanim przejdę do trzeciego pytania — krótkie wprowadzenie, bo dotyczy warstw drugich. L1, czyli sam Ethereum, jest bezpieczny, ale drogi: każdy bajt danych konkuruje o miejsce w bloku.
     Rollup wykonuje setki transakcji poza łańcuchem i publikuje na L1 tylko jedną skompresowaną paczkę z dowodem poprawności. Koszt najdroższego zasobu — miejsca na dane — dzieli się na wszystkie transakcje w paczce. Od aktualizacji EIP-4844 dane idą do tanich „blobów", co dodatkowo obniża koszt.
-    Są dwie rodziny rollupów. Optimistic — Arbitrum, Base — zakłada poprawność i pozwala ją zakwestionować w okresie sporu. ZK-rollup — zkSync — dołącza kryptograficzny dowód z wiedzą zerową, więc poprawność jest gwarantowana od razu. Ta różnica wróci przy interpretacji wyników.
+    Są dwa rodzaje rollupów. Optimistic — Arbitrum, Base — zakłada, że jest dobrze, i daje czas na zgłoszenie oszustwa. ZK-rollup — zkSync — od razu dołącza matematyczny dowód poprawności; pewność natychmiast, ale kosztem dodatkowej pracy. Ta różnica wróci przy tłumaczeniu wyników.
   </aside>
 </section>
 
@@ -684,11 +684,11 @@
       <div>
         <p class="cap">Metodologia</p>
         <ul class="list">
-          <li><strong>3</strong> niezależne uruchomienia pipeline, zagregowane</li>
+          <li><strong>3</strong> niezależne uruchomienia całego procesu (uśrednione)</li>
           <li>Rozmiary paczki: n ∈ {1, 10, 100, 1 000, 10 000}</li>
-          <li>Koszt USD modelowany z 90-dniowej historii baseFee (p10/p50/p90)</li>
-          <li>N = 30 pomiarów latencji z raportowanym σ</li>
-          <li>Osobny model kosztów L1 dla każdej rodziny rollupów</li>
+          <li>Koszt w USD z 90-dniowej historii cen sieci — scenariusz pesymistyczny / typowy / optymistyczny</li>
+          <li>30 pomiarów czasu reakcji (z odchyleniem standardowym)</li>
+          <li>Osobny model cen dla każdego rodzaju sieci</li>
         </ul>
         <p class="src">Pomiary na sieciach testowych · snapshot cen 2026-05-13 · zkSync: porównywalny tylko koszt USD (gaz nieporównywalny między rodzinami rollupów).</p>
       </div>
@@ -698,14 +698,14 @@
   <aside class="notes">
     Trzecie pytanie: które L2 jest najtańsze. Badam cztery sieci — Sepolię jako punkt odniesienia L1, Arbitrum i Base jako optimistic, oraz zkSync Era jako ZK-rollup.
     O metodologii i o uczciwości pomiaru: pipeline uruchamiałem trzy razy niezależnie i agregowałem wyniki. Rozmiary paczek od 1 do 10 tysięcy. Latencję mierzyłem 30 razy z odchyleniem standardowym.
-    Ważne zastrzeżenie, które sam podkreślam: pomiary są na sieciach testowych, a koszty w USD są modelowane — biorę zmierzone zużycie gazu i mnożę przez osobny model kosztów L1 dla każdej rodziny rollupów, z 90-dniowej historii baseFee i snapshotu cen z 13 maja. Dodatkowo gaz zkSync nie jest wprost porównywalny z EVM — między rodzinami porównuję wyłącznie koszt w dolarach. To świadomy wybór na rzecz reprodukowalności.
+    Ważne zastrzeżenie, które sam podkreślam: testowałem na sieciach testowych, a ceny w dolarach policzyłem z modelu — biorę zmierzone zużycie i mnożę przez cennik z konkretnego dnia (13 maja), osobny dla każdego rodzaju sieci, z 90-dniowej historii cen. Dodatkowo „gaz" w zkSync liczy się inaczej niż w pozostałych, więc między sieciami porównuję wyłącznie dolary, nigdy gaz. To celowy wybór, żeby wynik dało się powtórzyć.
   </aside>
 </section>
 
 <!-- ════ 8 · Wynik Q3 ════ -->
 <section>
   <div class="head">
-    <span class="label">Wynik 3 — koszt / dyplom · n = 10 000 · p50 · ETH/USD = 3500 (2026-05-13)</span>
+    <span class="label">Wynik 3 — koszt / dyplom · n = 10 000 · scenariusz typowy · ETH/USD = 3500 (2026-05-13)</span>
     <h2>Base: 35× taniej niż Ethereum L1</h2>
   </div>
   <div class="body flush">
@@ -725,7 +725,7 @@
       <div>
         <p class="cap">Dlaczego Base jest najtańszy</p>
         <p class="why">Przy dużych paczkach koszt na dyplom sprowadza się do <strong>opłaty za dane na L1 ÷ n</strong>. Base (OP-Stack) agresywnie kompresuje paczkę i publikuje ją w tanich blobach EIP-4844, więc ten dominujący składnik jest u niej najniższy.</p>
-        <p class="why">zkSync dodatkowo płaci za wygenerowanie kryptograficznego dowodu i obsługę kont — to stały narzut, który przy takich rozmiarach paczek rozkłada się gorzej niż sama kompresja danych.</p>
+        <p class="why">zkSync dodatkowo płaci za swój matematyczny dowód i obsługę kont — to stały narzut, który przy takich rozmiarach paczek rozkłada się gorzej niż sama kompresja danych.</p>
         <p class="cap" style="margin-top:1.4rem;">Odporność (analiza wrażliwości)</p>
         <ul class="list">
           <li>Base najtańszy na <strong>każdym</strong> rozmiarze paczki (n = 1 … 10 000)</li>
@@ -737,7 +737,7 @@
   <div class="foot"><span>UniVerify — Weryfikacja dyplomów na Ethereum</span><span class="pg"></span></div>
   <aside class="notes">
     Wynik: Base jest około 35 razy tańszy niż Ethereum L1 — 9 razy 10 do minus ósmej dolara za dyplom wobec 3,2 razy 10 do minus szóstej na Sepolii. Arbitrum i zkSync są tańsze od L1 tylko 1,8 i 1,4 raza.
-    Dlaczego akurat Base? Przy dużych paczkach koszt na dyplom sprowadza się do opłaty za dane na L1 podzielonej przez n. Base na OP-Stack agresywnie kompresuje paczkę i publikuje ją w tanich blobach, więc ten dominujący składnik jest najniższy. zkSync musi dodatkowo zapłacić za wygenerowanie kryptograficznego dowodu i obsługę kont — i ten stały narzut przy takich rozmiarach paczek rozkłada się gorzej niż sama kompresja danych. To jest sedno interpretacji.
+    Dlaczego akurat Base? Przy dużych paczkach koszt na dyplom sprowadza się do opłaty za dane na L1 podzielonej przez n. Base na OP-Stack agresywnie kompresuje paczkę i publikuje ją w tanich blobach, więc ten dominujący składnik jest najniższy. zkSync musi dodatkowo zapłacić za swój matematyczny dowód i obsługę kont — i ten stały narzut przy takich rozmiarach paczek rozkłada się gorzej niż sama kompresja danych. To jest sedno interpretacji.
     O odporności: świadomie nie mówię „wynik niezależny od założeń". Mówię dokładnie tyle, ile zmierzyłem — w zbadanym zakresie Base jest najtańszy na każdym rozmiarze paczki, a ranking nie zmienia się przy dwukrotnym wzroście lub spadku kursu ETH/USD oraz ceny sekwencera. To pokazują tabele wrażliwości w pracy.
   </aside>
 </section>
