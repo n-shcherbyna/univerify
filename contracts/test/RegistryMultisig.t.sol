@@ -108,4 +108,68 @@ contract RegistryMultisigTest is Test {
         vm.expectRevert(RegistryMultisig.DuplicateOwner.selector);
         new RegistryMultisig(owners, 1);
     }
+
+    function _selfCall(bytes memory data) internal {
+        vm.prank(a);
+        uint256 id = ms.submit(address(ms), 0, data);
+        vm.prank(b);
+        ms.confirm(id);
+        vm.prank(a);
+        ms.execute(id);
+    }
+
+    function testRotationRequiresSelfCall() public {
+        // Direct call from an owner is rejected — must go through m-of-n.
+        vm.prank(a);
+        vm.expectRevert(RegistryMultisig.OnlySelf.selector);
+        ms.addOwner(address(0xD4));
+    }
+
+    function testAddOwnerViaMultisig() public {
+        _selfCall(abi.encodeCall(RegistryMultisig.addOwner, (address(0xD4))));
+        assertTrue(ms.isOwner(address(0xD4)));
+        assertEq(ms.ownerCount(), 4);
+    }
+
+    function testRemoveOwnerViaMultisig() public {
+        _selfCall(abi.encodeCall(RegistryMultisig.removeOwner, (c)));
+        assertFalse(ms.isOwner(c));
+        assertEq(ms.ownerCount(), 2);
+    }
+
+    function testRemoveOwnerBelowThresholdReverts() public {
+        // 3 owners, threshold 2 → removing one is fine, removing to below threshold is not.
+        _selfCall(abi.encodeCall(RegistryMultisig.removeOwner, (c))); // now 2 owners, threshold 2
+        // Removing another would leave 1 owner < threshold 2 → inner call reverts → CallFailed.
+        vm.prank(a);
+        uint256 id = ms.submit(address(ms), 0, abi.encodeCall(RegistryMultisig.removeOwner, (b)));
+        vm.prank(b);
+        ms.confirm(id);
+        vm.prank(a);
+        vm.expectRevert(RegistryMultisig.CallFailed.selector);
+        ms.execute(id);
+    }
+
+    function testChangeThresholdViaMultisig() public {
+        _selfCall(abi.encodeCall(RegistryMultisig.changeThreshold, (uint256(3))));
+        assertEq(ms.threshold(), 3);
+    }
+
+    function testRemovedOwnerConfirmationStopsCounting() public {
+        // c confirms a pending tx, then c is removed via m-of-n (a+b).
+        // c's stale confirmation must no longer count toward threshold.
+        vm.prank(a);
+        uint256 id = ms.submit(address(counter), 0, abi.encodeCall(Counter.bump, (7)));
+        vm.prank(c);
+        ms.confirm(id);
+        assertEq(ms.confirmationCount(id), 2); // a (auto) + c
+
+        _selfCall(abi.encodeCall(RegistryMultisig.removeOwner, (c)));
+        assertEq(ms.confirmationCount(id), 1); // only a remains a current owner
+
+        // With threshold 2 and only a's confirmation, execute must revert.
+        vm.prank(a);
+        vm.expectRevert(RegistryMultisig.NotEnoughConfirmations.selector);
+        ms.execute(id);
+    }
 }
