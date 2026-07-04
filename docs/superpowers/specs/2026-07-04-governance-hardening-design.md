@@ -27,8 +27,9 @@ Replace the single-EOA owner with **m-of-n multisig + timelock** governance so t
    until a delay passes** — makes rewrites *non-silent, detectable, and revocable*
    during the delay window, matching the thesis's core claim.
 
-Non-goals: signer rotation (documented as future work — signer set is immutable at
-deploy), on-chain governance token / voting, changing `DiplomaRegistry` behavior.
+Non-goals: on-chain governance token / voting, changing `DiplomaRegistry` behavior.
+Signer rotation IS in scope (see below) — a multisig that cannot remove a compromised or
+lost signer would contradict the key-compromise resilience this feature argues for.
 
 ## Key constraint: registry stays byte-for-byte unchanged
 
@@ -56,9 +57,10 @@ Three roles, two new deployable units, registry unchanged:
 Purpose-built, single-responsibility, heavily tested. ~120 lines.
 
 State:
-- `address[] owners` + `mapping(address => bool) isOwner` — immutable set, from constructor.
-- `uint256 threshold` — immutable, from constructor. Require `0 < threshold <= owners.length`,
-  owners non-zero and unique.
+- `address[] owners` + `mapping(address => bool) isOwner` — initialized from constructor,
+  mutable via self-governed rotation (below). Removal uses swap-and-pop keeping `isOwner` in sync.
+- `uint256 threshold` — initialized from constructor. Constructor and every rotation enforce the
+  invariant `0 < threshold <= owners.length`, owners non-zero and unique.
 - Transaction queue: `struct Tx { address target; uint256 value; bytes data; bool executed; }`,
   stored by incrementing `txId`.
 - `mapping(uint256 => mapping(address => bool)) confirmed` + `mapping(uint256 => uint256) confirmations`.
@@ -73,12 +75,23 @@ Functions (all owner-gated except views):
 - Views: `getOwners()`, `threshold()`, `txCount()`, `getTx(txId)`, `confirmationsOf(txId)`,
   `isConfirmed(txId, owner)`.
 
-Events: `Submitted(txId, target, value, data, proposer)`, `Confirmed(txId, owner)`,
-`Revoked(txId, owner)`, `Executed(txId)`.
+Self-governed signer rotation (all `onlySelf` — callable only via an executed multisig tx,
+i.e. they require m-of-n; no new trust assumption, standard Gnosis-Safe pattern):
+- `addOwner(address newOwner)` — reverts on zero/duplicate.
+- `removeOwner(address owner)` — reverts if unknown or if it would drop `owners.length` below
+  `threshold`; swap-and-pop.
+- `changeThreshold(uint256 newThreshold)` — enforces the invariant above.
+The `onlySelf` modifier requires `msg.sender == address(this)`, so a rotation is itself an
+m-of-n tx: `submit(address(this), 0, addOwner.encode(...))` → confirm → execute. Rotation does
+NOT route through the timelock (it does not touch the registry; the m-of-n gate is sufficient).
 
-Guards: `onlyOwner` modifier; reject execution below threshold; reject double-execute;
-reject actions on unknown/executed txs. Reentrancy: `executed` set before the external call
-(checks-effects-interactions).
+Events: `Submitted(txId, target, value, data, proposer)`, `Confirmed(txId, owner)`,
+`Revoked(txId, owner)`, `Executed(txId)`, `OwnerAdded(owner)`, `OwnerRemoved(owner)`,
+`ThresholdChanged(threshold)`.
+
+Guards: `onlyOwner` modifier; `onlySelf` for rotation; reject execution below threshold; reject
+double-execute; reject actions on unknown/executed txs. Reentrancy: `executed` set before the
+external call (checks-effects-interactions).
 
 ### 2. `TimelockController` (OZ 5.6.1, no new code)
 
@@ -132,8 +145,10 @@ New `gov` command group (script style consistent with existing `issue.ts` / `ver
 - `gov exec-multisig --tx <txId>` — fires the scheduled `timelock.schedule`.
 - `gov execute --op <operationId>` — after delay, calls `timelock.execute`.
 - `gov cancel --op <operationId>` — m-of-n cancel flow.
+- `gov owner add|remove --address <addr>` and `gov threshold set --value <m>` — self-governed
+  rotation (each is an m-of-n `submit`/`confirm`/`execute` targeting the multisig itself).
 - `gov status` — list pending multisig txs (with confirmations) and pending timelock ops
-  (with state + ready-at).
+  (with state + ready-at); also prints current owners + threshold.
 
 Reads env for `MULTISIG_ADDRESS`, `TIMELOCK_ADDRESS`, `REGISTRY_ADDRESS`, `RPC_URL`,
 signer key(s).
@@ -173,7 +188,10 @@ Multisig unit:
 - constructor validation (threshold bounds, zero/duplicate owners revert);
 - submit auto-confirms; confirm/revoke adjust count; non-owner rejected;
 - execute reverts below threshold; execute reverts if already executed; double-confirm reverts;
-- execute forwards call and reverts on inner-call failure.
+- execute forwards call and reverts on inner-call failure;
+- rotation: `addOwner`/`removeOwner`/`changeThreshold` revert when called directly (not `onlySelf`)
+  and succeed only via an executed m-of-n tx; `removeOwner` reverts if it would drop below
+  threshold; duplicate/zero/unknown-owner reverts; owner set and `isOwner` stay consistent.
 
 Integration (multisig + timelock + registry):
 - full schedule → warp `minDelay` → execute path performs the registry op;
@@ -202,7 +220,7 @@ demonstrated, measured property.
 |-----------|---------|-------|
 | Multisig owners (n) | 3 | deploy param |
 | Threshold (m) | 2 | deploy param, `2-of-3` |
-| Signer rotation | immutable | future work |
+| Signer rotation | self-governed (m-of-n) | `onlySelf` add/remove/changeThreshold |
 | Timelock `minDelay` | 48 h (172800 s) | deploy param; tests use short values |
 | Executor | `address(0)` (anyone) | after delay only |
 | Timelock admin | `address(0)` | no backdoor |
