@@ -32,7 +32,7 @@ contract RegistryMultisig {
 
     Transaction[] private transactions;
     mapping(uint256 => mapping(address => bool)) public confirmed;
-    mapping(uint256 => uint256) public confirmations;
+    // No running counter: confirmationCount() re-derives the tally from the CURRENT owner set so a removed owner's stale confirmation stops counting (ConsenSys MultiSigWallet pattern).
 
     event Submitted(uint256 indexed txId, address indexed proposer, address target, uint256 value, bytes data);
     event Confirmed(uint256 indexed txId, address indexed owner);
@@ -85,7 +85,6 @@ contract RegistryMultisig {
         if (transactions[txId].executed) revert AlreadyExecuted();
         if (confirmed[txId][msg.sender]) revert AlreadyConfirmed();
         confirmed[txId][msg.sender] = true;
-        confirmations[txId] += 1;
         emit Confirmed(txId, msg.sender);
     }
 
@@ -94,7 +93,6 @@ contract RegistryMultisig {
         if (transactions[txId].executed) revert AlreadyExecuted();
         if (!confirmed[txId][msg.sender]) revert NotConfirmed();
         confirmed[txId][msg.sender] = false;
-        confirmations[txId] -= 1;
         emit Revoked(txId, msg.sender);
     }
 
@@ -102,7 +100,7 @@ contract RegistryMultisig {
         if (txId >= transactions.length) revert UnknownTx();
         Transaction storage t = transactions[txId];
         if (t.executed) revert AlreadyExecuted();
-        if (confirmations[txId] < threshold) revert NotEnoughConfirmations();
+        if (confirmationCount(txId) < threshold) revert NotEnoughConfirmations();
         t.executed = true; // effects before interaction (reentrancy-safe)
         (bool ok, ) = t.target.call{value: t.value}(t.data);
         if (!ok) revert CallFailed();
@@ -155,6 +153,14 @@ contract RegistryMultisig {
 
     function txCount() external view returns (uint256) {
         return transactions.length;
+    }
+
+    /// @notice Confirmations counted over the CURRENT owner set only, so a
+    ///         removed owner's stale confirmation stops counting immediately.
+    function confirmationCount(uint256 txId) public view returns (uint256 count) {
+        for (uint256 i = 0; i < owners.length; i++) {
+            if (confirmed[txId][owners[i]]) count += 1;
+        }
     }
 
     function getTx(uint256 txId)

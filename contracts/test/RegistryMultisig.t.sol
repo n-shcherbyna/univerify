@@ -34,7 +34,7 @@ contract RegistryMultisigTest is Test {
 
     function testSubmitAutoConfirms() public {
         uint256 id = _submitBump(a, 5);
-        assertEq(ms.confirmations(id), 1);
+        assertEq(ms.confirmationCount(id), 1);
         assertTrue(ms.confirmed(id, a));
     }
 
@@ -68,10 +68,10 @@ contract RegistryMultisigTest is Test {
         uint256 id = _submitBump(a, 1);
         vm.prank(b);
         ms.confirm(id);
-        assertEq(ms.confirmations(id), 2);
+        assertEq(ms.confirmationCount(id), 2);
         vm.prank(b);
         ms.revoke(id);
-        assertEq(ms.confirmations(id), 1);
+        assertEq(ms.confirmationCount(id), 1);
     }
 
     function testDoubleExecuteReverts() public {
