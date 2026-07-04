@@ -15,65 +15,72 @@ type Bundle = {
   setTxState: (s: TxState) => void;
 };
 
-async function send(b: Bundle, hash: Hex): Promise<Hex> {
-  b.setTxState("confirming");
-  await b.publicClient.waitForTransactionReceipt({ hash });
-  b.setTxState("idle");
-  return hash;
+async function run(b: Bundle, write: () => Promise<Hex>): Promise<Hex> {
+  b.setTxState("submitting");
+  try {
+    const hash = await write();
+    b.setTxState("confirming");
+    await b.publicClient.waitForTransactionReceipt({ hash });
+    b.setTxState("idle");
+    return hash;
+  } catch (e) {
+    b.setTxState("idle");
+    throw e;
+  }
 }
 
 /** Propose a registry change: wrap in timelock.schedule, submit to multisig. */
 export async function proposeChange(b: Bundle, registryData: Hex, salt: Hex, delay: bigint) {
-  b.setTxState("submitting");
-  const scheduleData = buildScheduleCall(b.registry, registryData, salt, delay);
-  const hash = await b.walletClient.writeContract({
-    address: b.multisig, abi: RegistryMultisigAbi, functionName: "submit",
-    args: [b.timelock, 0n, scheduleData], account: b.account,
+  return run(b, () => {
+    const scheduleData = buildScheduleCall(b.registry, registryData, salt, delay);
+    return b.walletClient.writeContract({
+      address: b.multisig, abi: RegistryMultisigAbi, functionName: "submit",
+      args: [b.timelock, 0n, scheduleData], account: b.account,
+    });
   });
-  return send(b, hash);
 }
 
 export async function confirmTx(b: Bundle, txId: bigint) {
-  b.setTxState("submitting");
-  const hash = await b.walletClient.writeContract({
-    address: b.multisig, abi: RegistryMultisigAbi, functionName: "confirm", args: [txId], account: b.account,
-  });
-  return send(b, hash);
+  return run(b, () =>
+    b.walletClient.writeContract({
+      address: b.multisig, abi: RegistryMultisigAbi, functionName: "confirm", args: [txId], account: b.account,
+    }),
+  );
 }
 
 export async function revokeTx(b: Bundle, txId: bigint) {
-  b.setTxState("submitting");
-  const hash = await b.walletClient.writeContract({
-    address: b.multisig, abi: RegistryMultisigAbi, functionName: "revoke", args: [txId], account: b.account,
-  });
-  return send(b, hash);
+  return run(b, () =>
+    b.walletClient.writeContract({
+      address: b.multisig, abi: RegistryMultisigAbi, functionName: "revoke", args: [txId], account: b.account,
+    }),
+  );
 }
 
 export async function execMultisig(b: Bundle, txId: bigint) {
-  b.setTxState("submitting");
-  const hash = await b.walletClient.writeContract({
-    address: b.multisig, abi: RegistryMultisigAbi, functionName: "execute", args: [txId], account: b.account,
-  });
-  return send(b, hash);
+  return run(b, () =>
+    b.walletClient.writeContract({
+      address: b.multisig, abi: RegistryMultisigAbi, functionName: "execute", args: [txId], account: b.account,
+    }),
+  );
 }
 
 export async function execTimelock(b: Bundle, registryData: Hex, salt: Hex) {
-  b.setTxState("submitting");
-  const hash = await b.walletClient.writeContract({
-    address: b.timelock, abi: TimelockControllerAbi, functionName: "execute",
-    args: [b.registry, 0n, registryData, ZERO32, salt], account: b.account,
-  });
-  return send(b, hash);
+  return run(b, () =>
+    b.walletClient.writeContract({
+      address: b.timelock, abi: TimelockControllerAbi, functionName: "execute",
+      args: [b.registry, 0n, registryData, ZERO32, salt], account: b.account,
+    }),
+  );
 }
 
 export async function cancelOp(b: Bundle, opId: Hex) {
-  b.setTxState("submitting");
-  const cancelData = encodeFunctionData({
-    abi: TimelockControllerAbi, functionName: "cancel", args: [opId],
+  return run(b, () => {
+    const cancelData = encodeFunctionData({
+      abi: TimelockControllerAbi, functionName: "cancel", args: [opId],
+    });
+    return b.walletClient.writeContract({
+      address: b.multisig, abi: RegistryMultisigAbi, functionName: "submit",
+      args: [b.timelock, 0n, cancelData], account: b.account,
+    });
   });
-  const hash = await b.walletClient.writeContract({
-    address: b.multisig, abi: RegistryMultisigAbi, functionName: "submit",
-    args: [b.timelock, 0n, cancelData], account: b.account,
-  });
-  return send(b, hash);
 }
