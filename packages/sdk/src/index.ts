@@ -9,6 +9,7 @@ export type {
   BatchInfo,
   PrivateDiplomaEnvelope,
   SelectiveVerifyResult,
+  OperationState,
 } from "./client.js";
 
 // Re-export commonly needed utilities from verifier-core
