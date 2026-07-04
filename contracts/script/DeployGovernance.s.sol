@@ -50,6 +50,11 @@ contract DeployGovernance is Script {
 
         console2.log("RegistryMultisig:", address(ms));
         console2.log("TimelockController:", address(timelock));
-        console2.log("Registry pendingOwner set to timelock. Run `gov bootstrap` to accept.");
+        console2.log("Registry pendingOwner set to timelock. Complete the handover via governance:");
+        console2.log("  gov propose --op acceptOwnership --salt bootstrap   (owner 1)");
+        console2.log("  gov confirm --tx <id>                               (owner 2 ... up to threshold)");
+        console2.log("  gov exec-multisig --tx <id>                         (schedules on timelock)");
+        console2.log("  <wait GOV_MIN_DELAY seconds>");
+        console2.log("  gov execute --op acceptOwnership --salt bootstrap   (anyone)");
     }
 }
