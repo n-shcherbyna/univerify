@@ -40,6 +40,21 @@ export async function proposeChange(b: Bundle, registryData: Hex, salt: Hex, del
   });
 }
 
+/**
+ * Propose a signer-set change (addOwner / removeOwner / changeThreshold). These
+ * are `onlySelf` on the multisig, so the proposal targets the multisig itself:
+ * once m-of-n confirm and execMultisig runs, the multisig self-calls immediately
+ * — no timelock, no delay (unlike registry changes, which go through schedule).
+ */
+export async function proposeSignerChange(b: Bundle, data: Hex) {
+  return run(b, () =>
+    b.walletClient.writeContract({
+      address: b.multisig, abi: RegistryMultisigAbi, functionName: "submit",
+      args: [b.multisig, 0n, data], account: b.account,
+    }),
+  );
+}
+
 export async function confirmTx(b: Bundle, txId: bigint) {
   return run(b, () =>
     b.walletClient.writeContract({

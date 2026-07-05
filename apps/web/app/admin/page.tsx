@@ -2,23 +2,19 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { isAddress, encodeFunctionData, decodeFunctionData, type Address, type Hex } from "viem";
-import { DiplomaRegistryAbi, TimelockControllerAbi } from "@univerify/verifier-core";
+import { DiplomaRegistryAbi, TimelockControllerAbi, RegistryMultisigAbi } from "@univerify/verifier-core";
 
 import { readPublicEnv } from "@/lib/univerify/env";
 import {
   makePublicClient,
   readOwner,
-  readPendingOwner,
   readRegistryOverview,
-  readUniversityMeta,
-  universityStatusLabel,
   type IssuerOverview,
   type UniversityOverview,
 } from "@/lib/univerify/registry";
 import { getEthereum, ensureChain, makeWalletClient } from "@/lib/univerify/wallet";
 import { makeStateLogger } from "@/lib/univerify/logs";
 import type { ChainState, TxState } from "@/lib/univerify/types";
-import { writeIssuerAdminTx } from "@/lib/univerify/registryAdminWrite";
 import {
   saltFor,
   hashOp,
@@ -29,6 +25,7 @@ import {
 } from "@/lib/univerify/governance";
 import {
   proposeChange,
+  proposeSignerChange,
   confirmTx,
   revokeTx,
   execMultisig,
@@ -37,7 +34,7 @@ import {
 } from "@/lib/univerify/registryGovernanceWrite";
 
 type UniversityForm = { id: string; name: string; country: string; website: string; accreditationId: string };
-type Tab = "overview" | "onboard" | "university" | "issuer" | "ownership" | "governance";
+type Tab = "overview" | "governance";
 
 type Bundle = Parameters<typeof proposeChange>[0];
 type MultisigInfo = { owners: Address[]; threshold: bigint; txCount: bigint };
@@ -65,7 +62,11 @@ function uniFormValid(f: UniversityForm): boolean {
   return /^\d+$/.test(f.id.trim()) && f.id.trim() !== "0" && f.name.trim().length > 0;
 }
 
-/** Human-readable label for a pending multisig tx (a wrapped timelock.schedule/cancel). */
+/**
+ * Human-readable label for a pending multisig tx. Two shapes: a wrapped
+ * timelock.schedule/cancel (registry change), or a direct multisig self-call
+ * (signer rotation: addOwner / removeOwner / changeThreshold).
+ */
 function decodeMultisigAction(data: Hex): string {
   try {
     const outer = decodeFunctionData({ abi: TimelockControllerAbi, data });
@@ -81,7 +82,13 @@ function decodeMultisigAction(data: Hex): string {
     if (outer.functionName === "cancel") return `cancel(${String(outer.args[0])})`;
     return `${outer.functionName}(…)`;
   } catch {
-    return "unknown action";
+    // Not a timelock call — try a multisig self-call (signer rotation).
+    try {
+      const self = decodeFunctionData({ abi: RegistryMultisigAbi, data });
+      return `${self.functionName}(${(self.args ?? []).map((a) => String(a)).join(", ")})`;
+    } catch {
+      return "unknown action";
+    }
   }
 }
 
@@ -122,9 +129,6 @@ export default function AdminPage() {
   const [account, setAccount] = useState<Address | "">("");
   const [, setChainState] = useState<ChainState>("unknown");
   const [owner, setOwner] = useState<Address | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [pendingOwner, setPendingOwner] = useState<Address | null>(null);
-  const [isPendingOwner, setIsPendingOwner] = useState(false);
   const [tab, setTab] = useState<Tab>("overview");
 
   // Overview state
@@ -132,15 +136,6 @@ export default function AdminPage() {
   const [universities, setUniversities] = useState<UniversityOverview[]>([]);
   const [issuers, setIssuers] = useState<IssuerOverview[]>([]);
   const [overviewError, setOverviewError] = useState("");
-
-  // Forms
-  const [onboardIssuer, setOnboardIssuer] = useState("");
-  const [onboardUni, setOnboardUni] = useState<UniversityForm>(EMPTY_UNI);
-  const [manageUni, setManageUni] = useState<UniversityForm>(EMPTY_UNI);
-  const [manageStatus, setManageStatus] = useState("1");
-  const [issuerOpsAddress, setIssuerOpsAddress] = useState("");
-  const [assignUniversityId, setAssignUniversityId] = useState("");
-  const [transferTarget, setTransferTarget] = useState("");
 
   // Governance state
   const [multisigInfo, setMultisigInfo] = useState<MultisigInfo | null>(null);
@@ -158,6 +153,11 @@ export default function AdminPage() {
   const [proposeIssuer, setProposeIssuer] = useState("");
   const [proposeUni, setProposeUni] = useState<UniversityForm>(EMPTY_UNI);
   const [proposeStatus, setProposeStatus] = useState("1");
+
+  // Signer-rotation forms
+  const [addOwnerAddr, setAddOwnerAddr] = useState("");
+  const [removeOwnerAddr, setRemoveOwnerAddr] = useState("");
+  const [newThreshold, setNewThreshold] = useState("");
 
   const [txState, setTxState] = useState<TxState>("idle");
   const [txHash, setTxHash] = useState<Hex | null>(null);
@@ -350,15 +350,7 @@ export default function AdminPage() {
       setAccount(a);
       await ensureChain({ eth, targetChainId: TARGET_CHAIN_ID });
       setChainState("ok");
-      const [o, po] = await Promise.all([
-        readOwner({ publicClient, registry: REGISTRY }),
-        readPendingOwner({ publicClient, registry: REGISTRY }),
-      ]);
-      setOwner(o);
-      setIsAdmin(a.toLowerCase() === o.toLowerCase());
-      const hasPending = po !== "0x0000000000000000000000000000000000000000";
-      setPendingOwner(hasPending ? po : null);
-      setIsPendingOwner(hasPending && a.toLowerCase() === po.toLowerCase());
+      setOwner(await readOwner({ publicClient, registry: REGISTRY }));
       await loadOverview();
       if (governanceEnabled) {
         await loadGovernance();
@@ -370,141 +362,36 @@ export default function AdminPage() {
     }
   }
 
-  async function runTx(fn: () => Promise<void>, { allowPendingOwner = false } = {}) {
-    resetMessages();
-    if (!account) return setError("Connect MetaMask first.");
-    if (!isAdmin && !(allowPendingOwner && isPendingOwner)) return setError("Only contract owner can perform this action.");
-    const eth = getEthereum();
-    if (!eth) return setError("MetaMask not found.");
-    try {
-      await ensureChain({ eth, targetChainId: TARGET_CHAIN_ID });
-      await fn();
-      await loadOverview();
-    } catch (e: unknown) {
-      setTxState("idle");
-      const err = e instanceof Error ? e : null;
-      setError((err as { shortMessage?: string } | null)?.shortMessage ?? err?.message ?? String(e));
-    }
-  }
-
-  async function onboard() {
-    if (!isAddress(onboardIssuer)) return setError("Invalid issuer address.");
-    if (!uniFormValid(onboardUni)) return setError("University ID and name are required.");
-    const eth = getEthereum()!;
-    await runTx(async () => {
-      const walletClient = makeWalletClient({ eth, account: account as Address, chainId: TARGET_CHAIN_ID });
-      log.push(`Onboard: issuer=${onboardIssuer} universityId=${onboardUni.id} name=${onboardUni.name}`);
-      await writeIssuerAdminTx({
-        fn: "onboardIssuerAndUniversity",
-        issuer: onboardIssuer as Address,
-        universityId: BigInt(onboardUni.id.trim()),
-        name: onboardUni.name.trim(), country: onboardUni.country.trim(),
-        website: onboardUni.website.trim(), accreditationId: onboardUni.accreditationId.trim(),
-        registry: REGISTRY, account: account as Address, publicClient, walletClient, setTxState, onTxHash: setTxHash,
-      });
-      setOnboardUni(EMPTY_UNI);
-      setOnboardIssuer("");
-      setTab("overview");
+  async function proposeAddOwner() {
+    if (!isAddress(addOwnerAddr)) return setError("Invalid owner address.");
+    const data = encodeFunctionData({ abi: RegistryMultisigAbi, functionName: "addOwner", args: [addOwnerAddr as Address] });
+    await runGov(async (b) => {
+      log.push(`Propose addOwner(${addOwnerAddr})`);
+      await proposeSignerChange(b, data);
+      setAddOwnerAddr("");
     });
   }
 
-  async function setUniversity() {
-    if (!uniFormValid(manageUni)) return setError("University ID and name are required.");
-    if (!/^[123]$/.test(manageStatus)) return setError("Invalid status.");
-    const eth = getEthereum()!;
-    await runTx(async () => {
-      const walletClient = makeWalletClient({ eth, account: account as Address, chainId: TARGET_CHAIN_ID });
-      const status = Number(manageStatus);
-      log.push(`Set university: id=${manageUni.id} status=${universityStatusLabel(status)}`);
-      await writeIssuerAdminTx({
-        fn: "setUniversity",
-        universityId: BigInt(manageUni.id.trim()), status,
-        name: manageUni.name.trim(), country: manageUni.country.trim(),
-        website: manageUni.website.trim(), accreditationId: manageUni.accreditationId.trim(),
-        registry: REGISTRY, account: account as Address, publicClient, walletClient, setTxState, onTxHash: setTxHash,
-      });
-      setTab("overview");
+  async function proposeRemoveOwner() {
+    if (!isAddress(removeOwnerAddr)) return setError("Invalid owner address.");
+    const data = encodeFunctionData({ abi: RegistryMultisigAbi, functionName: "removeOwner", args: [removeOwnerAddr as Address] });
+    await runGov(async (b) => {
+      log.push(`Propose removeOwner(${removeOwnerAddr})`);
+      await proposeSignerChange(b, data);
+      setRemoveOwnerAddr("");
     });
   }
 
-  async function assignIssuer() {
-    if (!isAddress(issuerOpsAddress)) return setError("Invalid issuer address.");
-    if (!/^\d+$/.test(assignUniversityId.trim()) || assignUniversityId.trim() === "0") return setError("Invalid university ID.");
-    const eth = getEthereum()!;
-    await runTx(async () => {
-      const walletClient = makeWalletClient({ eth, account: account as Address, chainId: TARGET_CHAIN_ID });
-      const universityId = BigInt(assignUniversityId.trim());
-      const meta = await readUniversityMeta({ publicClient, registry: REGISTRY, universityId, fromBlock: DEPLOY_BLOCK });
-      if (!meta) return setError(`University ${universityId} not found. Onboard it first.`);
-      log.push(`Assign issuer=${issuerOpsAddress} \u2192 universityId=${universityId} (${meta.name})`);
-      await writeIssuerAdminTx({
-        fn: "onboardIssuerAndUniversity",
-        issuer: issuerOpsAddress as Address, universityId,
-        name: meta.name, country: meta.country, website: meta.website, accreditationId: meta.accreditationId,
-        registry: REGISTRY, account: account as Address, publicClient, walletClient, setTxState, onTxHash: setTxHash,
-      });
-      setIssuerOpsAddress("");
-      setTab("overview");
+  async function proposeChangeThreshold() {
+    if (!/^\d+$/.test(newThreshold.trim()) || newThreshold.trim() === "0") return setError("Threshold must be a positive integer.");
+    const value = BigInt(newThreshold.trim());
+    if (multisigInfo && value > BigInt(multisigInfo.owners.length)) return setError("Threshold cannot exceed the number of owners.");
+    const data = encodeFunctionData({ abi: RegistryMultisigAbi, functionName: "changeThreshold", args: [value] });
+    await runGov(async (b) => {
+      log.push(`Propose changeThreshold(${value.toString()})`);
+      await proposeSignerChange(b, data);
+      setNewThreshold("");
     });
-  }
-
-  async function removeIssuer() {
-    if (!isAddress(issuerOpsAddress)) return setError("Invalid issuer address.");
-    const eth = getEthereum()!;
-    await runTx(async () => {
-      const walletClient = makeWalletClient({ eth, account: account as Address, chainId: TARGET_CHAIN_ID });
-      log.push(`Remove issuer=${issuerOpsAddress}`);
-      await writeIssuerAdminTx({
-        fn: "removeIssuer", issuer: issuerOpsAddress as Address,
-        registry: REGISTRY, account: account as Address, publicClient, walletClient, setTxState, onTxHash: setTxHash,
-      });
-      setIssuerOpsAddress("");
-      setTab("overview");
-    });
-  }
-
-  async function transferOwnership() {
-    if (!isAddress(transferTarget)) return setError("Invalid address.");
-    const eth = getEthereum()!;
-    await runTx(async () => {
-      const walletClient = makeWalletClient({ eth, account: account as Address, chainId: TARGET_CHAIN_ID });
-      log.push(`Transfer ownership \u2192 ${transferTarget}`);
-      await writeIssuerAdminTx({
-        fn: "transferOwnership", newOwner: transferTarget as Address,
-        registry: REGISTRY, account: account as Address, publicClient, walletClient, setTxState, onTxHash: setTxHash,
-      });
-      setTransferTarget("");
-    });
-    await connect();
-  }
-
-  async function acceptOwnership() {
-    const eth = getEthereum()!;
-    await runTx(async () => {
-      const walletClient = makeWalletClient({ eth, account: account as Address, chainId: TARGET_CHAIN_ID });
-      log.push("Accept ownership");
-      await writeIssuerAdminTx({
-        fn: "acceptOwnership",
-        registry: REGISTRY, account: account as Address, publicClient, walletClient, setTxState, onTxHash: setTxHash,
-      });
-    }, { allowPendingOwner: true });
-    await connect();
-  }
-
-  function prefillUniForm(uni: UniversityOverview) {
-    setManageUni({
-      id: uni.universityId.toString(),
-      name: uni.name, country: uni.country,
-      website: uni.website, accreditationId: uni.accreditationId,
-    });
-    setManageStatus(String(uni.status));
-    setTab("university");
-  }
-
-  function prefillIssuerForm(issuer: IssuerOverview) {
-    setIssuerOpsAddress(issuer.issuer);
-    setAssignUniversityId(issuer.universityId.toString());
-    setTab("issuer");
   }
 
   function uniFields(f: UniversityForm, onChange: (f: UniversityForm) => void, showId = true) {
@@ -539,18 +426,14 @@ export default function AdminPage() {
   }
 
   const tabs: { id: Tab; label: string }[] = [
-    { id: "overview",    label: "Overview" },
-    { id: "onboard",     label: "Onboard" },
-    { id: "university",  label: "Update university" },
-    { id: "issuer",      label: "Manage issuer" },
-    { id: "ownership",   label: "Ownership" },
+    { id: "overview", label: "Overview" },
     ...(governanceEnabled ? [{ id: "governance" as Tab, label: "Governance" }] : []),
   ];
 
   return (
     <main className="uv-page">
       <h1 className="uv-title"><span className="uv-title-gradient">Admin</span></h1>
-      <p className="uv-subtitle">Manage issuers and universities on-chain. Requires contract owner wallet.</p>
+      <p className="uv-subtitle">Registry authorization is governed by the multisig + timelock. Changes are proposed and executed under the Governance tab.</p>
 
       {/* Wallet bar */}
       <div className="uv-card uv-wallet-bar">
@@ -561,8 +444,8 @@ export default function AdminPage() {
           <b>Account</b><code>{account || "\u2014"}</code>
           <b>Owner</b><code>{owner ?? "\u2014"}</code>
           <b>Access</b>
-          <span style={{ fontWeight: 700, color: account ? (isAdmin ? "var(--success)" : "var(--warn)") : undefined }}>
-            {account ? (isAdmin ? "\u2713 Owner" : "\u2717 Not owner") : "\u2014"}
+          <span style={{ fontWeight: 700, color: account ? (isMultisigOwner ? "var(--success)" : "var(--warn)") : undefined }}>
+            {account ? (isMultisigOwner ? "\u2713 Multisig owner" : "\u2717 Not a multisig owner") : "\u2014"}
           </span>
         </div>
       </div>
@@ -610,7 +493,6 @@ export default function AdminPage() {
                       <th>Country</th>
                       <th>Status</th>
                       <th>Accreditation</th>
-                      <th></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -621,13 +503,6 @@ export default function AdminPage() {
                         <td>{u.country || <span className="uv-muted">\u2014</span>}</td>
                         <td><StatusBadge status={u.status} /></td>
                         <td>{u.accreditationId || <span className="uv-muted">\u2014</span>}</td>
-                        <td>
-                          {isAdmin && (
-                            <button onClick={() => prefillUniForm(u)} className="uv-btn" style={{ fontSize: 12, padding: "4px 12px" }}>
-                              Edit
-                            </button>
-                          )}
-                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -648,7 +523,6 @@ export default function AdminPage() {
                       <th>Address</th>
                       <th>University</th>
                       <th>Status</th>
-                      <th></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -668,138 +542,12 @@ export default function AdminPage() {
                             {iss.active ? "Active" : "Removed"}
                           </span>
                         </td>
-                        <td>
-                          {isAdmin && (
-                            <button onClick={() => prefillIssuerForm(iss)} className="uv-btn" style={{ fontSize: 12, padding: "4px 12px" }}>
-                              Manage
-                            </button>
-                          )}
-                        </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
             </>
-          )}
-        </div>
-      )}
-
-      {/* ONBOARD */}
-      {tab === "onboard" && (
-        <div className="uv-card" style={{ marginTop: 0, borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
-          <h2 className="uv-card-title">Onboard university + issuer</h2>
-          <p className="uv-hint">Registers the university on-chain and assigns the issuer address in a single transaction.</p>
-          <div style={{ marginTop: 14 }}>
-            <label className="uv-label">Issuer wallet address</label>
-            <input value={onboardIssuer} onChange={(e) => setOnboardIssuer(e.target.value.trim())} placeholder="0x..." className="uv-input uv-mono" />
-          </div>
-          {uniFields(onboardUni, setOnboardUni)}
-          <div className="uv-actions">
-            <button onClick={() => void onboard()} disabled={isBusy} className="uv-btn uv-btn-primary">
-              {txState !== "idle" ? `${txState}\u2026` : "Onboard (1 transaction)"}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* UPDATE UNIVERSITY */}
-      {tab === "university" && (
-        <div className="uv-card" style={{ marginTop: 0, borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
-          <h2 className="uv-card-title">Update university</h2>
-          <p className="uv-hint">Change university metadata or status. Metadata is stored in events; only status is in storage.</p>
-          {uniFields(manageUni, setManageUni)}
-          <div style={{ marginTop: 14 }}>
-            <label className="uv-label">Status</label>
-            <select value={manageStatus} onChange={(e) => setManageStatus(e.target.value)} className="uv-input" style={{ width: 200 }}>
-              <option value="1">Active</option>
-              <option value="2">Suspended</option>
-              <option value="3">Revoked</option>
-            </select>
-          </div>
-          <div className="uv-actions">
-            <button onClick={() => void setUniversity()} disabled={isBusy} className="uv-btn uv-btn-primary">
-              {txState !== "idle" ? `${txState}\u2026` : "Update university"}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* MANAGE ISSUER */}
-      {tab === "issuer" && (
-        <div className="uv-card" style={{ marginTop: 0, borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
-          <h2 className="uv-card-title">Manage issuer</h2>
-          <div style={{ display: "grid", gap: 12, marginTop: 14 }}>
-            <div>
-              <label className="uv-label">Issuer wallet address</label>
-              <input value={issuerOpsAddress} onChange={(e) => setIssuerOpsAddress(e.target.value.trim())} placeholder="0x..." className="uv-input uv-mono" />
-            </div>
-            <div>
-              <label className="uv-label">Assign to university ID</label>
-              <input value={assignUniversityId} onChange={(e) => setAssignUniversityId(e.target.value.trim())} placeholder="1001" className="uv-input uv-mono" style={{ width: 180 }} />
-            </div>
-          </div>
-          <div className="uv-actions">
-            <button onClick={() => void assignIssuer()} disabled={isBusy} className="uv-btn uv-btn-primary">
-              {txState !== "idle" ? `${txState}\u2026` : "Assign to university"}
-            </button>
-            <button onClick={() => void removeIssuer()} disabled={isBusy} className="uv-btn uv-btn-danger">
-              Remove issuer
-            </button>
-          </div>
-          <p className="uv-hint">Assigning re-runs onboardIssuerAndUniversity \u2014 safe to use for existing universities.</p>
-        </div>
-      )}
-
-      {/* OWNERSHIP */}
-      {tab === "ownership" && (
-        <div className="uv-card" style={{ marginTop: 0, borderTopLeftRadius: 0, borderTopRightRadius: 0 }}>
-          <h2 className="uv-card-title">Ownership transfer (2-step)</h2>
-          <p className="uv-hint">Transfer contract ownership safely. The new owner must accept before the transfer completes.</p>
-
-          <div className="uv-kv" style={{ marginTop: 16, gap: "6px 16px" }}>
-            <b>Current owner</b><code>{owner ?? "\u2014"}</code>
-            <b>Pending owner</b>
-            <code>
-              {pendingOwner ?? <span className="uv-muted">None</span>}
-            </code>
-          </div>
-
-          {/* Accept panel */}
-          {isPendingOwner && (
-            <div style={{ marginTop: 20, padding: 16, background: "var(--success-bg)", border: "1px solid var(--success)", borderRadius: 10 }}>
-              <p style={{ margin: 0, fontWeight: 700, color: "var(--success)" }}>
-                You are the pending owner. Accept to complete the transfer.
-              </p>
-              <div className="uv-actions" style={{ marginTop: 12 }}>
-                <button onClick={() => void acceptOwnership()} disabled={isBusy} className="uv-btn uv-btn-primary">
-                  {txState !== "idle" ? `${txState}\u2026` : "Accept ownership"}
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Transfer panel */}
-          {isAdmin && (
-            <div style={{ marginTop: 20 }}>
-              <label className="uv-label">New owner address</label>
-              <input value={transferTarget} onChange={(e) => setTransferTarget(e.target.value.trim())} placeholder="0x..." className="uv-input uv-mono" />
-              <div className="uv-actions">
-                <button onClick={() => void transferOwnership()} disabled={isBusy} className="uv-btn uv-btn-danger">
-                  {txState !== "idle" ? `${txState}\u2026` : "Initiate transfer"}
-                </button>
-              </div>
-              <p className="uv-hint" style={{ marginTop: 8 }}>
-                The new owner must connect their wallet and click &quot;Accept ownership&quot; to complete the transfer.
-                Until then, you remain the owner.
-              </p>
-            </div>
-          )}
-
-          {!isAdmin && !isPendingOwner && account && (
-            <p className="uv-hint" style={{ marginTop: 16 }}>
-              You are neither the current owner nor the pending owner.
-            </p>
           )}
         </div>
       )}
@@ -879,6 +627,44 @@ export default function AdminPage() {
           {!isMultisigOwner && account && (
             <p className="uv-hint" style={{ marginTop: 8 }}>Only multisig owners can propose changes.</p>
           )}
+
+          {/* Section (a2): Manage signers */}
+          <h3 className="uv-section-heading">Manage signers</h3>
+          <p className="uv-hint">
+            Add or remove multisig owners, or change the confirmation threshold. These are self-governed:
+            once m-of-n confirm and the tx is executed, the change applies immediately — no timelock delay.
+          </p>
+          <div style={{ display: "grid", gap: 16, marginTop: 14 }}>
+            <div style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
+              <div style={{ flex: "1 1 320px" }}>
+                <label className="uv-label">Add owner</label>
+                <input value={addOwnerAddr} onChange={(e) => setAddOwnerAddr(e.target.value.trim())} placeholder="0x..." className="uv-input uv-mono" />
+              </div>
+              <button onClick={() => void proposeAddOwner()} disabled={isBusy || !isMultisigOwner} className="uv-btn uv-btn-primary">
+                Propose add
+              </button>
+            </div>
+            <div style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
+              <div style={{ flex: "1 1 320px" }}>
+                <label className="uv-label">Remove owner</label>
+                <input value={removeOwnerAddr} onChange={(e) => setRemoveOwnerAddr(e.target.value.trim())} placeholder="0x..." className="uv-input uv-mono" />
+              </div>
+              <button onClick={() => void proposeRemoveOwner()} disabled={isBusy || !isMultisigOwner} className="uv-btn uv-btn-danger">
+                Propose remove
+              </button>
+            </div>
+            <div style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
+              <div style={{ flex: "0 1 180px" }}>
+                <label className="uv-label">
+                  Threshold {multisigInfo && <span className="uv-muted">(now {multisigInfo.threshold.toString()} of {multisigInfo.owners.length})</span>}
+                </label>
+                <input value={newThreshold} onChange={(e) => setNewThreshold(e.target.value.trim())} placeholder="2" className="uv-input uv-mono" style={{ width: 120 }} />
+              </div>
+              <button onClick={() => void proposeChangeThreshold()} disabled={isBusy || !isMultisigOwner} className="uv-btn uv-btn-primary">
+                Propose threshold
+              </button>
+            </div>
+          </div>
 
           {/* Section (b): Pending multisig txs */}
           <h3 className="uv-section-heading">
