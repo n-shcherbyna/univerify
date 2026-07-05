@@ -96,3 +96,21 @@ describe("SDK re-exports", () => {
     expect(names).toContain("issueBatchRoot");
   });
 });
+
+// ─── Governance reads ────────────────────────────────────────────────────────
+
+describe("governance reads", () => {
+  const sdk = new UniverifySdk({
+    rpcUrl: "http://127.0.0.1:8545",
+    registryAddress: "0x0000000000000000000000000000000000000001",
+    chainId: 31337,
+  });
+
+  it("classifies operation state from timestamp", () => {
+    // _classifyOperation is a pure helper: (timestamp, nowSeconds) -> state
+    expect(sdk._classifyOperation(0n, 1000n).state).toBe("Unset");
+    expect(sdk._classifyOperation(1n, 1000n).state).toBe("Done");
+    expect(sdk._classifyOperation(2000n, 1000n).state).toBe("Pending");
+    expect(sdk._classifyOperation(1000n, 1000n).state).toBe("Ready");
+  });
+});

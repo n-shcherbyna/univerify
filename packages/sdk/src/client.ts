@@ -15,6 +15,8 @@ import {
   computeRootFromProof,
   computePrivateDocHash,
   verifyDisclosedFields,
+  RegistryMultisigAbi,
+  TimelockControllerAbi,
   type StatusCode,
   type DiplomaPayload,
   type FieldCommitments,
@@ -102,6 +104,8 @@ export type PrivateDiplomaEnvelope = {
     issuer: Address;
   };
 };
+
+export type OperationState = "Unset" | "Pending" | "Ready" | "Done";
 
 export type SelectiveVerifyResult = {
   verified: boolean;
@@ -338,6 +342,48 @@ export class UniverifySdk {
       functionName: "pendingOwner",
       args: [],
     })) as Address;
+  }
+
+  // ── Governance reads ──────────────────────────────────────────────────────
+
+  /** Pure classifier for a timelock operation timestamp (OZ semantics). */
+  _classifyOperation(timestamp: bigint, nowSeconds: bigint): { state: OperationState; readyAt: bigint } {
+    if (timestamp === 0n) return { state: "Unset", readyAt: 0n };
+    if (timestamp === 1n) return { state: "Done", readyAt: 0n };
+    if (timestamp > nowSeconds) return { state: "Pending", readyAt: timestamp };
+    return { state: "Ready", readyAt: timestamp };
+  }
+
+  async getMultisigInfo(multisig: Address) {
+    const [owners, threshold, txCount] = await Promise.all([
+      this.client.readContract({ address: multisig, abi: RegistryMultisigAbi, functionName: "getOwners" }),
+      this.client.readContract({ address: multisig, abi: RegistryMultisigAbi, functionName: "threshold" }),
+      this.client.readContract({ address: multisig, abi: RegistryMultisigAbi, functionName: "txCount" }),
+    ]);
+    return { owners: owners as Address[], threshold: threshold as bigint, txCount: txCount as bigint };
+  }
+
+  async getMultisigTx(multisig: Address, txId: bigint) {
+    const [tx, confirmations] = await Promise.all([
+      this.client.readContract({ address: multisig, abi: RegistryMultisigAbi, functionName: "getTx", args: [txId] }),
+      this.client.readContract({ address: multisig, abi: RegistryMultisigAbi, functionName: "confirmationCount", args: [txId] }),
+    ]);
+    const [target, value, data, executed] = tx as [Address, bigint, Hex, boolean];
+    return { target, value, data, executed, confirmations: confirmations as bigint };
+  }
+
+  async getTimelockDelay(timelock: Address): Promise<bigint> {
+    return (await this.client.readContract({
+      address: timelock, abi: TimelockControllerAbi, functionName: "getMinDelay",
+    })) as bigint;
+  }
+
+  async getOperationState(timelock: Address, id: Hex): Promise<{ state: OperationState; readyAt: bigint }> {
+    const [timestamp, block] = await Promise.all([
+      this.client.readContract({ address: timelock, abi: TimelockControllerAbi, functionName: "getTimestamp", args: [id] }) as Promise<bigint>,
+      this.client.getBlock(),
+    ]);
+    return this._classifyOperation(timestamp, block.timestamp);
   }
 
   // ── Internal contract reads ──────────────────────────────────────────────

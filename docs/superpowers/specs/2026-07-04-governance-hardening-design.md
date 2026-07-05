@@ -114,8 +114,10 @@ Deployed by an EOA that is initially the registry owner. Sequence:
    acceptOwnership(), 0, salt, minDelay))` → confirm → `execute` → wait `minDelay` →
    `timelock.execute(registry, 0, acceptOwnership(), 0, salt)`.
 
-Handled by a CLI `bootstrap` command and reflected in the Foundry `Deploy` script (which for
-local/test convenience may use a short `minDelay` to complete handover in one run).
+Driven with the same steady-state `gov` subcommands using `--op acceptOwnership`
+(`propose` → `confirm` → `exec-multisig` → wait `minDelay` → `execute`); the
+`DeployGovernance` script prints this exact sequence after setting `pendingOwner`.
+For local/test convenience a short `minDelay` completes the handover quickly.
 
 ## Authorization-change lifecycle (steady state)
 
@@ -137,8 +139,9 @@ per proposal (e.g. keccak of a nonce/description) so identical ops can be re-pro
 
 ## CLI (`packages/verifier-cli`)
 
-New `gov` command group (script style consistent with existing `issue.ts` / `verify.ts`):
-- `gov bootstrap` — deploy handover / schedule+execute `acceptOwnership`.
+New `gov` command group (script style consistent with existing `issue.ts` / `verify.ts`).
+The one-time ownership handover uses the same subcommands with `--op acceptOwnership`
+(no dedicated `bootstrap` command); steady-state ops:
 - `gov propose --op <name> --args <...>` — build registry calldata, wrap in `schedule`,
   call `multisig.submit`. Prints `txId`, `operationId`, and computed ready-at.
 - `gov confirm --tx <txId>`.

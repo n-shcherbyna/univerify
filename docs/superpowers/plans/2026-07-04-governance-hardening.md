@@ -63,8 +63,8 @@
   - `constructor(address[] memory _owners, uint256 _threshold)`
   - `submit(address target, uint256 value, bytes calldata data) returns (uint256 txId)` (onlyOwner, auto-confirms)
   - `confirm(uint256 txId)` / `revoke(uint256 txId)` (onlyOwner)
-  - `execute(uint256 txId)` (onlyOwner; requires `confirmations[txId] >= threshold`)
-  - views: `getOwners()`, `ownerCount()`, `txCount()`, `getTx(uint256) returns (address,uint256,bytes,bool)`, public mappings `isOwner`, `threshold`, `confirmations`, `confirmed`
+  - `execute(uint256 txId)` (onlyOwner; requires `confirmationCount(txId) >= threshold`)
+  - views: `getOwners()`, `ownerCount()`, `txCount()`, `getTx(uint256) returns (address,uint256,bytes,bool)`, `confirmationCount(uint256) returns (uint256)` (counts only **current** owners), public mappings `isOwner`, `threshold`, `confirmed`
   - errors: `NotOwner, OnlySelf, ZeroOwner, DuplicateOwner, UnknownOwner, InvalidThreshold, UnknownTx, AlreadyConfirmed, NotConfirmed, AlreadyExecuted, NotEnoughConfirmations, CallFailed`
   - events: `Submitted, Confirmed, Revoked, Executed, OwnerAdded, OwnerRemoved, ThresholdChanged`
 
@@ -109,7 +109,7 @@ contract RegistryMultisigTest is Test {
 
     function testSubmitAutoConfirms() public {
         uint256 id = _submitBump(a, 5);
-        assertEq(ms.confirmations(id), 1);
+        assertEq(ms.confirmationCount(id), 1);
         assertTrue(ms.confirmed(id, a));
     }
 
@@ -143,10 +143,10 @@ contract RegistryMultisigTest is Test {
         uint256 id = _submitBump(a, 1);
         vm.prank(b);
         ms.confirm(id);
-        assertEq(ms.confirmations(id), 2);
+        assertEq(ms.confirmationCount(id), 2);
         vm.prank(b);
         ms.revoke(id);
-        assertEq(ms.confirmations(id), 1);
+        assertEq(ms.confirmationCount(id), 1);
     }
 
     function testDoubleExecuteReverts() public {
@@ -230,7 +230,9 @@ contract RegistryMultisig {
 
     Transaction[] private transactions;
     mapping(uint256 => mapping(address => bool)) public confirmed;
-    mapping(uint256 => uint256) public confirmations;
+    // No running confirmation counter: a removed owner's stale confirmation must
+    // not keep counting. confirmationCount() re-derives the tally from the
+    // CURRENT owner set (ConsenSys MultiSigWallet pattern).
 
     event Submitted(uint256 indexed txId, address indexed proposer, address target, uint256 value, bytes data);
     event Confirmed(uint256 indexed txId, address indexed owner);
@@ -283,7 +285,6 @@ contract RegistryMultisig {
         if (transactions[txId].executed) revert AlreadyExecuted();
         if (confirmed[txId][msg.sender]) revert AlreadyConfirmed();
         confirmed[txId][msg.sender] = true;
-        confirmations[txId] += 1;
         emit Confirmed(txId, msg.sender);
     }
 
@@ -292,7 +293,6 @@ contract RegistryMultisig {
         if (transactions[txId].executed) revert AlreadyExecuted();
         if (!confirmed[txId][msg.sender]) revert NotConfirmed();
         confirmed[txId][msg.sender] = false;
-        confirmations[txId] -= 1;
         emit Revoked(txId, msg.sender);
     }
 
@@ -300,7 +300,7 @@ contract RegistryMultisig {
         if (txId >= transactions.length) revert UnknownTx();
         Transaction storage t = transactions[txId];
         if (t.executed) revert AlreadyExecuted();
-        if (confirmations[txId] < threshold) revert NotEnoughConfirmations();
+        if (confirmationCount(txId) < threshold) revert NotEnoughConfirmations();
         t.executed = true; // effects before interaction (reentrancy-safe)
         (bool ok, ) = t.target.call{value: t.value}(t.data);
         if (!ok) revert CallFailed();
@@ -353,6 +353,14 @@ contract RegistryMultisig {
 
     function txCount() external view returns (uint256) {
         return transactions.length;
+    }
+
+    /// @notice Confirmations counted over the CURRENT owner set only, so a
+    ///         removed owner's stale confirmation stops counting immediately.
+    function confirmationCount(uint256 txId) public view returns (uint256 count) {
+        for (uint256 i = 0; i < owners.length; i++) {
+            if (confirmed[txId][owners[i]]) count += 1;
+        }
     }
 
     function getTx(uint256 txId)
@@ -442,6 +450,24 @@ Append to `contracts/test/RegistryMultisigTest` in `contracts/test/RegistryMulti
     function testChangeThresholdViaMultisig() public {
         _selfCall(abi.encodeCall(RegistryMultisig.changeThreshold, (uint256(3))));
         assertEq(ms.threshold(), 3);
+    }
+
+    function testRemovedOwnerConfirmationStopsCounting() public {
+        // c confirms a pending tx, then c is removed via m-of-n (a+b).
+        // c's stale confirmation must no longer count toward threshold.
+        vm.prank(a);
+        uint256 id = ms.submit(address(counter), 0, abi.encodeCall(Counter.bump, (7)));
+        vm.prank(c);
+        ms.confirm(id);
+        assertEq(ms.confirmationCount(id), 2); // a (auto) + c
+
+        _selfCall(abi.encodeCall(RegistryMultisig.removeOwner, (c)));
+        assertEq(ms.confirmationCount(id), 1); // only a remains a current owner
+
+        // With threshold 2 and only a's confirmation, execute must revert.
+        vm.prank(a);
+        vm.expectRevert(RegistryMultisig.NotEnoughConfirmations.selector);
+        ms.execute(id);
     }
 ```
 
@@ -750,7 +776,7 @@ export const RegistryMultisigAbi = [
   { type: "function", name: "txCount", stateMutability: "view", inputs: [], outputs: [{ name: "", type: "uint256" }] },
   { type: "function", name: "threshold", stateMutability: "view", inputs: [], outputs: [{ name: "", type: "uint256" }] },
   { type: "function", name: "isOwner", stateMutability: "view", inputs: [{ name: "", type: "address" }], outputs: [{ name: "", type: "bool" }] },
-  { type: "function", name: "confirmations", stateMutability: "view", inputs: [{ name: "", type: "uint256" }], outputs: [{ name: "", type: "uint256" }] },
+  { type: "function", name: "confirmationCount", stateMutability: "view", inputs: [{ name: "txId", type: "uint256" }], outputs: [{ name: "", type: "uint256" }] },
   {
     type: "function", name: "getTx", stateMutability: "view",
     inputs: [{ name: "txId", type: "uint256" }],
@@ -948,7 +974,7 @@ Add these methods inside the `UniverifySdk` class (they use the existing private
   async getMultisigTx(multisig: Address, txId: bigint) {
     const [tx, confirmations] = await Promise.all([
       this.client.readContract({ address: multisig, abi: RegistryMultisigAbi, functionName: "getTx", args: [txId] }),
-      this.client.readContract({ address: multisig, abi: RegistryMultisigAbi, functionName: "confirmations", args: [txId] }),
+      this.client.readContract({ address: multisig, abi: RegistryMultisigAbi, functionName: "confirmationCount", args: [txId] }),
     ]);
     const [target, value, data, executed] = tx as [Address, bigint, Hex, boolean];
     return { target, value, data, executed, confirmations: confirmations as bigint };
@@ -1180,7 +1206,7 @@ async function main() {
       for (let i = 0n; i < (txCount as bigint); i++) {
         const [t, conf] = await Promise.all([
           pub.readContract({ address: multisig(), abi: RegistryMultisigAbi, functionName: "getTx", args: [i] }),
-          pub.readContract({ address: multisig(), abi: RegistryMultisigAbi, functionName: "confirmations", args: [i] }),
+          pub.readContract({ address: multisig(), abi: RegistryMultisigAbi, functionName: "confirmationCount", args: [i] }),
         ]);
         console.log(`tx#${i}`, { target: (t as any)[0], executed: (t as any)[3], confirmations: (conf as bigint).toString() });
       }
@@ -1254,7 +1280,7 @@ export async function readMultisigInfo(pub: Pub, multisig: Address) {
 export async function readMultisigTx(pub: Pub, multisig: Address, txId: bigint) {
   const [tx, confirmations] = await Promise.all([
     pub.readContract({ address: multisig, abi: RegistryMultisigAbi, functionName: "getTx", args: [txId] }),
-    pub.readContract({ address: multisig, abi: RegistryMultisigAbi, functionName: "confirmations", args: [txId] }),
+    pub.readContract({ address: multisig, abi: RegistryMultisigAbi, functionName: "confirmationCount", args: [txId] }),
   ]);
   const [target, value, data, executed] = tx as [Address, bigint, Hex, boolean];
   return { txId, target, value, data, executed, confirmations: confirmations as bigint };
