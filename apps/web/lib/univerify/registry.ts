@@ -157,6 +157,43 @@ export async function readUniversityStatus(params: {
   })) as number;
 }
 
+/**
+ * getLogs over a full contract history in one call exceeds free-tier RPC limits
+ * (e.g. Alchemy free caps eth_getLogs at ~10 blocks). Page through the range in
+ * chunks, halving the window on any provider error until it succeeds.
+ */
+async function getLogsChunked(params: {
+  publicClient: RegistryPublicClient;
+  address: Address;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- viem event/args shapes vary per call site
+  event: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  args?: any;
+  fromBlock: bigint;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+}): Promise<any[]> {
+  const latest = await params.publicClient.getBlockNumber();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const logs: any[] = [];
+  let chunk = 2000n;
+  let start = params.fromBlock;
+  while (start <= latest) {
+    const end = start + chunk - 1n < latest ? start + chunk - 1n : latest;
+    try {
+      const batch = await params.publicClient.getLogs({
+        address: params.address, event: params.event, args: params.args,
+        fromBlock: start, toBlock: end,
+      });
+      logs.push(...batch);
+      start = end + 1n;
+    } catch (e) {
+      if (chunk <= 1n) throw e;
+      chunk = chunk / 2n > 0n ? chunk / 2n : 1n;
+    }
+  }
+  return logs;
+}
+
 export type UniversityOverview = UniversityMeta & { universityId: bigint };
 
 export type IssuerOverview = {
@@ -185,17 +222,17 @@ export async function readRegistryOverview(params: {
   };
 
   const [uniLogs, issuerAddedLogs] = await Promise.all([
-    params.publicClient.getLogs({
+    getLogsChunked({
+      publicClient: params.publicClient,
       address: params.registry,
       event: uniEventAbi,
       fromBlock: params.fromBlock,
-      toBlock: "latest",
     }),
-    params.publicClient.getLogs({
+    getLogsChunked({
+      publicClient: params.publicClient,
       address: params.registry,
       event: { type: "event" as const, name: "IssuerAdded", inputs: [{ name: "issuer", type: "address", indexed: true }] },
       fromBlock: params.fromBlock,
-      toBlock: "latest",
     }),
   ]);
 
@@ -248,7 +285,8 @@ export async function readUniversityMeta(params: {
   universityId: bigint;
   fromBlock?: bigint;
 }): Promise<UniversityMeta | null> {
-  const logs = await params.publicClient.getLogs({
+  const logs = await getLogsChunked({
+    publicClient: params.publicClient,
     address: params.registry,
     event: {
       type: "event",
@@ -264,7 +302,6 @@ export async function readUniversityMeta(params: {
     },
     args: { universityId: params.universityId },
     fromBlock: params.fromBlock ?? 0n,
-    toBlock: "latest",
   });
 
   if (logs.length === 0) return null;
