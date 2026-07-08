@@ -38,17 +38,13 @@ forge test --match-path "test/DiplomaRegistryGasComparison.t.sol" --gas-report
 \section{Etap 1 --- mikrooptymalizacje modelu per-dyplom}
 \label{sec:gaz-etap1}
 
-\subsection{Kontekst i pytanie badawcze}
-
 Model per-dyplom to najprostsze możliwe podejście: każdy dyplom to jeden wpis
-\code{mapping(bytes32 => Record)}. Pytanie brzmi: \emph{jak bardzo zmiana jednej
-konkretnej decyzji implementacyjnej wpływa na koszt gazu?}
+\code{mapping(bytes32 => Record)}. Zbadano siedem kolejnych wersji kontraktu, aby
+sprawdzić, jak bardzo zmiana jednej konkretnej decyzji implementacyjnej wpływa na
+koszt gazu. Zamiast oznaczać je literami, nadano im nazwy opisujące \emph{kluczową
+właściwość} każdej wersji --- bo to właśnie ona odróżnia ją od poprzedniej.
 
-Zbadano siedem wersji kontraktu. Zamiast oznaczać je literami, nadano im nazwy
-opisujące \emph{kluczową właściwość} każdej wersji --- bo to właśnie ona odróżnia ją
-od poprzedniej.
-
-\subsection{Opis wersji kontraktu}
+\subsection{Wersje kontraktu}
 
 \begin{table}[H]
 \centering
@@ -88,11 +84,11 @@ Nazwa wersji & Kluczowa zmiana & Uzasadnienie / hipoteza \\
 \end{tabular}
 \end{table}
 
-\subsection{Wyniki: widok całego testu (suite-level)}
+\subsection{Wyniki}
 
-Poniższa tabela pokazuje łączny koszt jednego scenariusza testowego. Warto
-pamiętać, że \code{testGas\_revoke} zawiera wywołanie \code{issue} jako setup stanu
---- dlatego wartości w~tej kolumnie są wyższe niż sam koszt rewokacji.
+Poniższa tabela pokazuje łączny koszt jednego scenariusza testowego (suite-level).
+Warto pamiętać, że \code{testGas\_revoke} zawiera wywołanie \code{issue} jako setup
+stanu --- dlatego wartości w~tej kolumnie są wyższe niż sam koszt rewokacji.
 
 \begin{table}[H]
 \centering
@@ -121,8 +117,6 @@ koszt rewokacji z~93k do 114k gas --- bo EVM musi teraz zaktualizować dodatkowy
 storage przy każdym \code{revoke()}. Wersja \code{MinimalRecord} naprawia ten błąd,
 usuwając timestampy ze storage i~pozostawiając je wyłącznie w~logach zdarzeń.
 
-\subsection{Wyniki: funkcja po funkcji (function-level)}
-
 Widok function-level pozwala zmierzyć czysty koszt każdej operacji, niezależnie od
 kontekstu testu. Różnice deployment są tutaj bardziej widoczne niż w~suite-level.
 
@@ -150,36 +144,20 @@ Wersja & Deployment & \code{addIssuer} & \code{issue} & \code{revoke} \\
 redukuje deployment z~464k do 409k gas --- bo komunikaty string (\code{"Only owner"},
 \code{"Already issued"}, itd.) są przechowywane w~bytecode kontraktu, a~\code{custom
 errors} zastępuje je 4-bajtowymi selektorami. Ta zmiana oszczędza \emph{rozmiar
-kodu}, co przekłada się na tańszy deployment.
+kodu}, co przekłada się na tańszy deployment: redukcja o~55\,000 gas (11.9\%).
 
-\subsection{Podsumowanie etapu 1}
-
-Kilka wniosków, które wynikają bezpośrednio z~danych:
-
-\begin{itemize}
-  \item \textbf{Nie każda zmiana poprawia sytuację.} \code{TimestampRevoke} to
-        klasyczny przykład \emph{dodania czegoś z~dobrej intencji}, co kosztuje
-        dużo więcej niż zakładano. Przechowywanie timestamp-u rewokacji w~storage
-        zamiast w~eventach zwiększyło koszt \code{revoke} o~61\%.
-  \item \textbf{Rozmiar bytecode ma znaczenie dla deployment.} Przejście
-        z~komunikatów string na \code{custom errors} redukuje deployment
-        o~55\,000 gas (11.9\%), bo krótszy bytecode --- tańszy \code{CREATE}.
-  \item \textbf{Suma wszystkich optymalizacji} od \code{StringErrors} do
-        \code{MinimalRecord}:
-        \[
-          \Delta_{\code{issue}} \approx 14.1\%,\quad
-          \Delta_{\code{revoke}} \approx 7.8\%,\quad
-          \Delta_{\text{deploy}} \approx 19.6\%.
-        \]
-  \item \textbf{Wszystkie wersje są w~tej samej klasie kosztowej:} każdy dyplom to
-        nadal kilkadziesiąt tysięcy gas. Mikrooptymalizacje nie zmieniają
-        \emph{modelu} kosztu.
-\end{itemize}
+Nie każda zmiana poprawia sytuację --- \code{TimestampRevoke} to klasyczny przykład
+dodania czegoś z~dobrej intencji, co kosztuje dużo więcej niż zakładano:
+przechowywanie timestampu rewokacji w~storage zamiast w~eventach zwiększyło koszt
+\code{revoke} o~61\%. Sumarycznie, od \code{StringErrors} do \code{MinimalRecord}:
+\[
+  \Delta_{\code{issue}} \approx 14.1\%,\quad
+  \Delta_{\code{revoke}} \approx 7.8\%,\quad
+  \Delta_{\text{deploy}} \approx 19.6\%.
+\]
 
 \section{Etap 2 --- architektura Merkle batch}
 \label{sec:gaz-etap2}
-
-\subsection{Pytanie architektoniczne}
 
 Model per-dyplom zakłada, że \emph{każdy dyplom trafia na łańcuch jako osobna
 transakcja}. Czy to konieczne? Merkle batch odpowiada: nie. Zamiast zapisywać $N$
@@ -193,7 +171,7 @@ dyplomów w~$N$ transakcjach, wystawca:
         $O(\log N)$.
 \end{enumerate}
 
-\subsection{Jak zmieniają się operacje}
+\subsection{Zmiana modelu operacji}
 
 \begin{table}[H]
 \centering
@@ -210,7 +188,7 @@ Zarządzanie wystawcami & \code{addIssuer}/\code{removeIssuer} & \code{onboardIs
 \end{tabular}
 \end{table}
 
-\subsection{Porównanie kosztów funkcji}
+\subsection{Wyniki: koszt na dyplom}
 
 \begin{table}[H]
 \centering
@@ -239,11 +217,8 @@ Model & Operacja & Min & Avg & Max \\
 
 \noindent Na poziomie pojedynczej transakcji Merkle nie jest tańszy ---
 \code{issueBatchRoot} kosztuje tyle samo co \code{issue} w~per-dyplom. Ale to nie
-jest właściwa metryka do porównania. Właściwą jest \textbf{koszt na dyplom}.
-
-\subsection{Amortyzacja: koszt na dyplom w~funkcji rozmiaru partii}
-
-Ponieważ jedna transakcja \code{issueBatchRoot} obejmuje $N$ dyplomów:
+jest właściwa metryka do porównania. Właściwą jest \textbf{koszt na dyplom}, bo
+jedna transakcja \code{issueBatchRoot} obejmuje $N$ dyplomów:
 \[
   \text{gas\_per\_diploma}(N) = \frac{50{,}939}{N},
   \qquad
@@ -305,11 +280,9 @@ $N$ & Merkle (gas/dyplom) & Legacy (gas/dyplom) & Ile razy taniej? \\
 \end{tabular}
 \end{table}
 
-\subsection{Podsumowanie etapu 2}
-
-Przejście na Merkle to \emph{nie kolejna mikrooptymalizacja} --- to inna odpowiedź
-na pytanie o~model danych. Koszt jednostkowej transakcji jest taki sam jak legacy
-(lub nawet minimalnie wyższy), ale pojedyncza transakcja ``certyfikuje'' całą
+\noindent Przejście na Merkle to \emph{nie kolejna mikrooptymalizacja} --- to inna
+odpowiedź na pytanie o~model danych. Koszt jednostkowej transakcji jest taki sam jak
+legacy (lub nawet minimalnie wyższy), ale pojedyncza transakcja ,,certyfikuje'' całą
 partię. Przy $N=100$ koszt per dyplom spada z~$\approx$48\,200 do $\approx$509 gas
 --- \textbf{redukcja o 98.9\%}. Ceną za tę zmianę jest trzykrotnie droższy
 deployment ($\approx$1.06M vs $\approx$0.39M gas) oraz bardziej złożona weryfikacja
@@ -318,16 +291,14 @@ wymagająca dowodu Merkle.
 \section{Etap 3 --- optymalizacje hot-path Merkle}
 \label{sec:gaz-etap3}
 
-\subsection{Pytanie badawcze i kontrakt \code{MerkleG}}
-
-Skoro architektura Merkle jest już wybrana, pojawia się nowe pytanie: \emph{czy
-ścieżka weryfikacji dowodu daje się jeszcze zoptymalizować na poziomie kodu EVM?}
-Kontrakt \code{DiplomaRegistryG} (dalej: \code{MerkleG}) to identyczny funkcjonalnie
-wariant \code{MerkleBaseline} z~czterema przyrostowymi technikami nałożonymi na dwie
+Skoro architektura Merkle jest już wybrana, pojawia się nowe pytanie: czy ścieżka
+weryfikacji dowodu daje się jeszcze zoptymalizować na poziomie kodu EVM? Kontrakt
+\code{DiplomaRegistryG} (dalej: \code{MerkleG}) to identyczny funkcjonalnie wariant
+\code{MerkleBaseline} z~czterema przyrostowymi technikami nałożonymi na dwie
 wewnętrzne funkcje: \code{\_processProof()} (iteracja po elementach dowodu)
 i~\code{\_merkleLeaf()} (budowanie liścia do zhashowania).
 
-\subsection{Opis technik G1--G4}
+\subsection{Techniki G1--G4}
 
 \begin{table}[H]
 \centering
@@ -366,7 +337,7 @@ G4 \newline assembly preimage
 \end{tabular}
 \end{table}
 
-\subsection{Wyniki: function-level}
+\subsection{Wyniki}
 
 \begin{table}[H]
 \centering
@@ -404,23 +375,16 @@ Deployment
 \end{tabular}
 \end{table}
 
-\noindent Kilka obserwacji:
-\begin{itemize}
-  \item \code{issueBatchRoot} nie wywołuje \code{\_processProof} ani
-        \code{\_merkleLeaf} w~ścieżce zapisu --- oszczędność wynosi zero.
-  \item \code{statusWithProof} zyskuje relatywnie więcej ($-6.6\%$ avg) niż
-        \code{revokeFromBatch} ($-1.4\%$ avg), bo stanowi mniejszą bazę kosztową
-        (mniej operacji storage).
-  \item Absolutna oszczędność na wywołaniu wynosi \textbf{786 gas avg} dla obu
-        operacji.
-\end{itemize}
+\noindent \code{issueBatchRoot} nie wywołuje \code{\_processProof} ani
+\code{\_merkleLeaf} w~ścieżce zapisu, więc oszczędność tam wynosi zero.
+\code{statusWithProof} zyskuje relatywnie więcej ($-6.6\%$ avg) niż
+\code{revokeFromBatch} ($-1.4\%$ avg), bo stanowi mniejszą bazę kosztową (mniej
+operacji storage) --- absolutna oszczędność na wywołaniu wynosi jednak \textbf{786
+gas avg} dla obu operacji.
 
-\subsection{Analiza per głębokość drzewa}
-
-\subsubsection*{Co dokładnie mierzy test?}
-
-Zanim przejdę do liczb, warto zrozumieć, co naprawdę robi każdy test. Na przykładzie
-\code{testRevokeFromBatch\_Depth8}:
+\paragraph{Co dokładnie mierzy test.}
+Zanim przejdę do liczb w~funkcji głębokości drzewa, warto zrozumieć, co naprawdę
+robi każdy test. Na przykładzie \code{testRevokeFromBatch\_Depth8}:
 
 \begin{enumerate}
   \item \textbf{\code{\_makeLeaves(256)}} --- funkcja testowa wywołuje
@@ -446,8 +410,6 @@ Uczelnia buduje drzewo Merkle lokalnie (np.\ w~TypeScript/Python) i~jedynie zapi
 jego korzeń na łańcuch --- jedną transakcją \code{issueBatchRoot}. Dlatego liczby
 z~tabeli poniżej \textbf{nie} odpowiadają kosztowi produkcyjnemu.
 
-\subsubsection*{Rozkład kosztu testu na składowe}
-
 \begin{table}[H]
 \centering
 \caption{Rozkład kosztu \code{testRevokeFromBatch\_DepthD} na składowe (Baseline).}
@@ -465,14 +427,12 @@ $d$ & Liści & \makecell{Budowa liści\\$2^d \times 866$} & \makecell{Budowa drz
 
 \noindent Koszty \code{revokeFromBatch} dla głębokości 1 i~4 są interpolowane na
 podstawie zmierzonego przyrostu 919 gas/krok z~danych function-level. Suma dla
-każdego wiersza zgadza się ze zmierzoną wartością testu.
-
-\noindent\textbf{Co z~tego wynika?} W~wierszu $d=8$ budowa drzewa
-($\approx$2.2M gas) stanowi \textbf{87\% łącznego kosztu testu}, podczas gdy
+każdego wiersza zgadza się ze zmierzoną wartością testu. W~wierszu $d=8$ budowa
+drzewa ($\approx$2.2M gas) stanowi \textbf{87\% łącznego kosztu testu}, podczas gdy
 rzeczywiste wywołanie \code{revokeFromBatch} kosztuje jedynie 61\,591 gas
 (\textbf{2.4\% całości}).
 
-\subsubsection*{Koszt produkcyjny a~koszt testu}
+\paragraph{Koszt testu vs koszt produkcyjny.}
 
 \begin{table}[H]
 \centering
@@ -500,7 +460,8 @@ rewokacji to stałe $\approx$105--113\,k~gas (issueBatchRoot + revokeFromBatch).
 Rozmiar drzewa zmienia koszt testu, ale nie zmienia znacząco kosztu on-chain.
 \end{tcolorbox}
 
-\subsubsection*{Dane pomiarowe (dla kompletności)}
+\noindent Dla kompletności, poniższa tabela zestawia pełne wyniki testów
+end-to-end dla obu operacji i~obu wersji kontraktu:
 
 \begin{table}[H]
 \centering
@@ -612,8 +573,6 @@ gazu i~partii 100 absolwentów.
 \section{Wnioski etapu}
 \label{sec:gaz-wnioski}
 
-\subsection{Hierarchia efektywności decyzji projektowych}
-
 Trzy etapy eksperymentów układają się w~spójny obraz: decyzje projektowe mają różne
 \emph{rzędy wpływu} na koszt.
 
@@ -632,35 +591,25 @@ Etap & Typ zmiany & Redukcja kosztu & Metryka \\
 \end{tabular}
 \end{table}
 
-\subsection{Wnioski końcowe}
+Cztery wnioski wynikają z~całości. Po pierwsze, \textbf{mikrooptymalizacje kodu
+dają realną, ale ograniczoną poprawę}: różnice rzędu 8--20\% są mierzalne i~warte
+uwagi przy wdrożeniu na głównej sieci Ethereum, ale nie zmieniają klasy kosztowej
+--- każdy dyplom nadal kosztuje dziesiątki tysięcy gas. Po drugie, \textbf{zmiana
+architektury to inna liga}: model Merkle batch nie ,,poprawia'' istniejącego kodu
+--- zadaje inne pytanie na poziomie projektu. Przy partii 100 dyplomów koszt
+jednostkowy spada o~niemal 99\%, co jest efektem amortyzacji stałego kosztu
+transakcji, a~nie szybszego algorytmu. Po trzecie, \textbf{optymalizacje hot-path
+Merkle są przewidywalne i~liniowe}: wzór $\Delta(d) = 2^d \cdot 42 + 96 + d \cdot
+199$ dokładnie opisuje zmierzone oszczędności --- wiemy \emph{skąd} pochodzi każdy
+zaoszczędzony gas i~możemy ekstrapolować na inne rozmiary drzew. Po czwarte,
+\textbf{dobór optymalizacji zależy od modelu użycia}: dla systemu z~małymi partiami
+($N < 5$) różnice architektur są marginalne, dla masowej emisji ($N \geq 50$)
+Merkle jest jedynym sensownym wyborem, a~optymalizacje G1--G4 mają sens przy
+systemach z~intensywną weryfikacją lub bardzo głębokimi drzewami.
 
-\begin{enumerate}
-  \item \textbf{Mikrooptymalizacje kodu dają realną, ale ograniczoną poprawę.}
-        Różnice rzędu 8--20\% są mierzalne i~warte uwagi przy wdrożeniu na głównej
-        sieci Ethereum. Nie zmieniają jednak klasy kosztowej --- każdy dyplom nadal
-        kosztuje dziesiątki tysięcy gas.
-  \item \textbf{Zmiana architektury to inna liga.} Model Merkle batch nie
-        ``poprawia'' istniejącego kodu --- zadaje inne pytanie na poziomie
-        projektu. Przy partii 100 dyplomów koszt jednostkowy spada o~niemal 99\%.
-        To efekt amortyzacji stałego kosztu transakcji, nie efekt szybszego
-        algorytmu.
-  \item \textbf{Optymalizacje hot-path Merkle są przewidywalne i~liniowe.} Wzór
-        $\Delta(d) = 2^d \cdot 42 + 96 + d \cdot 199$ dokładnie opisuje zmierzone
-        oszczędności --- wiemy \emph{skąd} pochodzi każdy zaoszczędzony gas i~możemy
-        ekstrapolować na inne rozmiary drzew.
-  \item \textbf{Dobór optymalizacji zależy od modelu użycia.} Dla systemu z~małymi
-        partiami ($N < 5$) różnice architektur są marginalne. Dla masowej emisji
-        ($N \geq 50$) Merkle jest jedynym sensownym wyborem. Optymalizacje G1--G4
-        mają sens przy systemach z~intensywną weryfikacją lub bardzo głębokimi
-        drzewami.
-\end{enumerate}
-
-\subsection{Ograniczenia}
-
-\begin{itemize}
-  \item Pomiary są lokalne (Foundry) i~nie uwzględniają rzeczywistej zmienności
-        \emph{base fee} ani kosztów calldata (które rosną z~długością dowodu).
-        Rozdział~\ref{ch:l2} uzupełnia je o~pomiary sieciowe na~warstwie drugiej.
-  \item Nie mierzono kosztu budowania drzewa Merkle po stronie klienta (off-chain);
-        przy bardzo dużych batchach ($N > 10^5$) może to być istotny parametr.
-\end{itemize}
+Pomiary mają jednak dwa ograniczenia: są lokalne (Foundry) i~nie uwzględniają
+rzeczywistej zmienności \emph{base fee} ani kosztów calldata (które rosną
+z~długością dowodu) --- rozdział~\ref{ch:l2} uzupełnia je o~pomiary sieciowe na
+warstwie drugiej; ponadto nie mierzono kosztu budowania drzewa Merkle po stronie
+klienta (off-chain), co przy bardzo dużych batchach ($N > 10^5$) może być istotnym
+parametrem.

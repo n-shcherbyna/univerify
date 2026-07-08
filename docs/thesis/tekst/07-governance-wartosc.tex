@@ -118,16 +118,13 @@ testu mierzy dokładnie jedną operację onboardu wydawcy, a~raportowana przez F
 suma na test (wyłączająca \code{setUp}) jest liczbą podaną bezpośrednio, niewymagającą
 dekompozycji.
 
-\begin{itemize}
-  \item \textbf{Onboard bezpośredni (EOA): 84\,246 gazu} --- linia bazowa sprzed
-        wprowadzenia zarządzania, jedno wywołanie \code{onboardIssuerAndUniversity}
-        na rejestrze będącym własnością zwykłego EOA.
-  \item \textbf{Onboard zarządzany: 824\,254 gazu} --- ta sama operacja przeprowadzona
-        pełną ścieżką: \code{multisig.submit} + \code{multisig.confirm}
-        + \code{multisig.execute} (planuje na timelocku) + \code{timelock.execute}
-        (wywołuje rejestr po opóźnieniu).
-  \item \textbf{Narzut na zmianę uprawnień: $824\,254 - 84\,246 = 740\,008$ gazu.}
-\end{itemize}
+Linią bazową sprzed wprowadzenia zarządzania jest pojedyncze wywołanie
+\code{onboardIssuerAndUniversity} na rejestrze będącym własnością zwykłego EOA:
+84\,246 gazu. Ta sama operacja przeprowadzona pełną ścieżką zarządzaną ---
+\code{multisig.submit} + \code{multisig.confirm} + \code{multisig.execute}
+(planuje na timelocku) oraz \code{timelock.execute} (wywołuje rejestr po
+opóźnieniu) --- kosztuje 824\,254 gazu, co daje narzut na zmianę uprawnień rzędu
+$824\,254 - 84\,246 = 740\,008$ gazu.
 
 Tabela~\ref{tab:gov-cost} pokazuje, gdzie trafia gaz ścieżki zarządzanej. Dominuje
 \code{submit}, który zapisuje na łańcuchu pełne dane zaplanowanej operacji.

@@ -12,10 +12,10 @@ wartości --- infrastrukturę klucza publicznego oraz zasadę minimalizacji dany
 Dominującą dziś metodą potwierdzania autentyczności dyplomu jest bezpośredni
 kontakt z~uczelnią: pracodawca lub instytucja dzwoni, pisze e-mail albo wypełnia
 formularz, a~pracownik dziekanatu ręcznie sprawdza dane w~wewnętrznym systemie.
-Proces ten jest powolny, kosztowny w~przeliczeniu na roboczogodziny i~--- co
-istotne --- \emph{zależny od ciągłości działania wydawcy}: jeśli uczelnia zostanie
-zlikwidowana, połączona lub po prostu nie odpowie, weryfikacja staje się
-niemożliwa.
+Jak zasygnalizowano we~wstępie (sekcja~\ref{sec:motywacja}), taki proces jest
+kosztowny w~przeliczeniu na roboczogodziny, a~przede wszystkim kruchy:
+\emph{zależy od tego, czy wydający dokument podmiot wciąż istnieje i~odpowiada na
+zapytania}.
 
 Rozwiązania pośrednie próbują ten problem złagodzić. Centralne rejestry dyplomów
 (prowadzone np.\ przez ministerstwa) przenoszą zaufanie na jeden podmiot państwowy,
@@ -84,8 +84,9 @@ dyplomu na tej podstawie opisuje rozdział~\ref{ch:prywatnosc}.
 \section{Rollupy warstwy drugiej i EIP-4844}
 \label{sec:l2-podstawy}
 
-Warstwa pierwsza (\emph{layer~1}, L1) Ethereum oferuje wysokie bezpieczeństwo, lecz
-ograniczoną przepustowość i~zmienny, często wysoki koszt transakcji. Rollupy
+Warstwa pierwsza (\emph{layer~1}, L1) Ethereum~\cite{ethereum} oferuje wysokie
+bezpieczeństwo, lecz ograniczoną przepustowość i~zmienny, często wysoki koszt
+transakcji. Rollupy
 warstwy drugiej (\emph{layer~2}, L2) przenoszą wykonanie transakcji poza łańcuch
 główny, publikując na nim jedynie dane i~zobowiązania pozwalające odtworzyć oraz
 zweryfikować stan. Wyróżnia się dwie rodziny:
@@ -104,7 +105,9 @@ odtworzyć jego stan. Do 2024~r.\ dane te trafiały do drogiego \code{calldata}.
 Ulepszenie EIP-4844~\cite{eip4844} wprowadziło \emph{transakcje blobowe}
 (\emph{blobs}): tani, tymczasowy obszar danych z~osobnym rynkiem opłat, znacząco
 obniżający koszt DA rollupów. W~efekcie koszt jednej transakcji L2 rozkłada się na
-dwie składowe: opłatę za dane publikowane na L1 oraz koszt wykonania na L2.
+dwie składowe: opłatę za dane publikowane na L1 oraz koszt wykonania na L2,
+rozliczany w~jednostkach gazu zgodnie z~formalnym modelem maszyny wirtualnej EVM
+opisanym w~Yellow Paper~\cite{wood-yellowpaper}.
 Rozdział~\ref{ch:l2} pokazuje empirycznie, że dla naszego obciążenia --- publikacji
 32-bajtowego korzenia --- dominuje ta druga składowa, a~porównawcze zestawienia
 kosztów rollupów zestawia się z~danymi publicznymi~\cite{l2beat}.

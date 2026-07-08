@@ -16,7 +16,6 @@ amerykańskich.
 \section{Metodyka pomiaru}
 \label{sec:l2-metodyka}
 
-\subsection{Zakres i badane sieci}
 Porównanie obejmuje koszt uruchomienia kontraktu \code{DiplomaRegistry} na czterech
 sieciach Ethereum: warstwie pierwszej (Sepolia, jako punkt odniesienia) oraz trzech
 rozwiązaniach warstwy drugiej reprezentujących odmienne rodziny technologiczne ---
@@ -24,7 +23,6 @@ Arbitrum Nitro, Base jako przedstawiciel stosu OP oraz zkSync~Era jako rollup
 oparty na dowodach zwięzłości (ang. \emph{validity proofs}). Dobór ten pozwala
 porównać nie pojedyncze wdrożenia, lecz reprezentatywne klasy rollupów.
 
-\subsection{Pomiary}
 Każdą sieć mierzono na jej publicznej sieci testowej. \emph{Zużycie gazu} oraz
 \emph{opłata za dane L1} są wielkościami rzeczywistymi, odczytanymi z~paragonów
 transakcji, natomiast koszty w~USD modelowane są na podstawie historycznych
@@ -33,7 +31,6 @@ p10/p50/p90). Wszystkie wyniki w~USD przeliczono kursem
 $\text{ETH}/\text{USD}=3500$ (snapshot z~dnia 13~maja~2026~r.); wpływ tego założenia
 badany jest w~sekcji~\ref{sec:l2-wrazliwosc}. Pomiary wykonano 19~maja~2026~r.
 
-\subsection{Parametry próby}
 Dla operacji \code{issueBatch} użyto rozmiarów paczek
 $\{1, 10, 100, 1\,000, 10\,000\}$. Dla \code{revokeFromBatch} zebrano 30~próbek
 przeciwko paczce bazowej o~rozmiarze 40, z~losowym wyborem unieważnianych liści.
@@ -136,9 +133,10 @@ wzrostem paczki dzięki amortyzacji stałego kosztu publikacji korzenia
 \label{sec:l2-revoke}
 
 Unieważnienie pojedynczego dyplomu (\code{revokeFromBatch}) jest operacją rzadką i
-dotyczy jednej transakcji. Tabela~\ref{tab:revoke} podaje jej medianowy koszt;
-utrzymuje on ten sam porządek sieci co koszt publikacji, z~Base jako
-zdecydowanie najtańszą opcją.
+dotyczy jednej transakcji. Tabela~\ref{tab:revoke} podaje jej medianowy koszt. Base pozostaje zdecydowanie
+najtańszą opcją, jednak porządek pozostałych sieci nie jest identyczny jak przy
+publikacji: Sepolia i~zkSync zamieniają się miejscami, przez co zkSync staje się
+tu operacją najdroższą.
 
 \begin{table}[H]
   \centering
@@ -214,7 +212,9 @@ Ponieważ koszty w~USD zależą od trzech zmiennych rynkowych --- opłaty bazowe
 kursu ETH/USD oraz ceny gazu sekwensera L2 --- poniżej badana jest odporność
 wyników na ich wahania.
 
-\subsection{Scenariusze opłaty bazowej L1}
+Pierwszym czynnikiem jest opłata bazowa L1: rys.~\ref{fig:basefee} pokazuje koszt
+\code{issueBatch(1000)} w~trzech jej scenariuszach (p10/p50/p90).
+
 \begin{figure}[H]
   \centering
   \begin{tikzpicture}
@@ -237,8 +237,8 @@ wyników na ich wahania.
   \label{fig:basefee}
 \end{figure}
 
-\subsection{Wrażliwość na kurs ETH/USD}
-Koszt w~USD jest liniową funkcją kursu ETH/USD: $C(r) = C_{3500}\cdot r/3500$, gdzie
+Drugim czynnikiem jest kurs ETH/USD. Koszt w~USD jest jego liniową funkcją:
+$C(r) = C_{3500}\cdot r/3500$, gdzie
 $C_{3500}$ to wartość bazowa raportowana przy snapshocie z~dnia 13~maja~2026~r.
 ($r=3500$). Tabela~\ref{tab:eth-sens} pokazuje koszt \code{issueBatch(1000)}
 w~scenariuszu p50 dla trzech zakotwiczonych poziomów rynkowych.
@@ -260,9 +260,8 @@ w~scenariuszu p50 dla trzech zakotwiczonych poziomów rynkowych.
   ]{\DataDir/table-sensitivity-eth-usd.csv}
 \end{table}
 
-\subsection{Wrażliwość na cenę gazu sekwensera L2}
-Cena gazu ustalana przez operatora sekwensera L2 jest niezależna od opłaty bazowej
-L1. Model kosztu rozkłada się addytywnie:
+Trzecim czynnikiem jest cena gazu ustalana przez operatora sekwensera L2,
+niezależna od opłaty bazowej L1. Model kosztu rozkłada się addytywnie:
 \[
   C_{\text{total}} = C_{\text{exec}} + C_{\text{L1 data}},
 \]
@@ -322,11 +321,12 @@ Abstraction --- nie jest to ta sama jednostka co \code{gasUsed} w~EVM. Porównyw
 surowych liczb gazu między rodzinami rollupów jest \textbf{metodologicznie
 niepoprawne}; sensowne porównanie kosztów możliwe jest wyłącznie w~USD lub ETH.
 
-\paragraph{Opóźnienie inkluzji ograniczone interwałem odpytywania.} Pomiar czasu od
-wysłania do paragonu opiera się o~cykl odpytywania klienta viem
-(\textasciitilde 4~s). Otrzymane wartości są zatem \textbf{górnym ograniczeniem
-czasu inkluzji w~bloku}, a~nie samym czasem inkluzji. Porównanie międzysieciowe jest
-dodatkowo zniekształcone interakcją czasu bloku z~interwałem odpytywania.
+\paragraph{Opóźnienie inkluzji ograniczone interwałem odpytywania.} Jak
+zaznaczono w~sekcji~\ref{sec:l2-latencja}, pomiar czasu od wysłania do paragonu
+jest \textbf{górnym ograniczeniem czasu inkluzji w~bloku}, nie zaś jego dokładną
+wartością, z~uwagi na~cykl odpytywania klienta viem (\textasciitilde 4~s).
+Dodatkowo porównanie międzysieciowe jest zniekształcone interakcją czasu bloku
+z~tym interwałem.
 
 \paragraph{Snapshot skalarów Base SystemConfig.} Model kosztu Base (Ecotone) używa
 snapshotu parametrów \code{baseFeeScalar} oraz \code{blobBaseFeeScalar} pobranego
@@ -334,9 +334,9 @@ z~konkretnego bloku L1. Po zmianie tych skalarów przez operatora Base wynikowe
 koszty zmieniłyby się proporcjonalnie; data snapshotu jest udokumentowana
 w~\code{meta.json} każdego eksportu.
 
-\paragraph{Snapshot kursu ETH/USD.} Wyniki w~USD przeliczono kursem
-$\text{ETH}/\text{USD}=3500$ (snapshot z~dnia 13~maja~2026~r.). Wynik dla innego
-kursu otrzymuje się mnożeniem przez czynnik $r/3500$.
+\paragraph{Snapshot kursu ETH/USD.} Przyjęty kurs $\text{ETH}/\text{USD}=3500$ jest
+migawką z~dnia 13~maja~2026~r.; jego wpływ na wyniki oraz formułę przeliczeniową
+dla innych kursów podano w~sekcji~\ref{sec:l2-wrazliwosc}.
 
 \paragraph{Konserwatywne ceny sekwensera L2.} Ceny gazu sekwensera ustawiono na
 zaokrąglone wartości powyżej żywego snapshotu (Arbitrum 0{,}1 wobec 0{,}02~gwei;
@@ -368,14 +368,20 @@ Ponieważ koszt na dyplom maleje proporcjonalnie do $1/n$ (publikujemy jeden
 32-bajtowy korzeń niezależnie od rozmiaru paczki), stosunki kosztów między sieciami
 są niezmiennicze względem $n$; powyższa hierarchia utrzymuje się dla dowolnego
 rozmiaru paczki. Przewaga Base nie wynika z~lepszej kompresji \emph{naszych}
-danych --- we wszystkich sieciach publikujemy ten sam korzeń o~koszcie około
-51~tys.\ gazu --- lecz z~tego, że pojedyncza transakcja L2 jest tania: rollup
+danych --- w~sieciach EVM publikujemy ten sam 32-bajtowy korzeń o~koszcie około
+51~tys.\ gazu (zkSync~Era rozlicza gaz w~niewspółmiernej jednostce) --- lecz
+z~tego, że pojedyncza transakcja L2 jest tania: rollup
 amortyzuje koszt zapisu danych na~L1 pomiędzy wszystkich swoich użytkowników poprzez
 transakcje blob (EIP-4844). Dla naszej transakcji składnik danych L1 stanowi znikomą
 część kosztu, w~którym dominuje wykonanie po stronie sekwensera.
 
-Wynik ten jest odporny na typową zmienność rynkową: analiza wrażliwości
-(sekcja~\ref{sec:l2-wrazliwosc}) pokazuje, że nawet dwukrotne wahania kursu ETH/USD,
-opłaty bazowej L1 czy ceny sekwensera L2 nie zmieniają uporządkowania sieci ani
-rzędu wielkości kosztu. Z~perspektywy kosztowej Base jest zatem najkorzystniejszym
-celem wdrożenia rejestru dyplomów spośród badanych sieci.
+Wynik ten jest odporny na typową zmienność rynkową, choć nie wszystkie zmienne
+działają tak samo (sekcja~\ref{sec:l2-wrazliwosc}). Skalowanie kursem ETH/USD jest
+liniowe --- zachowuje zarówno uporządkowanie sieci, jak i~rząd wielkości kosztu ---
+a~zmiana ceny sekwensera L2 również nie narusza kolejności rollupów. Wahania opłaty
+bazowej L1 wpływają natomiast silnie na samą Sepolię, która jako sieć warstwy
+pierwszej jest na nie bezpośrednio wystawiona: przy wyższej opłacie jej koszt rośnie,
+przez co dystans rollupów do warstwy pierwszej jeszcze się powiększa. We wszystkich
+scenariuszach Base pozostaje najtańsza, a~rollupy zachowują stabilny, niski koszt ---
+z~perspektywy kosztowej Base jest zatem najkorzystniejszym celem wdrożenia rejestru
+dyplomów spośród badanych sieci.
