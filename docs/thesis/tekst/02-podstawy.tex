@@ -1,39 +1,145 @@
 \chapter{Podstawy teoretyczne}
 \label{ch:podstawy}
 
-% Jedyny rozdział czysto teoretyczny — do napisania od zera.
-% Zbiera pojęcia potrzebne w rozdziałach 3-7.
+Rozdział zbiera pojęcia potrzebne w~dalszej części pracy: przegląd obecnych metod
+weryfikacji dyplomów, konstrukcję drzew Merkle i~schematów zobowiązań, model
+kosztowy rollupów warstwy drugiej, a~także dwie ramy odniesienia dla analizy
+wartości --- infrastrukturę klucza publicznego oraz zasadę minimalizacji danych.
 
 \section{Weryfikacja dyplomów: stan obecny}
 \label{sec:stan-obecny}
-% Metody obecne: telefon/e-mail do uczelni, centralne rejestry, PKI.
-\TODO{Przegląd obecnych metod weryfikacji i ich ograniczeń.}
+
+Dominującą dziś metodą potwierdzania autentyczności dyplomu jest bezpośredni
+kontakt z~uczelnią: pracodawca lub instytucja dzwoni, pisze e-mail albo wypełnia
+formularz, a~pracownik dziekanatu ręcznie sprawdza dane w~wewnętrznym systemie.
+Proces ten jest powolny, kosztowny w~przeliczeniu na roboczogodziny i~--- co
+istotne --- \emph{zależny od ciągłości działania wydawcy}: jeśli uczelnia zostanie
+zlikwidowana, połączona lub po prostu nie odpowie, weryfikacja staje się
+niemożliwa.
+
+Rozwiązania pośrednie próbują ten problem złagodzić. Centralne rejestry dyplomów
+(prowadzone np.\ przez ministerstwa) przenoszą zaufanie na jeden podmiot państwowy,
+lecz nie usuwają pojedynczego punktu kontroli i~awarii. Dokumenty podpisane cyfrowo
+w~ramach infrastruktury klucza publicznego (sekcja~\ref{sec:pki}) pozwalają na
+niezależną weryfikację offline, ale nie dają publicznego zapisu tego, kto był
+uprawniony do wydawania. Kierunek oparty na łańcuchu bloków --- reprezentowany m.in.\
+przez inicjatywy takie jak Blockcerts oraz szereg raportów wdrożeniowych dla sektora
+edukacji~\cite{grech2017} --- publikuje odciski dokumentów w~publicznym,
+niemodyfikowalnym rejestrze. Niniejsza praca rozwija ten kierunek, kontynuując
+wcześniejsze prace autora~\cite{shcherbyna-sitee} i~koncentrując się na trzech
+osiach: koszcie, prywatności oraz modelu zarządzania uprawnieniami.
 
 \section{Drzewa Merkle}
 \label{sec:merkle}
-% Definicja, dowód przynależności (proof), złożoność O(log n),
-% domenowo separowany liść.
-\TODO{Formalne wprowadzenie drzew Merkle i dowodów przynależności.}
+
+Drzewo Merkle~\cite{merkle1987} to binarne drzewo skrótów, w~którym każdy liść jest
+skrótem pojedynczego elementu danych, a~każdy węzeł wewnętrzny --- skrótem
+konkatenacji swoich dzieci:
+\[
+  \text{węzeł} = H\bigl(\text{lewe} \,\Vert\, \text{prawe}\bigr),
+\]
+gdzie $H$ jest kryptograficzną funkcją skrótu (w~tej pracy \code{keccak256}, wariant
+rodziny SHA-3~\cite{fips202}). Korzeń drzewa jest zwięzłym, 32-bajtowym
+zobowiązaniem do całego zbioru liści: zmiana dowolnego elementu zmienia korzeń.
+
+\emph{Dowód przynależności} (\emph{Merkle proof}) elementu to zbiór węzłów
+rodzeństwa na ścieżce od liścia do korzenia. Mając liść i~taki dowód, weryfikator
+odtwarza korzeń, hashując kolejno pary aż do szczytu, i~porównuje go z~korzeniem
+zaufanym. Dla drzewa o~$n$ liściach dowód ma długość $O(\log n)$, co czyni
+weryfikację tanią niezależnie od rozmiaru partii --- własność wykorzystywaną
+w~rozdziale~\ref{ch:gaz} do amortyzacji kosztu on-chain.
+
+Aby uniemożliwić przeniesienie ważnego dowodu do innego kontekstu (atak
+powtórzenia), liść poddaje się \emph{separacji domen}: przed zhashowaniem wiąże się
+go z~parametrami wdrożenia (adres kontraktu, identyfikator sieci, wystawca, numer
+partii). Ta sama wartość dokumentu w~innej sieci lub u~innego wystawcy daje inny
+liść.
 
 \section{Schematy zobowiązań kryptograficznych}
 \label{sec:zobowiazania}
-% Własności: hiding + binding. Zobowiązanie z solą: c = keccak(wartość, sól).
-% Podstawa selektywnego ujawniania (rozdz. 6).
-\TODO{Wprowadź zobowiązania hash-owe z solą; własności hiding/binding.}
 
-\section{Rollupy warstwy 2 i EIP-4844}
+Schemat zobowiązania (\emph{commitment}) pozwala „zapieczętować'' wartość tak, by
+później móc ją ujawnić i~udowodnić, że była ustalona wcześniej. Dobry schemat ma dwie
+własności~\cite{bonehshoup}:
+
+\begin{description}
+  \item[Wiązanie (\emph{binding}).] Zobowiązania nie da się otworzyć na dwie różne
+        wartości --- zobowiązujący nie może zmienić zdania po fakcie.
+  \item[Ukrywanie (\emph{hiding}).] Samo zobowiązanie nie zdradza zobowiązanej
+        wartości.
+\end{description}
+
+W~tej pracy używamy prostego zobowiązania opartego na funkcji skrótu z~solą:
+\[
+  c = H(\text{wartość} \,\Vert\, r),
+\]
+gdzie $r$ to losowa, tajna sól o~wysokiej entropii. Odporność $H$ na kolizje daje
+wiązanie, a~tajna sól --- ukrywanie, także dla wartości z~małych domen (bez soli
+atak słownikowy nad małą domeną byłby trywialny). Alternatywą o~silniejszych,
+informacyjno-teoretycznych gwarancjach ukrywania są zobowiązania
+Pedersena~\cite{pedersen1991}, oparte na trudności problemu logarytmu dyskretnego;
+zastosowanie wariantu hash-owego jest tu podyktowane spójnością z~modelem
+haszowania drzewa Merkle oraz brakiem potrzeby homomorfizmu. Konstrukcję pól
+dyplomu na tej podstawie opisuje rozdział~\ref{ch:prywatnosc}.
+
+\section{Rollupy warstwy drugiej i EIP-4844}
 \label{sec:l2-podstawy}
-% Optimistic vs zk rollupy, dostępność danych (DA), blob transactions (blobs),
-% podział kosztu: opłata L1-data + wykonanie L2.
-\TODO{Model kosztowy rollupów i wpływ EIP-4844 (blobów) na koszt DA.}
 
-\section{Infrastruktura klucza publicznego (PKI) i podpisy cyfrowe}
+Warstwa pierwsza (\emph{layer~1}, L1) Ethereum oferuje wysokie bezpieczeństwo, lecz
+ograniczoną przepustowość i~zmienny, często wysoki koszt transakcji. Rollupy
+warstwy drugiej (\emph{layer~2}, L2) przenoszą wykonanie transakcji poza łańcuch
+główny, publikując na nim jedynie dane i~zobowiązania pozwalające odtworzyć oraz
+zweryfikować stan. Wyróżnia się dwie rodziny:
+
+\begin{description}
+  \item[Rollupy optymistyczne] (np.\ Arbitrum~\cite{arbitrum-nitro}, Base)
+        zakładają poprawność transakcji domyślnie i~dopuszczają \emph{dowody
+        oszustwa} w~oknie sporu.
+  \item[Rollupy zk] (np.\ zkSync) dołączają do każdej partii \emph{dowód ważności}
+        (zero-knowledge), matematycznie potwierdzający poprawność przejścia stanu.
+\end{description}
+
+Kluczowym parametrem kosztu jest \emph{dostępność danych} (\emph{data
+availability}, DA) --- rollup musi opublikować na L1 tyle danych, by każdy mógł
+odtworzyć jego stan. Do 2024~r.\ dane te trafiały do drogiego \code{calldata}.
+Ulepszenie EIP-4844~\cite{eip4844} wprowadziło \emph{transakcje blobowe}
+(\emph{blobs}): tani, tymczasowy obszar danych z~osobnym rynkiem opłat, znacząco
+obniżający koszt DA rollupów. W~efekcie koszt jednej transakcji L2 rozkłada się na
+dwie składowe: opłatę za dane publikowane na L1 oraz koszt wykonania na L2.
+Rozdział~\ref{ch:l2} pokazuje empirycznie, że dla naszego obciążenia --- publikacji
+32-bajtowego korzenia --- dominuje ta druga składowa, a~porównawcze zestawienia
+kosztów rollupów zestawia się z~danymi publicznymi~\cite{l2beat}.
+
+\section{Infrastruktura klucza publicznego i podpisy cyfrowe}
 \label{sec:pki}
-% Baza porównawcza dla analizy wartości w rozdz. 7:
-% podpisany dokument daje offline'ową, niezależną weryfikację.
-\TODO{Opisz PKI jako punkt odniesienia dla analizy wartości blockchaina.}
 
-\section{Ochrona danych osobowych (RODO) i minimalizacja danych}
+Kryptografia asymetryczna~\cite{diffiehellman1976} umożliwia podpis cyfrowy:
+posiadacz klucza prywatnego podpisuje dokument, a~każdy dysponujący odpowiadającym
+kluczem publicznym może podpis zweryfikować, nie mogąc go podrobić. Infrastruktura
+klucza publicznego (\emph{public key infrastructure}, PKI) organizuje zaufanie do
+kluczy publicznych: urząd certyfikacji (\emph{certificate authority}, CA) wystawia
+certyfikaty wiążące tożsamość z~kluczem, a~standard X.509~\cite{rfc5280} definiuje ich
+format oraz mechanizmy unieważniania (listy CRL, protokół OCSP).
+
+Dla niniejszej pracy PKI jest \emph{punktem odniesienia}. Dyplom podpisany cyfrowo
+przez uczelnię daje niezależną, offline'ową weryfikację po znikomym koszcie --- czyli
+dokładnie te zalety, które najczęściej przypisuje się rozwiązaniom blockchainowym.
+Rozdział~\ref{ch:governance} wykorzystuje to porównanie, by wyodrębnić tę własność,
+której PKI \emph{nie} zapewnia: publiczny, odporny na ciche wsteczne przepisanie log
+uprawnień do wydawania.
+
+\section{Ochrona danych osobowych i minimalizacja danych}
 \label{sec:rodo}
-% Zasada minimalizacji danych — motywacja dla selektywnego ujawniania.
-\TODO{Zasada minimalizacji danych z RODO jako motywacja prywatności.}
+
+Ogólne rozporządzenie o~ochronie danych (RODO)~\cite{gdpr} ustanawia zasadę
+\emph{minimalizacji danych}: przetwarzane dane osobowe muszą być adekwatne,
+stosowne oraz ograniczone do tego, co niezbędne dla celu przetwarzania
+(art.~5~ust.~1~lit.~c). W~kontekście weryfikacji dyplomu oznacza to, że podmiot
+sprawdzający sam fakt ukończenia studiów nie powinien być zmuszany do poznania
+wszystkich danych z~dokumentu --- numeru dyplomu, dokładnej daty czy pełnych danych
+osobowych.
+
+Model podstawowy, hashujący cały ładunek dyplomu, wymusza ujawnienie wszystkich pól
+przy każdej weryfikacji, co stoi w~napięciu z~tą zasadą. Stanowi to bezpośrednią
+motywację dla mechanizmu selektywnego ujawniania opartego na zobowiązaniach pól,
+przedstawionego w~rozdziale~\ref{ch:prywatnosc}.
