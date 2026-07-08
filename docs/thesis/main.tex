@@ -1,0 +1,139 @@
+% !TEX program = xelatex
+% !TeX encoding = utf8
+% !TeX spellcheck = pl-PL
+%
+% Praca magisterska — UniVerify
+% Szablon: EE-dyplom (Wydział Elektryczny PW, aut. Łukasz Makowski, CC-BY 4.0)
+%          https://github.com/SP5LMA/EE-dyplom
+% Kompilacja: XeLaTeX + biber (na Overleaf ustaw kompilator na XeLaTeX).
+
+\documentclass[thesis=mgr,faculty=ee]{EE-dyplom}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Konfiguracja strony tytułowej — do personalizacji
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% TODO: potwierdź instytut i tytuł promotora ze stroną Wydziału.
+\instytut{Instytut Elektrotechniki Teoretycznej i Systemów Informacyjno-Pomiarowych}
+\kierunek{Informatyka Stosowana}
+\specjalnosc{Inżynieria Oprogramowania} % TODO: potwierdź specjalność dla mgr
+\title{Optymalizacja kosztów weryfikacji dyplomów w łańcuchu bloków Ethereum}
+\engtitle{Cost Optimization of Diploma Verification on the Ethereum Blockchain}
+\album{323777}
+\author{inż. Nazar Shcherbyna}
+\promotor{dr hab. inż. Bartosz Sawicki, prof. uczelni} % TODO: potwierdź dokładny tytuł
+\date{2026}
+\longdate{2026-XX-XX} % TODO: data złożenia
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Streszczenie (PL) i Abstract (EN)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\streszczeniepracy{
+Weryfikacja autentyczności dyplomów uczelni wyższych opiera się dziś przede
+wszystkim na bezpośrednim kontakcie z instytucją wydającą --- procesie powolnym,
+kosztownym i uzależnionym od ciągłości jej działania. Niniejsza praca przedstawia
+system UniVerify, który wykorzystuje publiczny łańcuch bloków Ethereum jako
+rejestr odporny na nieuprawnioną modyfikację. Dyplomy grupowane są w~drzewa
+Merkle, których korzenie publikowane są w~kontrakcie inteligentnym, dzięki czemu
+koszt zapisu nie zależy od liczby dokumentów w~partii.
+
+Praca wnosi trzy zasadnicze rozszerzenia względem systemu podstawowego. Po
+pierwsze, wprowadza mechanizm selektywnego ujawniania danych oparty na
+kryptograficznych zobowiązaniach z~solą, pozwalający posiadaczowi dyplomu
+udostępnić jedynie wybrane pola, zgodnie z~zasadą minimalizacji danych. Po
+drugie, przedstawia pomiary kosztu wdrożenia w~czterech sieciach: warstwie
+pierwszej (Sepolia) oraz trzech rollupach warstwy drugiej (Arbitrum, Base,
+zkSync), wraz z~analizą wrażliwości na wahania cen. Po trzecie, proponuje model
+zarządzania uprawnieniami łączący portfel wielopodpisowy z~mechanizmem opóźnienia
+czasowego, który eliminuje pojedynczy punkt zaufania.
+
+Wyniki pomiarów pokazują, że koszt rejestracji pojedynczego dyplomu w~warstwie
+drugiej jest rzędu $10^{-6}$~USD. Pracę zamyka analiza wartości: porównanie
+proponowanego rozwiązania z~podejściem tradycyjnym oraz z~infrastrukturą klucza
+publicznego, prowadzące do wniosku, że marginalna przewaga łańcucha bloków
+sprowadza się do jawnego, niemodyfikowalnego i~możliwego do zweryfikowania
+rejestru uprawnień do wydawania dyplomów.
+}
+
+\slowakluczowe{łańcuch bloków, Ethereum, weryfikacja dyplomów, drzewa Merkle,
+selektywne ujawnianie danych, ochrona prywatności, rollupy warstwy drugiej,
+kontrakty inteligentne, zarządzanie uprawnieniami}
+
+\thesisabstract{
+The authentication of university diplomas today relies chiefly on direct contact
+with the issuing institution --- a process that is slow, costly, and dependent on
+that institution's continued operation. This thesis presents UniVerify, a system
+that uses the public Ethereum blockchain as a tamper-resistant registry. Diplomas
+are grouped into Merkle trees whose roots are published in a smart contract, so
+that the on-chain cost is independent of the number of documents in a batch.
+
+The thesis makes three principal extensions to the base system. First, it
+introduces a selective-disclosure mechanism based on salted cryptographic
+commitments, allowing a diploma holder to reveal only chosen fields, in line with
+the data-minimisation principle. Second, it reports deployment-cost measurements
+across four networks: layer one (Sepolia) and three layer-two rollups (Arbitrum,
+Base, zkSync), together with a sensitivity analysis under price fluctuations.
+Third, it proposes an authorisation-governance model that combines a
+multisignature wallet with a time-lock, removing the single point of trust.
+
+The measurements show that registering a single diploma on layer two costs on the
+order of $10^{-6}$~USD. The thesis closes with a value analysis: a comparison of
+the proposed solution with the status quo and with public-key infrastructure,
+leading to the conclusion that the marginal advantage of the blockchain reduces to
+a public, immutable, and verifiable log of diploma-issuing authorisations.
+}
+
+\thesiskeywords{blockchain, Ethereum, diploma verification, Merkle trees,
+selective disclosure, privacy, layer-two rollups, smart contracts,
+authorisation governance}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Makra pomocnicze (na czas pisania; \TODO usuń przed oddaniem)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\newcommand{\code}[1]{\texttt{#1}}
+\newcommand{\TODO}[1]{\textcolor{red}{\textbf{[TODO: #1]}}}
+
+% Wykresy i tabele z danych (rozdz. 4-5 — koszt gazu + benchmarki L2)
+\usepackage{pgfplots}
+\usepackage{pgfplotstable}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{colortbl}   % \rowcolor w tabelach (rozdz. 4)
+\usepackage{multirow}   % \multirow (rozdz. 4)
+\usepackage{makecell}   % \makecell (rozdz. 4)
+\usepackage{tcolorbox}  % ramka "Wniosek praktyczny" (rozdz. 4)
+\usepackage{xfp}        % \fpeval — przeliczenia kosztowe (rozdz. 4)
+\pgfplotsset{compat=1.18}
+\newcommand{\DataDir}{dane/l2} % katalog z danymi pomiarowymi
+
+% Kolory tabel rozdz. 4 (regres / najlepszy / neutralny)
+\definecolor{regresscolor}{RGB}{255,235,235}
+\definecolor{bestcolor}{RGB}{230,255,230}
+\definecolor{neutralcolor}{RGB}{245,245,255}
+
+% Parametry i makro przeliczenia kosztu na PLN (rozdz. 4)
+\newcommand{\EthPln}{7000}
+\newcommand{\CostPln}[2]{\fpeval{round(#1*(#2*1e-9)*(\EthPln), 4)}}
+
+\begin{document}
+    % Strony nagłówkowe (tytułowa + streszczenie + abstract + oświadczenie)
+    \frontpages
+
+    % Treść pracy — rozdziały w katalogu tekst/
+    \input{tekst/01-wstep}
+    \input{tekst/02-podstawy}
+    \input{tekst/03-architektura}
+    \input{tekst/04-koszt-gazu}
+    \input{tekst/05-benchmarki-l2}
+    \input{tekst/06-prywatnosc}
+    \input{tekst/07-governance-wartosc}
+    \input{tekst/08-podsumowanie}
+
+    % Bibliografia (plik EE-dyplom.bib, biblatex + biber)
+    \bibliografia
+
+    % Strony końcowe — odkomentuj, gdy będą potrzebne pliki
+    % \acronymslist          % wymaga wykazu skrótów/symboli
+    \listoffigures
+    \listoftables
+    % \easyappendices        % wymaga tekst/appendices.tex
+\end{document}

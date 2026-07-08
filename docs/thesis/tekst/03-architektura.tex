@@ -1,0 +1,142 @@
+\chapter{Architektura systemu UniVerify}
+\label{ch:architektura}
+
+Rozdział przedstawia budowę systemu UniVerify w~postaci, na której opierają się
+kolejne rozdziały pomiarowe i~projektowe. Opisuje model danych, kontrakt rejestru,
+pakiety współdzielone oraz aplikację webową, a~na końcu zbiera je w~trzech
+przepływach end-to-end: wydania, weryfikacji i~rewokacji. Pomiary kosztów pozostają
+poza zakresem tego rozdziału --- omawiają je rozdziały~\ref{ch:gaz} i~\ref{ch:l2}.
+
+\section{Model danych}
+\label{sec:model-danych}
+
+Podstawową jednostką zapisu on-chain nie jest pojedynczy dyplom, lecz \emph{partia}
+(\emph{batch}). Wystawca grupuje dyplomy w~drzewo Merkle i~publikuje w~kontrakcie
+jedynie jego korzeń. Dzięki temu koszt zapisu nie zależy od liczby dokumentów
+w~partii --- jego uzasadnienie ilościowe podaje rozdział~\ref{ch:gaz}. Trójka
+identyfikująca partię to:
+
+\begin{itemize}
+  \item \code{issuer} --- adres Ethereum portfela autoryzowanego przez uczelnię;
+  \item \code{batchId} --- 64-bitowy numer kolejny partii, unikalny w~obrębie
+        wystawcy;
+  \item \code{merkleRoot} --- 32-bajtowy korzeń drzewa Merkle danej partii.
+\end{itemize}
+
+Pojedynczy dyplom reprezentowany jest przez \emph{kopertę}
+(\emph{envelope}) złożoną z~dwóch części: \code{payload} --- danych dyplomu
+(identyfikator uczelni, dane studenta, stopień, data wydania, numer dyplomu) ---
+oraz \code{proof} typu \code{MERKLE\_BATCH}, zawierającego ścieżkę Merkle wiążącą
+liść dokumentu z~korzeniem partii. Weryfikacja polega na odtworzeniu korzenia
+z~liścia i~ścieżki oraz porównaniu go z~korzeniem odczytanym z~kontraktu.
+
+Status dyplomu opisuje wartość \code{StatusCode}: $0$~---~nieznany
+(\emph{Unknown}), $1$~---~ważny (\emph{Valid}), $2$~---~unieważniony
+(\emph{Revoked}). Status nieznany oznacza, że liść nie należy do żadnej znanej
+partii; unieważnienie omówiono w~sekcji~\ref{sec:przeplywy}.
+
+\section{Kontrakt \code{DiplomaRegistry}}
+\label{sec:kontrakt}
+
+Kontrakt \code{DiplomaRegistry} udostępnia funkcje na trzech poziomach uprawnień.
+
+\begin{description}
+  \item[Właściciel (\emph{owner}).] Zarządza uczelniami i~wystawcami: rejestruje
+        uczelnię wraz z~metadanymi (nazwa, kraj, strona, identyfikator
+        akredytacji), przypisuje wystawcom uczelnie oraz odbiera im uprawnienia.
+        Właściciel korzysta z~dwustopniowego przekazania własności
+        (\code{transferOwnership} $\rightarrow$ \code{acceptOwnership}), co
+        rozdział~\ref{ch:governance} wykorzystuje do zainstalowania modelu
+        zarządzania bez zmiany kontraktu.
+  \item[Wystawca (\emph{issuer}).] Publikuje korzenie partii
+        (\code{issueBatch}) oraz unieważnia pojedyncze dyplomy
+        (\code{revokeFromBatch}), przy czym unieważnienie wymaga podania dowodu
+        Merkle potwierdzającego przynależność dokumentu do partii.
+  \item[Publiczny odczyt (\emph{view}).] Funkcje bezstanowe dostępne dla każdego:
+        \code{statusWithProof} (status wraz z~weryfikacją dowodu), \code{getBatch}
+        (korzeń partii), \code{isIssuer} oraz \code{issuerUniversityId}.
+\end{description}
+
+Kontrakt utrzymuje metadane uczelni, mapowanie wystawca~$\rightarrow$~uczelnia,
+korzenie Merkle indeksowane parą \code{(issuer, batchId)} oraz zbiór unieważnień.
+Status uczelni opisuje osobne wyliczenie: nieznana~(0), aktywna~(1),
+zawieszona~(2), unieważniona~(3).
+
+\section{Pakiety współdzielone}
+\label{sec:pakiety}
+
+System zorganizowano jako monorepozytorium, w~którym logika kryptograficzna żyje
+w~jednym miejscu i~jest współdzielona przez aplikację webową, CLI oraz SDK.
+
+\begin{description}
+  \item[\code{verifier-core}.] Warstwa fundamentalna. Eksportuje
+        \code{hashPayload} (kanonizacja + Keccak256), \code{computeMerkleLeaf}
+        (haszowanie liścia z~separacją domen), \code{buildMerkleFromLeaves}
+        (budowa drzewa i~zwrot korzenia oraz dowodów), \code{computeRootFromProof}
+        (odtworzenie korzenia z~liścia i~dowodu), a~także ABI kontraktu i~schemat
+        walidacji ładunku (Zod). Musi być zbudowana przed pozostałymi pakietami.
+  \item[\code{sdk}.] Klasa \code{UniverifySdk} opakowuje odczyty z~kontraktu
+        i~pełną weryfikację: \code{verify} (weryfikacja koperty wraz z~metadanymi
+        uczelni), \code{status}, \code{getBatch}, \code{getIssuer},
+        \code{getUniversity} oraz odczyt informacji o~własności.
+  \item[\code{verifier-cli}.] Skrypty wiersza poleceń: \code{issue.ts}
+        i~\code{verify.ts}, a~także grupa poleceń \code{gov} obsługująca model
+        zarządzania z~rozdziału~\ref{ch:governance}.
+\end{description}
+
+Rozdzielenie logiki do \code{verifier-core} sprawia, że ta sama, przetestowana
+implementacja haszowania i~drzew Merkle jest używana zarówno przy wystawianiu, jak
+i~przy weryfikacji --- eliminuje to ryzyko rozjazdu między stroną wydającą
+a~sprawdzającą.
+
+\section{Aplikacja webowa}
+\label{sec:web}
+
+Interfejs użytkownika to aplikacja Next.js udostępniająca trasy dopasowane do ról
+w~systemie (tab.~\ref{tab:web-routes}) oraz dwa punkty API.
+
+\begin{table}[H]
+\centering
+\caption{Trasy aplikacji webowej i~ich role.}
+\label{tab:web-routes}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Trasa & Rola & Przeznaczenie \\
+\midrule
+\code{/issuer}   & wystawca  & budowa partii Merkle, publikacja korzeni, eksport dowodów \\
+\code{/verifier} & publiczna & weryfikacja koperty i~sprawdzenie statusu on-chain \\
+\code{/revoke}   & wystawca  & unieważnianie dyplomów przez dowód Merkle \\
+\code{/present}  & posiadacz & selektywne ujawnianie pól (rozdz.~\ref{ch:prywatnosc}) \\
+\code{/admin}    & właściciel & zarządzanie wystawcami i~uczelniami (rozdz.~\ref{ch:governance}) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Punkty \code{/api/verify} (pełna weryfikacja z~metadanymi uczelni) oraz
+\code{/api/status} (lekki odczyt statusu) chroni wspólny \emph{guard}: opcjonalne
+uwierzytelnianie kluczem API (wymuszane tylko, gdy ustawiono zmienną środowiskową
+z~kluczami; akceptuje nagłówek \code{Bearer} lub \code{X-API-Key}) oraz ograniczanie
+liczby żądań (30~żądań na~60~s na~adres IP, w~przesuwnym oknie w~pamięci).
+
+\section{Przepływy: wydanie, weryfikacja, rewokacja}
+\label{sec:przeplywy}
+
+Trzy główne przepływy spinają opisane elementy w~całość.
+
+\paragraph{Wydanie.} Wystawca buduje off-chain drzewo Merkle z~liści dyplomów
+(\code{computeMerkleLeaf} + \code{buildMerkleFromLeaves}), publikuje w~kontrakcie
+sam korzeń (\code{issueBatch}) i~eksportuje każdemu absolwentowi kopertę zawierającą
+jego \code{payload} oraz dowód Merkle. Cała praca kryptograficzna poza jedną
+transakcją odbywa się bez gazu.
+
+\paragraph{Weryfikacja.} Weryfikator (przez \code{/verifier}, API lub SDK)
+odtwarza z~koperty liść, z~liścia i~dowodu --- korzeń, po czym porównuje go
+z~korzeniem odczytanym z~kontraktu dla pary \code{(issuer, batchId)}. Pozytywny
+wynik oznacza, że dokument należy do partii opublikowanej przez autoryzowanego
+wystawcę i~nie został unieważniony.
+
+\paragraph{Rewokacja.} Aby unieważnić pojedynczy dyplom, wystawca wywołuje
+\code{revokeFromBatch}, podając dowód Merkle dokumentu. Kontrakt dodaje liść do
+zbioru unieważnień, przez co kolejne odczyty statusu zwracają \code{Revoked}, mimo
+że korzeń partii pozostaje niezmieniony. Pozwala to cofnąć pojedynczy dokument bez
+naruszania pozostałych dyplomów tej samej partii.

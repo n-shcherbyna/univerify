@@ -1,0 +1,5 @@
+chain,revoke_p50_ms,revoke_p95_ms,issue_p50_ms,issue_p95_ms,issue_sigma_ms,issue_n
+sepolia,12499,33086,12503,48897,11923,90
+arbitrumSepolia,491,727,407,644,126,90
+baseSepolia,1538,2145,1494,2391,678,90
+zksyncSepolia,2254,6181,2114,6068,1954,90

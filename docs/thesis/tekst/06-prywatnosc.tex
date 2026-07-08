@@ -1,0 +1,161 @@
+\chapter{Ochrona prywatności przez selektywne ujawnianie danych}
+\label{ch:prywatnosc}
+
+System podstawowy zakotwicza w~łańcuchu bloków skrót całej treści dyplomu.
+Rozdział ten pokazuje, jak --- bez żadnej zmiany w~kontrakcie --- zastąpić ten
+monolityczny skrót strukturą zobowiązań kryptograficznych, dzięki której posiadacz
+dyplomu może ujawnić weryfikatorowi jedynie wybrane pola, zachowując pozostałe
+w~tajemnicy. Jest to pierwszy z~trzech głównych wkładów pracy.
+
+\section{Problem: minimalizacja danych}
+\label{sec:priv-problem}
+
+W~systemie podstawowym skrót dokumentu powstaje przez kanonizację i~zahaszowanie
+\emph{całego} ładunku dyplomu: \code{docHash = keccak256(canonicalize(payload))}.
+Aby zweryfikować dyplom, posiadacz musi przekazać weryfikatorowi pełny ładunek ---
+inaczej weryfikator nie odtworzy skrótu. Oznacza to, że dowód posiadania stopnia
+naukowego wymusza ujawnienie wszystkich danych: imienia i~nazwiska, numeru dyplomu,
+daty wydania i~szczegółów kierunku, nawet gdy relacja weryfikacyjna wymaga
+potwierdzenia tylko jednego z~nich.
+
+Narusza to zasadę minimalizacji danych --- fundament nowoczesnych regulacji ochrony
+danych osobowych --- zgodnie z~którą przetwarzać należy jedynie dane niezbędne do
+celu. Pracodawca weryfikujący sam fakt ukończenia studiów nie powinien być zmuszany
+do poznania numeru dyplomu kandydata. Celem tego rozdziału jest umożliwienie
+weryfikacji \emph{pojedynczych pól} bez ujawniania reszty, przy zachowaniu tej samej
+gwarancji zakotwiczenia w~łańcuchu.
+
+\section{Konstrukcja zobowiązań pól}
+\label{sec:priv-zobowiazania}
+
+Ładunek dzielimy na cztery ujawnialne pola: \code{student}, \code{degree},
+\code{issuedAt} oraz \code{diplomaNumber}. Dla każdego z~nich obliczamy osobne
+\emph{zobowiązanie ukrywające} (\emph{hiding commitment}), łącząc kanoniczną postać
+wartości pola z~losową solą:
+\[
+  c_i = \operatorname{keccak256}\bigl(\operatorname{canonicalize}(\text{pole}_i)
+        \,\Vert\, \text{sól}_i\bigr),
+  \qquad i \in \{\text{student}, \text{degree}, \text{issuedAt},
+        \text{diplomaNumber}\}.
+\]
+Każda sól to niezależna, losowa wartość 256-bitowa generowana przez
+\code{crypto.getRandomValues}. Skrót dokumentu odtwarzamy następnie \emph{ze
+zobowiązań}, a~nie z~jawnych wartości:
+\[
+  \code{docHash} = \operatorname{keccak256}
+    \bigl(c_{\text{student}} \Vert c_{\text{degree}}
+    \Vert c_{\text{issuedAt}} \Vert c_{\text{diplomaNumber}}\bigr).
+\]
+Liść drzewa Merkle pozostaje związany z~kontekstem wdrożenia dokładnie tak, jak
+w~systemie podstawowym:
+\[
+  \code{leaf} = \operatorname{keccak256}
+    \bigl(\code{registry} \Vert \code{chainId} \Vert \code{issuer}
+    \Vert \code{batchId} \Vert \code{docHash}\bigr).
+\]
+Ponieważ \code{docHash} jest deterministyczną funkcją czterech zobowiązań, korzeń
+partii publikowany w~kontrakcie nie zmienia formatu --- kontrakt nie odróżnia
+dyplomu prywatnego od standardowego.
+
+\section{Koperta prywatna}
+\label{sec:priv-koperta}
+
+Prywatna koperta dyplomu (\code{PrivateDiplomaEnvelope}) zawiera trzy części:
+
+\begin{itemize}
+  \item \textbf{zobowiązania} --- pełny komplet czterech wartości $c_i$, potrzebny
+        do odtworzenia \code{docHash} niezależnie od tego, które pola ujawniono;
+  \item \textbf{pola ujawnione} --- dla każdego \emph{wybranego} pola jego jawna
+        wartość wraz z~odpowiadającą jej solą; pola nieujawnione są w~kopercie
+        nieobecne;
+  \item \textbf{dowód Merkle} --- ścieżka od liścia do korzenia partii, identyczna
+        jak w~kopercie standardowej.
+\end{itemize}
+
+Sól pełni tu podwójną rolę. Dla pola \emph{ujawnionego} jest przekazywana
+weryfikatorowi, aby mógł odtworzyć i~sprawdzić zobowiązanie. Dla pola
+\emph{ukrytego} pozostaje tajemnicą posiadacza --- to ona uniemożliwia odgadnięcie
+wartości pola z~samego zobowiązania.
+
+\section{Protokół weryfikacji selektywnej}
+\label{sec:priv-protokol}
+
+Weryfikator dysponujący prywatną kopertą wykonuje trzy kroki:
+
+\begin{enumerate}
+  \item \textbf{Sprawdzenie ujawnionych pól.} Dla każdego pola obecnego w~sekcji
+        ujawnionej weryfikator przelicza $c_i' = \operatorname{keccak256}
+        (\operatorname{canonicalize}(\text{wartość}) \Vert \text{sól})$ i~porównuje
+        z~zobowiązaniem $c_i$ z~koperty. Niezgodność któregokolwiek pola oznacza
+        odrzucenie.
+  \item \textbf{Odtworzenie skrótu dokumentu.} Ze wszystkich czterech zobowiązań
+        (ujawnionych i~ukrytych) weryfikator liczy \code{docHash}, a~z~niego liść.
+  \item \textbf{Weryfikacja dowodu Merkle.} Odtworzony liść wraz z~dowodem daje
+        korzeń, który weryfikator porównuje z~korzeniem odczytanym z~kontraktu dla
+        pary \code{(issuer, batchId)}.
+\end{enumerate}
+
+Pole ukryte przechodzi przez krok~2 jako nieprzejrzyste zobowiązanie: jego wartość
+nie jest weryfikatorowi znana, ale jego wkład do \code{docHash} --- a~więc i~do
+liścia --- jest w~pełni uwzględniony. Weryfikator zyskuje pewność, że ujawnione pola
+należą do dyplomu zakotwiczonego on-chain, nie dowiadując się niczego o~polach
+ukrytych.
+
+\section{Implementacja}
+\label{sec:priv-implementacja}
+
+Cała logika prywatności jest \emph{poza łańcuchem}. Kontrakt \code{DiplomaRegistry}
+pozostaje niezmieniony --- publikuje korzenie przez ten sam \code{issueBatchRoot},
+a~jego koszty gazu są identyczne jak w~rozdziale~\ref{ch:l2}. Zmiany ograniczają się
+do warstwy klienckiej: pakiet \code{verifier-core} zyskuje funkcje
+\code{generateFieldSalts}, \code{computeFieldCommitments}, \code{computePrivateDocHash}
+i~\code{verifyDisclosedFields} (pokryte 17~testami jednostkowymi), SDK udostępnia
+weryfikację selektywną, a~aplikacja webowa --- trasę \code{/present}, na której
+posiadacz zaznacza pola do ujawnienia i~generuje prywatną kopertę.
+
+Fakt, że tak istotna funkcja realizowana jest bez ani jednej zmiany w~kontrakcie,
+jest sam w~sobie wynikiem: pokazuje, że model zakotwiczenia korzenia Merkle jest na
+tyle ogólny, iż selektywne ujawnianie mieści się w~nim jako czysto klienckie
+rozszerzenie.
+
+\section{Analiza bezpieczeństwa}
+\label{sec:priv-bezpieczenstwo}
+
+Bezpieczeństwo konstrukcji opiera się na dwóch własnościach funkcji
+\code{keccak256} traktowanej jako zobowiązanie.
+
+\paragraph{Wiązanie (binding).} Odporność \code{keccak256} na kolizje sprawia, że
+posiadacz nie może otworzyć jednego zobowiązania na dwie różne wartości pola.
+Uniemożliwia to przedstawienie tego samego dyplomu z~podmienioną, lecz „poprawnie
+weryfikującą się'' zawartością.
+
+\paragraph{Ukrywanie (hiding).} Dla pola ukrytego napastnik widzi jedynie
+$c_i = \operatorname{keccak256}(\text{wartość} \Vert \text{sól})$. Atak wyczerpujący
+wymagałby zgadnięcia \emph{zarówno} wartości, \emph{jak i} 256-bitowej soli. Ponieważ
+sól pochodzi z~kryptograficznie bezpiecznego generatora i~pozostaje tajna, przestrzeń
+poszukiwań jest rzędu $2^{256}$ --- praktycznie nieprzeszukiwalna, nawet gdy sama
+wartość pola należy do małej domeny (np. \code{degree.level} przyjmuje kilka
+wartości). Odsala to typowy zarzut wobec zobowiązań nad małymi domenami: bez
+tajnej soli o~wysokiej entropii atak słownikowy byłby trywialny, lecz tutaj sól tę
+lukę zamyka.
+
+\paragraph{Odporność na powtórzenie (replay).} Związanie liścia z~czwórką
+\code{(registry, chainId, issuer, batchId)} uniemożliwia przeniesienie ważnego
+dyplomu do innego kontraktu, sieci, wydawcy lub partii.
+
+\paragraph{Ograniczenie.} Konstrukcja ukrywa \emph{wartości} pól, lecz nie ukrywa
+\emph{struktury} koperty --- liczby pól ani faktu, że dyplom jest prywatny. Nie
+zapewnia też dowodów o~ujawnionej wartości typu „stopień jest co najmniej
+licencjatem'' bez podania konkretnej wartości. Takie własności wymagałyby dowodów
+z~wiedzą zerową (ZK), które --- zgodnie z~przyjętym zakresem pracy --- pozostają poza
+jej ramami; obecna konstrukcja realizuje selektywne ujawnianie pełnych pól, co
+odpowiada założonemu wymaganiu minimalizacji danych.
+
+\section{Zgodność wstecz}
+\label{sec:priv-zgodnosc}
+
+Koperta standardowa działa bez zmian --- weryfikator, który nie zna rozszerzenia
+prywatnego, przetwarza ją tak jak dotąd. Na poziomie partii przyjmujemy regułę
+rozłączności: dana partia jest w~całości standardowa albo w~całości prywatna, co
+usuwa dwuznaczność formatu \code{docHash} przy odtwarzaniu liścia i~pozwala obu
+trybom współistnieć w~jednym kontrakcie.

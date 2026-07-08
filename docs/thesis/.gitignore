@@ -1,0 +1,26 @@
+# Artefakty budowy LaTeX (latexmk + xelatex + biber)
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.lof
+*.log
+*.lot
+*.out
+*.run.xml
+*.toc
+*.xdv
+main.pdf
+# Glossary/acronym intermediate (klasa EE-dyplom)
+*.acn
+*.acr
+*.alg
+*.glo
+*.gls
+*.glg
+*.ist
+*.slo
+*.sls
+*.slg
