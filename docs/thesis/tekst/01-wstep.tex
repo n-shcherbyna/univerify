@@ -1,34 +1,69 @@
 \chapter{Wstęp}
 \label{ch:wstep}
 
-% Cel rozdziału: wprowadzić problem, cel, zakres i wkład pracy.
-% Do napisania od zera (rozdział krótki, 3-5 stron).
-
 \section{Motywacja}
 \label{sec:motywacja}
-% Problem weryfikacji dyplomów: fałszerstwa, koszt weryfikacji ręcznej,
-% zależność od wydawcy (uczelnia musi żyć i odpowiadać na zapytania).
-\TODO{Opisz problem weryfikacji dyplomów i jego znaczenie.}
+
+Dyplom ukończenia studiów jest jednym z~najczęściej weryfikowanych dokumentów
+w~obrocie zawodowym --- sprawdzają go pracodawcy, instytucje rekrutujące na dalsze
+studia, urzędy nostryfikujące wykształcenie za granicą. Mimo to sposób tej
+weryfikacji pozostaje archaiczny: w~praktyce sprowadza się do bezpośredniego
+kontaktu z~uczelnią, która ręcznie potwierdza dane. Proces jest powolny, kosztowny
+i~--- co najważniejsze --- zależny od ciągłości działania wydawcy. Uczelnia
+zlikwidowana, połączona lub po prostu nieodpowiadająca na zapytania czyni
+weryfikację niemożliwą, a~dyplom praktycznie bezużytecznym.
+
+Jednocześnie fałszerstwo dyplomów jest zjawiskiem realnym i~trudnym do wykrycia bez
+kontaktu ze źródłem. Papierowy dokument z~pieczęcią nie niesie ze sobą żadnego
+mechanizmu niezależnej, kryptograficznej weryfikacji. Powstaje więc potrzeba
+systemu, który pozwoli potwierdzić autentyczność dyplomu \emph{niezależnie od
+wydawcy}, tanio i~z~poszanowaniem prywatności posiadacza.
 
 \section{Cel i zakres pracy}
 \label{sec:cel}
-% Cel: zaprojektować i zmierzyć tani, prywatny rejestr dyplomów na Ethereum.
-% Zakres: L1 + L2, prywatność (selektywne ujawnianie), zarządzanie.
-\TODO{Sprecyzuj cel i granice zakresu.}
+
+Celem pracy jest zaprojektowanie, implementacja i~pomiar systemu weryfikacji
+dyplomów, który wykorzystuje publiczny łańcuch bloków Ethereum jako rejestr odporny
+na nieuprawnioną modyfikację, a~zarazem odpowiada na trzy praktyczne pytania:
+\emph{ile taki system kosztuje}, \emph{czy da się go pogodzić z~ochroną prywatności}
+oraz \emph{czy przewaga łańcucha bloków nad tańszymi alternatywami jest realna}.
+
+Zakres obejmuje: rdzeń systemu oparty na drzewach Merkle (korzenie partii
+publikowane w~kontrakcie inteligentnym), pomiary kosztu w~warstwie pierwszej oraz
+w~trzech rollupach warstwy drugiej, mechanizm selektywnego ujawniania pól dyplomu
+oraz model zarządzania uprawnieniami eliminujący pojedynczy punkt zaufania. Poza
+zakresem świadomie pozostawiono dowody z~wiedzą zerową oraz zaawansowane akumulatory
+kryptograficzne --- jako kierunki dalszych prac (rozdz.~\ref{ch:podsumowanie}).
 
 \section{Wkład własny}
 \label{sec:wklad}
-% Trzy główne wkłady (mapują się na rozdziały 5-7):
+
+Praca wnosi trzy zasadnicze rozszerzenia względem systemu podstawowego, mapujące się
+na rozdziały merytoryczne:
+
 \begin{enumerate}
-  \item Selektywne ujawnianie pól przez zobowiązania kryptograficzne
+  \item \textbf{Selektywne ujawnianie pól} przez kryptograficzne zobowiązania
+        z~solą, pozwalające posiadaczowi ujawnić jedynie wybrane pola dyplomu
+        zgodnie z~zasadą minimalizacji danych --- bez żadnej zmiany w~kontrakcie
         (rozdz.~\ref{ch:prywatnosc}).
-  \item Wdrożenie i pomiary kosztów na sieciach warstwy~2
-        (rozdz.~\ref{ch:l2}).
-  \item Model zarządzania (multisig + timelock) i analiza wartości
-        blockchaina względem alternatyw (rozdz.~\ref{ch:governance}).
+  \item \textbf{Wdrożenie i~pomiary kosztów} w~warstwie pierwszej
+        (rozdz.~\ref{ch:gaz}) oraz w~trzech sieciach warstwy drugiej wraz z~analizą
+        wrażliwości na wahania cen (rozdz.~\ref{ch:l2}), pokazujące, że koszt
+        rejestracji pojedynczego dyplomu jest rzędu $10^{-6}$~USD.
+  \item \textbf{Model zarządzania} łączący portfel wielopodpisowy z~mechanizmem
+        opóźnienia czasowego oraz \textbf{analiza wartości} porównująca łańcuch
+        bloków ze status quo i~infrastrukturą klucza publicznego
+        (rozdz.~\ref{ch:governance}).
 \end{enumerate}
-\TODO{Rozwiń każdy wkład w 1-2 zdaniach.}
 
 \section{Struktura pracy}
 \label{sec:struktura}
-\TODO{Krótki przewodnik po rozdziałach 2--8.}
+
+Rozdział~\ref{ch:podstawy} wprowadza podstawy teoretyczne: drzewa Merkle,
+zobowiązania kryptograficzne, model kosztowy rollupów, infrastrukturę klucza
+publicznego oraz zasadę minimalizacji danych. Rozdział~\ref{ch:architektura} opisuje
+architekturę systemu UniVerify. Rozdziały~\ref{ch:gaz} i~\ref{ch:l2} przedstawiają
+pomiary kosztu --- odpowiednio optymalizację gazu w~warstwie pierwszej oraz
+benchmarki w~warstwie drugiej. Rozdział~\ref{ch:prywatnosc} omawia mechanizm
+prywatności, a~rozdział~\ref{ch:governance} --- model zarządzania i~analizę wartości.
+Rozdział~\ref{ch:podsumowanie} podsumowuje wyniki i~wskazuje kierunki dalszych prac.

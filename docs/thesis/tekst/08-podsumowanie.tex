@@ -1,20 +1,76 @@
 \chapter{Podsumowanie i dalsze prace}
 \label{ch:podsumowanie}
 
+Praca przedstawiła system UniVerify --- oparty na publicznym łańcuchu bloków
+Ethereum rejestr dyplomów, w~którym dokumenty grupowane są w~drzewa Merkle,
+a~w~kontrakcie publikowany jest jedynie korzeń partii. Wokół tego rdzenia rozwinięto
+trzy rozszerzenia i~udzielono odpowiedzi na trzy postawione we wstępie pytania.
+
 \section{Wnioski}
 \label{sec:wnioski}
-% Podsumuj trzy wkłady i główny wynik (odpowiedź na pytanie "czy warto").
-\TODO{Zwięzłe wnioski końcowe spinające rozdziały 4--7.}
+
+Zrealizowane cele można zebrać wzdłuż trzech osi pracy:
+
+\begin{description}
+  \item[Koszt.] Trzyetapowa analiza gazu (rozdz.~\ref{ch:gaz}) pokazała, że
+        architektura Merkle batch obniża koszt \emph{na dyplom} o~98.9\% przy partii
+        100~dokumentów --- efekt amortyzacji stałego kosztu transakcji, a~nie
+        mikrooptymalizacji kodu (te dają jedynie 8--20\%). Pomiary w~warstwie
+        drugiej (rozdz.~\ref{ch:l2}) potwierdziły, że koszt rejestracji pojedynczego
+        dyplomu spada do rzędu $10^{-6}$~USD, z~kilkudziesięciokrotną różnicą między
+        rollupami a~warstwą pierwszą, odporną na wahania cen.
+  \item[Prywatność.] Mechanizm selektywnego ujawniania pól
+        (rozdz.~\ref{ch:prywatnosc}) pozwala posiadaczowi ujawnić jedynie wybrane
+        pola dyplomu, zgodnie z~zasadą minimalizacji danych, w~całości poza łańcuchem
+        i~bez żadnej zmiany w~kontrakcie.
+  \item[Zarządzanie i~wartość.] Model łączący portfel wielopodpisowy
+        z~opóźnieniem czasowym (rozdz.~\ref{ch:governance}) usunął pojedynczy punkt
+        zaufania, czyniąc zmiany uprawnień niecichymi, wykrywalnymi i~odwracalnymi.
+\end{description}
+
+Najważniejszym wnioskiem jest uczciwe rozgraniczenie wartości. Infrastruktura klucza
+publicznego dorównuje łańcuchowi bloków w~dwóch najczęściej przywoływanych zaletach
+--- niezależnej weryfikacji offline i~znikomym koszcie jednostkowym. Realna, choć
+wąska, marginalna przewaga blockchaina sprowadza się do \emph{jednej} własności:
+publicznego, dopisywalnego i~odpornego na ciche wsteczne przepisanie logu uprawnień
+do wydawania dyplomów. Blockchain w~weryfikacji dyplomów wygrywa zatem wtedy
+i~tylko wtedy, gdy taki niemodyfikowalny log uprawnień jest wymaganiem samym
+w~sobie; tam, gdzie ono nie występuje, PKI pozostaje rozwiązaniem właściwym.
 
 \section{Ograniczenia}
 \label{sec:ograniczenia}
-% Zbierz ograniczenia z rozdziałów: pomiary L2, małe domeny w prywatności,
-% pojedynczy region pomiaru, założenia modelu kosztowego.
-\TODO{Uczciwa lista ograniczeń pracy.}
+
+\begin{itemize}
+  \item \textbf{Prywatność małych domen.} Ukrywanie opiera się na tajności
+        256-bitowej soli; konstrukcja ujawnia strukturę koperty (liczbę pól, fakt
+        prywatności) i~nie wspiera dowodów predykatowych. Zdjęłyby to ograniczenie
+        dowody z~wiedzą zerową (poza zakresem).
+  \item \textbf{Pomiary warstwy drugiej.} Odczyty obarczone są heterogenicznością
+        dostawców RPC i~pojedynczym regionem pomiaru (eu-central-1) --- właściwe do
+        porównań względnych, nie do bezwzględnych twierdzeń geograficznych. Modele
+        kosztu DA opierają się na migawkach parametrów sieci z~konkretnej daty.
+  \item \textbf{Pomiary warstwy pierwszej.} Wykonane lokalnie (Foundry), bez
+        rzeczywistej zmienności \emph{base fee} i~kosztu \code{calldata} rosnącego
+        z~długością dowodu.
+  \item \textbf{Koszt zarządzania.} Narzut 740\,008 gazu na zmianę uprawnień jest
+        amortyzowany, lecz niezerowy wobec dojrzalszej i~tańszej alternatywy, jaką
+        jest PKI.
+\end{itemize}
 
 \section{Dalsze prace}
 \label{sec:dalsze-prace}
-% Odrzucone świadomie w tej pracy (poza zakresem): dowody ZK (predykatowe,
-% "GPA > 3.0"), akumulatory / drzewa Verkle, weryfikacja cross-chain,
-% produkcyjne zarządzanie kluczami studenta.
-\TODO{Kierunki rozszerzeń.}
+
+\begin{itemize}
+  \item \textbf{Dowody z~wiedzą zerową} --- dowody o~ujawnionej własności bez
+        ujawniania wartości (np.\ „stopień co najmniej licencjacki'') oraz ukrycie
+        samej struktury koperty, wykraczające poza selektywne ujawnianie pełnych
+        pól.
+  \item \textbf{Akumulatory i~drzewa Verkle} --- alternatywne struktury zobowiązań
+        potencjalnie skracające dowody przy bardzo dużych zbiorach.
+  \item \textbf{Skala i~głębokie drzewa} --- pomiary przy bardzo dużych partiach
+        oraz analiza kosztu budowy drzewa po stronie klienta i~wpływu długości
+        \code{calldata} dowodu.
+  \item \textbf{Wdrożenie produkcyjne} --- integracja z~rzeczywistymi systemami
+        dziekanatowymi, weryfikacja cross-chain oraz procedury operacyjne rotacji
+        sygnatariuszy i~zarządzania kluczami po stronie studenta.
+\end{itemize}
