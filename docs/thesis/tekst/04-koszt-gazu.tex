@@ -92,10 +92,11 @@ stanu --- dlatego wartości w~tej kolumnie są wyższe niż sam koszt rewokacji.
 
 \begin{table}[H]
 \centering
-\caption{Koszt testów end-to-end (gaz, łącznie z~deployem i~setupem).}
-\begin{tabular}{lrrrr}
+\caption{Koszt testów end-to-end w~gazie, łącznie z~deployem i~setupem (kolumny to
+warianty \code{testGas\_addIssuer}, \code{testGas\_issue}, \code{testGas\_revoke}).}
+\begin{tabular}{l r r r >{\raggedright\arraybackslash}p{3.1cm}}
 \toprule
-Wersja & \code{testGas\_addIssuer} & \code{testGas\_issue} & \code{testGas\_revoke} & Uwagi \\
+Wersja & \code{addIssuer} & \code{issue} & \code{revoke} & Uwagi \\
 \midrule
 \code{StringErrors}    & 57\,119 & 60\,721 &  93\,116 & punkt startowy \\
 \rowcolor{regresscolor}
@@ -579,14 +580,14 @@ Trzy etapy eksperymentów układają się w~spójny obraz: decyzje projektowe ma
 \begin{table}[H]
 \centering
 \caption{Zestawienie wyników trzech etapów.}
-\begin{tabular}{llrl}
+\begin{tabular}{>{\raggedright\arraybackslash}p{4.0cm} >{\raggedright\arraybackslash}p{3.4cm} r >{\raggedright\arraybackslash}p{3.2cm}}
 \toprule
 Etap & Typ zmiany & Redukcja kosztu & Metryka \\
 \midrule
-1: \code{StringErrors}$\to$\code{MinimalRecord} & mikrooptymalizacje kodu   & $\approx$14\%     & gas/dyplom (avg) \\
+1: \code{StringErrors} $\to$ \code{MinimalRecord} & mikrooptymalizacje kodu   & $\approx$14\%     & gas/dyplom (avg) \\
 1: deployment                                    & mikrooptymalizacje kodu   & $\approx$20\%     & deployment gas \\
-2: \code{PackedStorage}$\to$\code{MerkleBaseline} & zmiana architektury      & $\approx$98.9\%   & gas/dyplom przy $N=100$ \\
-3: \code{MerkleBaseline}$\to$\code{MerkleG}       & mikrooptymalizacje hot-path & $\approx$6.6\%  & \code{statusWithProof} avg \\
+2: \code{PackedStorage} $\to$ \code{MerkleBaseline} & zmiana architektury      & $\approx$98.9\%   & gas/dyplom przy $N=100$ \\
+3: \code{MerkleBaseline} $\to$ \code{MerkleG}       & mikrooptymalizacje hot-path & $\approx$6.6\%  & \code{statusWithProof} avg \\
 \bottomrule
 \end{tabular}
 \end{table}

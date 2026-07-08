@@ -40,7 +40,7 @@ Proponowany model przenosi własność rejestru z~pojedynczego EOA na dwuwarstwo
 konstrukcję, nie zmieniając przy tym ani jednego bajtu kontraktu
 \code{DiplomaRegistry}. Instalacja odbywa się wyłącznie przez istniejący,
 dwustopniowy mechanizm przekazania własności
-(\code{transferOwnership}~$\rightarrow$~\code{acceptOwnership}), dzięki czemu
+(\code{transferOwnership} $\rightarrow$ \code{acceptOwnership}), dzięki czemu
 pomiary kosztów z~rozdziału~\ref{ch:l2} pozostają w~mocy.
 
 \paragraph{Warstwa opóźnienia.} Nowym właścicielem rejestru zostaje kontrakt
@@ -119,7 +119,7 @@ suma na test (wyłączająca \code{setUp}) jest liczbą podaną bezpośrednio, n
 dekompozycji.
 
 Linią bazową sprzed wprowadzenia zarządzania jest pojedyncze wywołanie
-\code{onboardIssuerAndUniversity} na rejestrze będącym własnością zwykłego EOA:
+\code{onboardIssuer\allowbreak AndUniversity} na rejestrze będącym własnością zwykłego EOA:
 84\,246 gazu. Ta sama operacja przeprowadzona pełną ścieżką zarządzaną ---
 \code{multisig.submit} + \code{multisig.confirm} + \code{multisig.execute}
 (planuje na timelocku) oraz \code{timelock.execute} (wywołuje rejestr po
