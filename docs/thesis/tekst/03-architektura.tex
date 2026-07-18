@@ -49,7 +49,7 @@ Kontrakt \code{DiplomaRegistry} udostępnia funkcje na trzech poziomach uprawnie
         rozdział~\ref{ch:governance} wykorzystuje do zainstalowania modelu
         zarządzania bez zmiany kontraktu.
   \item[Wystawca (\emph{issuer}).] Publikuje korzenie partii
-        (\code{issueBatch}) oraz unieważnia pojedyncze dyplomy
+        (\code{issueBatchRoot}) oraz unieważnia pojedyncze dyplomy
         (\code{revokeFromBatch}), przy czym unieważnienie wymaga podania dowodu
         Merkle potwierdzającego przynależność dokumentu do partii.
   \item[Publiczny odczyt (\emph{view}).] Funkcje bezstanowe dostępne dla każdego:
@@ -66,7 +66,32 @@ zawieszona~(2), unieważniona~(3).
 \label{sec:pakiety}
 
 System zorganizowano jako monorepozytorium, w~którym logika kryptograficzna żyje
-w~jednym miejscu i~jest współdzielona przez aplikację webową, CLI oraz SDK.
+w~jednym miejscu i~jest współdzielona przez aplikację webową, CLI oraz SDK
+(rys.~\ref{fig:architektura}).
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=6mm and 8mm]
+  % Warstwa klientów
+  \node[blok] (web) {aplikacja webowa\\\code{Next.js}};
+  \node[blok, right=of web] (cli) {CLI\\\code{issue / verify / gov}};
+  \node[blok, right=of cli] (sdk) {SDK\\\code{UniverifySdk}};
+  % Rdzeń
+  \node[blokakcent, below=9mm of cli, minimum width=68mm]
+    (core) {\code{verifier-core}\\haszowanie, drzewa Merkle, schemat ładunku, ABI};
+  % On-chain
+  \node[blokszary, below=9mm of core, minimum width=68mm]
+    (chain) {kontrakt \code{DiplomaRegistry} (L1 / L2)\\korzenie partii, uprawnienia wystawców, unieważnienia};
+  \draw[strz] (web) -- (core);
+  \draw[strz] (cli) -- (core);
+  \draw[strz] (sdk) -- (core);
+  \draw[strz] (core) -- node[etyk, right=1mm] {odczyt / transakcje RPC} (chain);
+\end{tikzpicture}
+\caption[Architektura systemu UniVerify]{Architektura systemu UniVerify: trzy interfejsy klienckie współdzielą
+jedną implementację kryptograficzną (\code{verifier-core}), a~na łańcuchu
+utrzymywany jest wyłącznie kontrakt rejestru.}
+\label{fig:architektura}
+\end{figure}
 
 \begin{description}
   \item[\code{verifier-core}.] Warstwa fundamentalna. Eksportuje
@@ -121,11 +146,37 @@ liczby żądań (30~żądań na~60~s na~adres IP, w~przesuwnym oknie w~pamięci)
 \section{Przepływy: wydanie, weryfikacja, rewokacja}
 \label{sec:przeplywy}
 
-Trzy główne przepływy spinają opisane elementy w~całość.
+Trzy główne przepływy spinają opisane elementy w~całość
+(rys.~\ref{fig:przeplywy}).
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=14mm and 24mm]
+  % Wydanie
+  \node[blok] (uczelnia) {uczelnia\\(wystawca)};
+  \node[blokakcent, right=of uczelnia] (drzewo) {drzewo Merkle\\(off-chain, bez gazu)};
+  \node[blokszary, right=of drzewo] (kontrakt) {kontrakt\\\code{DiplomaRegistry}};
+  \node[blok, below=of drzewo] (absolwent) {absolwent\\(koperta: \code{payload} + dowód)};
+  \node[blok, below=of kontrakt] (weryfikator) {weryfikator};
+  \draw[strz] (uczelnia) -- node[etyk, above=1mm] {liście\\dyplomów} (drzewo);
+  \draw[strz] (drzewo) -- node[etyk, above=1mm] {\code{issueBatchRoot}\\(korzeń)} (kontrakt);
+  \draw[strz] (drzewo) -- node[etyk, left=1mm] {eksport kopert} (absolwent);
+  \draw[strz] (absolwent) -- node[etyk, above=1mm] {koperta} (weryfikator);
+  \draw[strz] (weryfikator) -- node[etyk, right=1mm, align=left]
+    {\code{statusWithProof}:\\porównanie korzeni} (kontrakt);
+  \draw[strz, dashed] (uczelnia.south) -- ++(0,-32mm) -|
+    node[etyk, below, pos=0.25] {\code{revokeFromBatch} (dowód Merkle)}
+    (kontrakt.south east);
+\end{tikzpicture}
+\caption[Przepływy: wydanie, weryfikacja, rewokacja]{Przepływy w~systemie: wydanie (uczelnia publikuje wyłącznie korzeń
+partii), weryfikacja (odtworzenie korzenia z~koperty i~porównanie ze stanem
+kontraktu) oraz rewokacja (linia przerywana).}
+\label{fig:przeplywy}
+\end{figure}
 
 \paragraph{Wydanie.} Wystawca buduje off-chain drzewo Merkle z~liści dyplomów
 (\code{computeMerkleLeaf} + \code{buildMerkleFromLeaves}), publikuje w~kontrakcie
-sam korzeń (\code{issueBatch}) i~eksportuje każdemu absolwentowi kopertę zawierającą
+sam korzeń (\code{issueBatchRoot}) i~eksportuje każdemu absolwentowi kopertę zawierającą
 jego \code{payload} oraz dowód Merkle. Cała praca kryptograficzna poza jedną
 transakcją odbywa się bez gazu.
 

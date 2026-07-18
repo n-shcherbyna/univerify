@@ -13,12 +13,13 @@ Zrealizowane cele można zebrać wzdłuż trzech osi pracy:
 
 \begin{description}
   \item[Koszt.] Trzyetapowa analiza gazu (rozdz.~\ref{ch:gaz}) pokazała, że
-        architektura Merkle batch obniża koszt \emph{na dyplom} o~98.9\% przy partii
+        architektura Merkle batch obniża koszt \emph{na dyplom} o~98{,}9\% przy partii
         100~dokumentów --- efekt amortyzacji stałego kosztu transakcji, a~nie
         mikrooptymalizacji kodu (te dają jedynie 8--20\%). Pomiary w~warstwie
         drugiej (rozdz.~\ref{ch:l2}) potwierdziły, że koszt rejestracji pojedynczego
-        dyplomu spada do rzędu $10^{-6}$~USD, z~kilkudziesięciokrotną różnicą między
-        rollupami a~warstwą pierwszą, odporną na wahania cen.
+        dyplomu spada do $9\cdot10^{-7}$--$2{,}3\cdot10^{-5}$~USD zależnie od
+        rollupa, z~35-krotną różnicą między najtańszą siecią a~warstwą pierwszą,
+        odporną na wahania cen.
   \item[Prywatność.] Mechanizm selektywnego ujawniania pól
         (rozdz.~\ref{ch:prywatnosc}) pozwala posiadaczowi ujawnić jedynie wybrane
         pola dyplomu, zgodnie z~zasadą minimalizacji danych, w~całości poza łańcuchem

@@ -64,7 +64,29 @@ sygnatariusza bez wymiany całej infrastruktury.
 
 Złożenie obu warstw daje następującą własność: żadna zmiana uprawnień nie jest
 ani jednoosobowa, ani natychmiastowa. Wymaga $m$~podpisów \emph{oraz} przetrwania
-okna opóźnienia, w~którym pozostaje publicznie widoczna i~odwracalna.
+okna opóźnienia, w~którym pozostaje publicznie widoczna i~odwracalna
+(rys.~\ref{fig:governance}).
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=10mm and 20mm]
+  \node[blokakcent] (ms) {\code{RegistryMultisig}\\próg $m$-z-$n$};
+  \node[blok, above=of ms] (sig) {sygnatariusze ($n$ portfeli)};
+  \node[blokakcent, right=of ms] (tl) {\code{TimelockController}\\opóźnienie \code{minDelay}};
+  \node[blokszary, right=of tl] (reg) {\code{DiplomaRegistry}\\(owner = timelock)};
+  \draw[strz] (sig) -- node[etyk, right=1mm] {\code{submit}, \code{confirm}$\times m$} (ms);
+  \draw[strz] (ms) -- node[etyk, above=1mm] {\code{schedule}} (tl);
+  \draw[strz] (tl) -- node[etyk, above=1mm] {\code{execute}\\po opóźnieniu} (reg);
+  \draw[strz, dashed] (ms.south) to[out=-30, in=-150]
+    node[etyk, below=1.5mm] {\code{cancel} w~oknie opóźnienia} (tl.south);
+  \node[etyk, below=17mm of tl]
+    {zdarzenie \code{CallScheduled} --- zmiana publicznie widoczna, zanim nabierze mocy};
+\end{tikzpicture}
+\caption[Model zarządzania: multisig + timelock]{Model zarządzania: każda operacja administracyjna wymaga progu
+$m$~podpisów, a~następnie przetrwania publicznego okna opóźnienia, w~którym może
+zostać anulowana.}
+\label{fig:governance}
+\end{figure}
 
 \section{Model zagrożeń}
 \label{sec:gov-zagrozenia}
@@ -150,8 +172,9 @@ Suma & 799\,219 & samo wykonanie on-chain \\
 Kluczowa obserwacja: zmiany uprawnień (dodanie lub usunięcie wydawcy) są
 \emph{rzadkie}. Narzut 740\,008 gazu ponoszony jest raz na wydawcę i~amortyzuje się
 na wszystkich dyplomach, które ten wydawca później wyda. Nie wpływa więc na koszt
-rejestracji pojedynczego dyplomu zmierzony w~rozdziale~\ref{ch:l2} --- rzędu
-$10^{-6}$~USD w~warstwie drugiej --- który pozostaje niezmieniony.
+rejestracji pojedynczego dyplomu zmierzony w~rozdziale~\ref{ch:l2} --- od
+$9\cdot10^{-7}$~USD w~najtańszej badanej sieci warstwy drugiej --- który
+pozostaje niezmieniony.
 
 \section{Porównanie podejść: status quo, PKI, blockchain}
 \label{sec:gov-porownanie}
@@ -216,8 +239,9 @@ tym, co tę własność urzeczywistnia --- bez timelocka i~progu sam łańcuch b
 gwarancji by nie dawał, bo pojedynczy właściciel mógłby log przepisać w~granicach
 swoich uprawnień.
 
-Pozostaje pytanie o~proporcję. Ta jedna własność kosztuje rzędu $10^{-6}$~USD na
-dyplom w~warstwie drugiej (rozdz.~\ref{ch:l2}) plus jednorazowy, amortyzowany narzut
+Pozostaje pytanie o~proporcję. Ta jedna własność kosztuje od $9\cdot10^{-7}$ do
+około $2\cdot10^{-5}$~USD na dyplom w~warstwie drugiej, zależnie od sieci
+(rozdz.~\ref{ch:l2}), plus jednorazowy, amortyzowany narzut
 740\,008 gazu na zmianę uprawnień (sekcja~\ref{sec:gov-koszt}) --- koszt niski
 w~wartościach bezwzględnych, lecz niezerowy wobec dojrzałej i~tańszej alternatywy,
 jaką jest PKI. Praca nie rozstrzyga tego arbitralnie: teza brzmi, że blockchain

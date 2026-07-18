@@ -12,7 +12,6 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Konfiguracja strony tytułowej — do personalizacji
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% TODO: potwierdź instytut i tytuł promotora ze stroną Wydziału.
 \instytut{Instytut Elektrotechniki Teoretycznej i Systemów Informacyjno-Pomiarowych}
 \kierunek{Informatyka Stosowana}
 \specjalnosc{Inżynieria Oprogramowania} % TODO: potwierdź specjalność dla mgr
@@ -20,7 +19,7 @@
 \engtitle{Cost Optimization of Diploma Verification on the Ethereum Blockchain}
 \album{323777}
 \author{inż. Nazar Shcherbyna}
-\promotor{dr hab. inż. Bartosz Sawicki, prof. uczelni} % TODO: potwierdź dokładny tytuł
+\promotor{dr hab. inż. Bartosz Sawicki, prof. uczelni}
 \date{2026}
 \longdate{2026-XX-XX} % TODO: data złożenia
 
@@ -33,7 +32,7 @@ wszystkim na bezpośrednim kontakcie z instytucją wydającą --- procesie powol
 kosztownym i uzależnionym od ciągłości jej działania. Niniejsza praca przedstawia
 system UniVerify, który wykorzystuje publiczny łańcuch bloków Ethereum jako
 rejestr odporny na nieuprawnioną modyfikację. Dyplomy grupowane są w~drzewa
-Merkle, których korzenie publikowane są w~kontrakcie inteligentnym, dzięki czemu
+Merkle, których korzenie publikowane są w~smart contract, dzięki czemu
 koszt zapisu nie zależy od liczby dokumentów w~partii.
 
 Praca wnosi trzy zasadnicze rozszerzenia względem systemu podstawowego. Po
@@ -47,7 +46,8 @@ zarządzania uprawnieniami łączący portfel wielopodpisowy z~mechanizmem opó�
 czasowego, który eliminuje pojedynczy punkt zaufania.
 
 Wyniki pomiarów pokazują, że koszt rejestracji pojedynczego dyplomu w~warstwie
-drugiej jest rzędu $10^{-6}$~USD. Pracę zamyka analiza wartości: porównanie
+drugiej wynosi od około $9\cdot10^{-7}$~USD w~najtańszej z~badanych sieci (Base)
+do rzędu $10^{-5}$~USD w~pozostałych rollupach (partia 1000~dyplomów). Pracę zamyka analiza wartości: porównanie
 proponowanego rozwiązania z~podejściem tradycyjnym oraz z~infrastrukturą klucza
 publicznego, prowadzące do wniosku, że marginalna przewaga łańcucha bloków
 sprowadza się do jawnego, niemodyfikowalnego i~możliwego do zweryfikowania
@@ -56,7 +56,7 @@ rejestru uprawnień do wydawania dyplomów.
 
 \slowakluczowe{łańcuch bloków, Ethereum, weryfikacja dyplomów, drzewa Merkle,
 selektywne ujawnianie danych, ochrona prywatności, rollupy warstwy drugiej,
-kontrakty inteligentne, zarządzanie uprawnieniami}
+smart contracts, zarządzanie uprawnieniami}
 
 \thesisabstract{
 The authentication of university diplomas today relies chiefly on direct contact
@@ -75,8 +75,9 @@ Base, zkSync), together with a sensitivity analysis under price fluctuations.
 Third, it proposes an authorisation-governance model that combines a
 multisignature wallet with a time-lock, removing the single point of trust.
 
-The measurements show that registering a single diploma on layer two costs on the
-order of $10^{-6}$~USD. The thesis closes with a value analysis: a comparison of
+The measurements show that registering a single diploma on layer two costs from
+about $9\cdot10^{-7}$~USD on the cheapest network studied (Base) to the order of
+$10^{-5}$~USD on the remaining rollups (batch of 1000 diplomas). The thesis closes with a value analysis: a comparison of
 the proposed solution with the status quo and with public-key infrastructure,
 leading to the conclusion that the marginal advantage of the blockchain reduces to
 a public, immutable, and verifiable log of diploma-issuing authorisations.
@@ -87,21 +88,35 @@ selective disclosure, privacy, layer-two rollups, smart contracts,
 authorisation governance}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-% Makra pomocnicze (na czas pisania; \TODO usuń przed oddaniem)
+% Makra pomocnicze
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newcommand{\code}[1]{\texttt{#1}}
-\newcommand{\TODO}[1]{\textcolor{red}{\textbf{[TODO: #1]}}}
+
+% Wykaz skrótów bez numerów stron (przy \glsaddall byłyby to martwe "1")
+\renewcommand{\glossaryentrynumbers}[1]{}
+
+% URL-e w bibliografii bez rozciągania międzyznakowego
+\setlength{\biburlnumskip}{0mu}
+\setlength{\biburlucskip}{0mu}
+\setlength{\biburllcskip}{0mu}
 
 % Wykresy i tabele z danych (rozdz. 4-5 — koszt gazu + benchmarki L2)
 \usepackage{pgfplots}
 \usepackage{pgfplotstable}
+\usetikzlibrary{positioning, arrows.meta, fit, calc}
+% Wspólny styl diagramów blokowych (rozdz. 3, 6, 7)
+\tikzset{
+  blok/.style={draw, rounded corners=2pt, align=center, font=\small,
+               minimum height=8mm, inner sep=5pt},
+  blokszary/.style={blok, fill=gray!10},
+  blokakcent/.style={blok, fill=blue!8},
+  strz/.style={-{Stealth[length=2.5mm]}, thick},
+  etyk/.style={font=\footnotesize, align=center},
+}
 \usepackage{booktabs}
 \usepackage{float}
-\usepackage{colortbl}   % \rowcolor w tabelach (rozdz. 4)
 \usepackage{multirow}   % \multirow (rozdz. 4)
 \usepackage{makecell}   % \makecell (rozdz. 4)
-\usepackage{tcolorbox}  % ramka "Wniosek praktyczny" (rozdz. 4)
-\usepackage{xfp}        % \fpeval — przeliczenia kosztowe (rozdz. 4)
 \usepackage{etoolbox}
 \pgfplotsset{compat=1.18}
 
@@ -111,16 +126,16 @@ authorisation governance}
 \setlength{\tabcolsep}{5pt}
 \newcommand{\DataDir}{dane/l2} % katalog z danymi pomiarowymi
 
-% Kolory tabel rozdz. 4 (regres / najlepszy / neutralny)
-\definecolor{regresscolor}{RGB}{255,235,235}
-\definecolor{bestcolor}{RGB}{230,255,230}
-\definecolor{neutralcolor}{RGB}{245,245,255}
+% Spis treści tylko do poziomu sekcji (krótszy, bez sieroty na 3. stronie)
+\setcounter{tocdepth}{1}
 
-% Parametry i makro przeliczenia kosztu na PLN (rozdz. 4)
-\newcommand{\EthPln}{7000}
-\newcommand{\CostPln}[2]{\fpeval{round(#1*(#2*1e-9)*(\EthPln), 4)}}
+% Bibliografia bez justowania — zapobiega rozciąganiu URL-i
+\renewcommand*{\bibfont}{\normalfont\raggedright}
 
 \begin{document}
+    % Wszystkie skróty z tekst/glossary.tex trafiają do wykazu
+    \glsaddall
+
     % Strony nagłówkowe (tytułowa + streszczenie + abstract + oświadczenie)
     \frontpages
 
@@ -137,8 +152,8 @@ authorisation governance}
     % Bibliografia (plik EE-dyplom.bib, biblatex + biber)
     \bibliografia
 
-    % Strony końcowe — odkomentuj, gdy będą potrzebne pliki
-    % \acronymslist          % wymaga wykazu skrótów/symboli
+    % Strony końcowe
+    \acronymslist
     \listoffigures
     \listoftables
     % \easyappendices        % wymaga tekst/appendices.tex

@@ -6,17 +6,14 @@ dyplomów na Ethereum. Eksperymenty podzielono na trzy etapy, każdy odpowiadaj�
 innemu poziomowi abstrakcji decyzji: (1)~mikrooptymalizacje modelu per-dyplom ---
 siedem kolejnych wersji kontraktu z~pojedynczymi zmianami kodu; (2)~zmianę
 architektury na \emph{Merkle batch}, w~której jedna transakcja pokrywa całą partię;
-(3)~mikrooptymalizacje hot-path weryfikacji dowodu Merkle. Kluczowe obserwacje:
-mikrooptymalizacje kodu redukują koszt do 14\%~na \code{issue} i~20\%~na deployment,
-lecz nie zmieniają klasy kosztowej; architektura Merkle obniża koszt \emph{na
-dyplom} o~98.9\%~przy partii 100~dokumentów; a~optymalizacje hot-path oszczędzają
-199~gazu na~krok dowodu, co odtwarza dokładny wzór liniowy.
+(3)~mikrooptymalizacje hot-path weryfikacji dowodu Merkle. Wnioski z~trzech
+etapów zbiera sekcja~\ref{sec:gaz-wnioski}.
 
 \section{Metodyka pomiaru}
 \label{sec:gaz-metodyka}
 
-Wszystkie pomiary wykonano lokalnie w~środowisku Foundry (Solidity 0.8.20), co
-eliminuje szum wynikający ze zmienności opłat sieciowych. Foundry dostarcza dwie
+Wszystkie pomiary wykonano lokalnie w~środowisku Foundry~\cite{foundry}
+(Solidity 0.8.20), co eliminuje szum wynikający ze zmienności opłat sieciowych. Foundry dostarcza dwie
 granulacje danych:
 
 \begin{itemize}
@@ -41,15 +38,17 @@ forge test --match-path "test/DiplomaRegistryGasComparison.t.sol" --gas-report
 Model per-dyplom to najprostsze możliwe podejście: każdy dyplom to jeden wpis
 \code{mapping(bytes32 => Record)}. Zbadano siedem kolejnych wersji kontraktu, aby
 sprawdzić, jak bardzo zmiana jednej konkretnej decyzji implementacyjnej wpływa na
-koszt gazu. Zamiast oznaczać je literami, nadano im nazwy opisujące \emph{kluczową
-właściwość} każdej wersji --- bo to właśnie ona odróżnia ją od poprzedniej.
+koszt gazu. Wersjom nadano nazwy opisujące \emph{kluczową właściwość}
+odróżniającą każdą z~nich od poprzedniej.
 
 \subsection{Wersje kontraktu}
 
 \begin{table}[H]
 \centering
-\caption{Chronologiczne wersje kontraktu per-dyplom --- co zmieniano i po co.}
-\begin{tabular}{>{\bfseries}p{3.0cm} p{4.5cm} p{6.5cm}}
+\caption{Chronologiczne wersje kontraktu per-dyplom: zakres i~uzasadnienie zmian.}
+\begin{tabular}{>{\bfseries}p{3.0cm}
+                >{\raggedright\arraybackslash}p{4.5cm}
+                >{\raggedright\arraybackslash}p{6.5cm}}
 \toprule
 Nazwa wersji & Kluczowa zmiana & Uzasadnienie / hipoteza \\
 \midrule
@@ -59,7 +58,7 @@ Nazwa wersji & Kluczowa zmiana & Uzasadnienie / hipoteza \\
 
 \code{TimestampRevoke}
   & \code{revokedAt(uint64)} zamiast \code{bool}
-  & Hipoteza: timestamp rewokacji przyda się audytorom; \newline \textcolor{red}{\textbf{efekt: regres}} --- dodatkowy slot storage \\[6pt]
+  & Hipoteza: timestamp rewokacji przyda się audytorom; \newline \textbf{efekt: regres} --- dodatkowy slot storage \\[6pt]
 
 \code{CustomErrors}
   & \code{custom errors} zamiast komunikatów string
@@ -75,7 +74,7 @@ Nazwa wersji & Kluczowa zmiana & Uzasadnienie / hipoteza \\
 
 \code{MinimalRecord}
   & Usunięcie timestampów ze storage; \newline rekord: \code{\{issuer, revoked\}}
-  & Daty w~blockchainie są dostępne przez logi eventów --- \newline po co je duplikować w~storage? \\[6pt]
+  & Daty pozostają dostępne w~logach zdarzeń; \newline duplikacja w~storage jest zbędna \\[6pt]
 
 \code{PackedStorage}
   & \code{mapping(bytes32 => uint256)}: \newline issuer (160 bitów) + bit revoked \newline w~jednym slocie; dodano \code{status()}
@@ -99,22 +98,19 @@ warianty \code{testGas\_addIssuer}, \code{testGas\_issue}, \code{testGas\_revoke
 Wersja & \code{addIssuer} & \code{issue} & \code{revoke} & Uwagi \\
 \midrule
 \code{StringErrors}    & 57\,119 & 60\,721 &  93\,116 & punkt startowy \\
-\rowcolor{regresscolor}
 \code{TimestampRevoke} & 57\,153 & 62\,890 & 114\,348 & \textbf{regres: +21k gas na revoke} \\
-\code{CustomErrors}    & 57\,186 & 63\,012 & 114\,380 & (pozor: suite-level bez widocznej poprawy) \\
+\code{CustomErrors}    & 57\,186 & 63\,012 & 114\,380 & pozornie bez poprawy (por.\ function-level) \\
 \code{ImmutableOwner}  & 55\,100 & 63\,037 & 114\,431 & drobna poprawa addIssuer \\
 \code{Idempotent}      & 55\,312 & 63\,047 & 114\,448 & marginalnie droższy w~tym scenariuszu \\
-\rowcolor{bestcolor}
 \code{MinimalRecord}   & 55\,100 & 60\,569 &  92\,868 & powrót do taniego \code{revoke} \\
-\rowcolor{bestcolor}
 \code{PackedStorage}   & 55\,056 & 60\,531 &  92\,797 & najlepszy wynik ogólny \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\noindent Najbardziej rzucającą się w~oczy obserwacją jest \textbf{regres w~wersji
+\noindent Najistotniejszą obserwacją jest \textbf{regres w~wersji
 \code{TimestampRevoke}}: dodanie pola \code{uint64 revokedAt} do rekordu zwiększa
-koszt rewokacji z~93k do 114k gas --- bo EVM musi teraz zaktualizować dodatkowy slot
+koszt rewokacji z~93k do 114k gas, ponieważ EVM musi zaktualizować dodatkowy slot
 storage przy każdym \code{revoke()}. Wersja \code{MinimalRecord} naprawia ten błąd,
 usuwając timestampy ze storage i~pozostawiając je wyłącznie w~logach zdarzeń.
 
@@ -129,39 +125,38 @@ kontekstu testu. Różnice deployment są tutaj bardziej widoczne niż w~suite-l
 Wersja & Deployment & \code{addIssuer} & \code{issue} & \code{revoke} \\
 \midrule
 \code{StringErrors}    & 464\,211 & 45\,719 & 48\,458 & 31\,274 \\
-\rowcolor{regresscolor}
 \code{TimestampRevoke} & 469\,181 & 46\,963 & 50\,659 & 50\,369 \\
 \code{CustomErrors}    & 409\,497 & 45\,904 & 43\,367 & 38\,867 \\
 \code{ImmutableOwner}  & 403\,109 & 43\,366 & 43\,370 & 38\,870 \\
 \code{Idempotent}      & 418\,029 & 43\,523 & 43\,377 & 38\,874 \\
-\rowcolor{bestcolor}
 \code{MinimalRecord}   & 373\,484 & 43\,366 & 41\,607 & 28\,825 \\
 \code{PackedStorage}   & 393\,596 & 43\,621 & 43\,084 & 29\,302 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\noindent Tutaj widać coś, czego suite-level nie pokazywał: \code{CustomErrors}
-redukuje deployment z~464k do 409k gas --- bo komunikaty string (\code{"Only owner"},
+\noindent Widok function-level ujawnia efekt niewidoczny na poziomie suite:
+\code{CustomErrors}
+redukuje deployment z~464k do 409k gas, ponieważ komunikaty string (\code{"Only owner"},
 \code{"Already issued"}, itd.) są przechowywane w~bytecode kontraktu, a~\code{custom
 errors} zastępuje je 4-bajtowymi selektorami. Ta zmiana oszczędza \emph{rozmiar
-kodu}, co przekłada się na tańszy deployment: redukcja o~55\,000 gas (11.9\%).
+kodu}, co przekłada się na tańszy deployment: redukcja o~55\,000 gas (11{,}9\%).
 
-Nie każda zmiana poprawia sytuację --- \code{TimestampRevoke} to klasyczny przykład
-dodania czegoś z~dobrej intencji, co kosztuje dużo więcej niż zakładano:
-przechowywanie timestampu rewokacji w~storage zamiast w~eventach zwiększyło koszt
-\code{revoke} o~61\%. Sumarycznie, od \code{StringErrors} do \code{MinimalRecord}:
+Nie każda zmiana poprawia sytuację --- \code{TimestampRevoke} jest przykładem
+modyfikacji wprowadzonej w~dobrej intencji, której koszt znacząco przewyższył
+oczekiwania: przechowywanie znacznika czasu rewokacji w~storage zamiast
+w~zdarzeniach zwiększyło koszt \code{revoke} o~61\%. Sumarycznie, od \code{StringErrors} do \code{MinimalRecord}:
 \[
-  \Delta_{\code{issue}} \approx 14.1\%,\quad
-  \Delta_{\code{revoke}} \approx 7.8\%,\quad
-  \Delta_{\text{deploy}} \approx 19.6\%.
+  \Delta_{\code{issue}} \approx 14{,}1\%,\quad
+  \Delta_{\code{revoke}} \approx 7{,}8\%,\quad
+  \Delta_{\text{deploy}} \approx 19{,}6\%.
 \]
 
 \section{Etap 2 --- architektura Merkle batch}
 \label{sec:gaz-etap2}
 
 Model per-dyplom zakłada, że \emph{każdy dyplom trafia na łańcuch jako osobna
-transakcja}. Czy to konieczne? Merkle batch odpowiada: nie. Zamiast zapisywać $N$
+transakcja}. Architektura Merkle batch znosi to założenie: zamiast zapisywać $N$
 dyplomów w~$N$ transakcjach, wystawca:
 \begin{enumerate}
   \item buduje drzewo Merkle z~$N$ liści (off-chain, bez gazu),
@@ -184,7 +179,7 @@ Operacja & \code{PackedStorage} (per-dyplom) & \code{MerkleBaseline} \\
 Wystawienie & \code{issue(docHash)} --- 1 tx / dyplom & \code{issueBatchRoot(batchId, root)} --- 1 tx / N dyplomów \\[4pt]
 Weryfikacja & \code{status(docHash)} --- odczyt mapping & \code{statusWithProof(hash, issuer, batchId, proof)} --- weryfikacja Merkle \\[4pt]
 Rewokacja & \code{revoke(docHash)} --- prosty SSTORE & \code{revokeFromBatch(hash, batchId, proof)} --- SSTORE + weryfikacja \\[4pt]
-Zarządzanie wystawcami & \code{addIssuer}/\code{removeIssuer} & \code{onboardIssuerAndUniversity} (bogatszy model z~uczelnią) \\
+Zarządzanie \newline wystawcami & \code{addIssuer}/\code{removeIssuer} & \code{onboardIssuerAndUniversity} (bogatszy model z~uczelnią) \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -211,19 +206,19 @@ Model & Operacja & Min & Avg & Max \\
 & \code{onboardIssuer\&Uni} & \multicolumn{3}{c}{76\,907 (stałe)} \\
 \midrule
 \multicolumn{2}{l}{Deployment} & \multicolumn{2}{l}{\code{PackedStorage}: 393\,596} & \\
-\multicolumn{2}{l}{} & \multicolumn{2}{l}{\code{MerkleBaseline}: 1\,059\,364 ($\times$2.7)} & \\
+\multicolumn{2}{l}{} & \multicolumn{2}{l}{\code{MerkleBaseline}: 1\,059\,364 ($\times$2{,}7)} & \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \noindent Na poziomie pojedynczej transakcji Merkle nie jest tańszy ---
-\code{issueBatchRoot} kosztuje tyle samo co \code{issue} w~per-dyplom. Ale to nie
-jest właściwa metryka do porównania. Właściwą jest \textbf{koszt na dyplom}, bo
-jedna transakcja \code{issueBatchRoot} obejmuje $N$ dyplomów:
+\code{issueBatchRoot} kosztuje tyle samo co \code{issue} w~per-dyplom. Właściwą
+metryką porównania jest jednak \textbf{koszt na dyplom}, ponieważ jedna
+transakcja \code{issueBatchRoot} obejmuje $N$ dyplomów:
 \[
-  \text{gas\_per\_diploma}(N) = \frac{50{,}939}{N},
+  \text{gas\_per\_diploma}(N) = \frac{50\,939}{N},
   \qquad
-  \text{gas\_per\_diploma}_\text{legacy} = 48{,}200 = \text{const}.
+  \text{gas\_per\_diploma}_\text{legacy} = 48\,200 = \text{const}.
 \]
 
 \begin{figure}[H]
@@ -241,24 +236,26 @@ jedna transakcja \code{issueBatchRoot} obejmuje $N$ dyplomów:
     grid=both,
     minor grid style={gray!15},
     major grid style={gray!40},
-    legend style={at={(0.97,0.97)},anchor=north east,font=\small},
-    title={Amortyzacja kosztu publikacji: legacy vs Merkle batch}
+    legend style={at={(0.5,-0.18)},anchor=north,font=\small},
+    legend columns=2,
 ]
 \addplot+[mark=*, thick, color=blue!70!black, mark size=3pt]
   coordinates {(1,50939)(2,25469)(5,10188)(10,5094)(20,2547)
                (50,1019)(100,509)(200,255)(500,102)(1000,51)};
-\addlegendentry{\code{MerkleBaseline}: $50939/N$}
+\addlegendentry{\code{MerkleBaseline}: $50\,939/N$}
 \addplot+[mark=square*, thick, color=orange!85!black, dashed, mark size=3pt]
   coordinates {(1,48200)(2,48200)(5,48200)(10,48200)(20,48200)
                (50,48200)(100,48200)(200,48200)(500,48200)(1000,48200)};
-\addlegendentry{\code{PackedStorage}: stałe 48200 gas}
+\addlegendentry{\code{PackedStorage}: stałe 48\,200 gas}
 \draw[dashed,gray] (axis cs:100,1) -- (axis cs:100,509);
 \node[anchor=south west, font=\footnotesize] at (axis cs:100,509)
-  {$N=100$: $509$ vs $48200$};
+  {$N=100$: $509$ vs $48\,200$};
 \end{axis}
 \end{tikzpicture}
-\caption{Skala logarytmiczna po obu osiach. Merkle obniża koszt per dyplom odwrotnie
-proporcjonalnie do $N$. Punkt przecięcia (\emph{break-even}) leży przy $N \approx 1$.}
+\caption[Amortyzacja kosztu publikacji: legacy vs Merkle batch]{Amortyzacja kosztu publikacji: model Merkle obniża koszt na dyplom
+odwrotnie proporcjonalnie do rozmiaru partii $N$, podczas gdy w~modelu
+per-dyplom koszt jest stały; próg opłacalności leży już przy $N \approx 1$
+(skala logarytmiczna na obu osiach).}
 \end{figure}
 
 \begin{table}[H]
@@ -266,15 +263,13 @@ proporcjonalnie do $N$. Punkt przecięcia (\emph{break-even}) leży przy $N \app
 \caption{Konkretne wartości: gas na dyplom i~stosunek do modelu legacy.}
 \begin{tabular}{rrrr}
 \toprule
-$N$ & Merkle (gas/dyplom) & Legacy (gas/dyplom) & Ile razy taniej? \\
+$N$ & Merkle (gas/dyplom) & Legacy (gas/dyplom) & Krotność redukcji \\
 \midrule
-1    & 50\,939 & 48\,200 & $0.95\times$ (legacy tańszy) \\
-5    & 10\,188 & 48\,200 & $4.7\times$ \\
-\rowcolor{neutralcolor}
-10   &  5\,094 & 48\,200 & $9.5\times$ \\
+1    & 50\,939 & 48\,200 & $0{,}95\times$ (legacy tańszy) \\
+5    & 10\,188 & 48\,200 & $4{,}7\times$ \\
+10   &  5\,094 & 48\,200 & $9{,}5\times$ \\
 50   &  1\,019 & 48\,200 & $47\times$ \\
-\rowcolor{bestcolor}
-100  &    509  & 48\,200 & \textbf{94.7×} \\
+100  &    509  & 48\,200 & $\mathbf{94{,}7\times}$ \\
 500  &    102  & 48\,200 & $472\times$ \\
 1000 &     51  & 48\,200 & $945\times$ \\
 \bottomrule
@@ -285,15 +280,15 @@ $N$ & Merkle (gas/dyplom) & Legacy (gas/dyplom) & Ile razy taniej? \\
 odpowiedź na pytanie o~model danych. Koszt jednostkowej transakcji jest taki sam jak
 legacy (lub nawet minimalnie wyższy), ale pojedyncza transakcja ,,certyfikuje'' całą
 partię. Przy $N=100$ koszt per dyplom spada z~$\approx$48\,200 do $\approx$509 gas
---- \textbf{redukcja o 98.9\%}. Ceną za tę zmianę jest trzykrotnie droższy
-deployment ($\approx$1.06M vs $\approx$0.39M gas) oraz bardziej złożona weryfikacja
+--- \textbf{redukcja o 98{,}9\%}. Ceną za tę zmianę jest niemal trzykrotnie droższy
+deployment ($\approx$1{,}06M vs $\approx$0{,}39M gas) oraz bardziej złożona weryfikacja
 wymagająca dowodu Merkle.
 
 \section{Etap 3 --- optymalizacje hot-path Merkle}
 \label{sec:gaz-etap3}
 
-Skoro architektura Merkle jest już wybrana, pojawia się nowe pytanie: czy ścieżka
-weryfikacji dowodu daje się jeszcze zoptymalizować na poziomie kodu EVM? Kontrakt
+Po wyborze architektury Merkle pozostaje pytanie, czy ścieżkę weryfikacji dowodu
+można dalej zoptymalizować na poziomie kodu EVM. Kontrakt
 \code{DiplomaRegistryG} (dalej: \code{MerkleG}) to identyczny funkcjonalnie wariant
 \code{MerkleBaseline} z~czterema przyrostowymi technikami nałożonymi na dwie
 wewnętrzne funkcje: \code{\_processProof()} (iteracja po elementach dowodu)
@@ -301,9 +296,13 @@ i~\code{\_merkleLeaf()} (budowanie liścia do zhashowania).
 
 \subsection{Techniki G1--G4}
 
+Tabela~\ref{tab:g1g4} zestawia cztery zastosowane techniki wraz z~miejscem ich
+działania i~mechanizmem oszczędności.
+
 \begin{table}[H]
 \centering
 \caption{Cztery techniki zastosowane w~\code{MerkleG}.}
+\label{tab:g1g4}
 \begin{tabular}{>{\bfseries}p{2.8cm} p{4.0cm} p{7.0cm}}
 \toprule
 Nazwa & Gdzie & Co robi i~dlaczego oszczędza gas \\
@@ -328,7 +327,7 @@ G3 \newline prywatny liść
     wywołujący je wcześniej już zweryfikował dane. Oszczędność: dwa warunkowe rzuty
     mniej. \\[4pt]
 
-G4 \newline assembly preimage
+G4 \newline assembly \mbox{preimage}
   & \code{\_merkleLeaf}, budowanie danych
   & Zamiast \code{abi.encodePacked(address(this), chainid(), issuer, batchId,
     docHash)} (112 bajtów, alokacja przez ABI-encoder), dane pakowane są przez
@@ -355,7 +354,7 @@ Operacja
 Deployment
   & \multicolumn{3}{c}{1\,059\,364}
   & \multicolumn{3}{c}{1\,018\,273}
-  & $-41{,}091$ (\textbf{$-$3.9\%}) \\
+  & $-41\,091$ (\textbf{$-$3{,}9\%}) \\
 \code{issueBatchRoot}
   & 50\,927 & 50\,937 & 50\,939
   & 50\,927 & 50\,937 & 50\,939
@@ -363,35 +362,35 @@ Deployment
 \code{revokeFromBatch}
   & 54\,239 & 57\,229 & 61\,591
   & 54\,101 & 56\,443 & 59\,859
-  & $-786$ ($-1.4\%$) \\
+  & $-786$ ($-1{,}4\%$) \\
 \code{statusWithProof}
   & 10\,555 & 11\,890 & 13\,835
   & 10\,417 & 11\,104 & 12\,103
-  & $-786$ (\textbf{$-$6.6\%}) \\
+  & $-786$ (\textbf{$-$6{,}6\%}) \\
 \code{merkleLeaf} (view)
   & 866 & 866 & 866
   & 824 & 824 & 824
-  & $-42$ ($-4.8\%$) \\
+  & $-42$ ($-4{,}8\%$) \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \noindent \code{issueBatchRoot} nie wywołuje \code{\_processProof} ani
 \code{\_merkleLeaf} w~ścieżce zapisu, więc oszczędność tam wynosi zero.
-\code{statusWithProof} zyskuje relatywnie więcej ($-6.6\%$ avg) niż
-\code{revokeFromBatch} ($-1.4\%$ avg), bo stanowi mniejszą bazę kosztową (mniej
+\code{statusWithProof} zyskuje relatywnie więcej ($-6{,}6\%$ avg) niż
+\code{revokeFromBatch} ($-1{,}4\%$ avg), ponieważ stanowi mniejszą bazę kosztową (mniej
 operacji storage) --- absolutna oszczędność na wywołaniu wynosi jednak \textbf{786
 gas avg} dla obu operacji.
 
 \paragraph{Co dokładnie mierzy test.}
-Zanim przejdę do liczb w~funkcji głębokości drzewa, warto zrozumieć, co naprawdę
+Przed analizą liczb w~funkcji głębokości drzewa warto zrozumieć, co naprawdę
 robi każdy test. Na przykładzie \code{testRevokeFromBatch\_Depth8}:
 
 \begin{enumerate}
   \item \textbf{\code{\_makeLeaves(256)}} --- funkcja testowa wywołuje
         \code{reg.merkleLeaf()} \emph{256 razy} jako zewnętrzne wywołania kontraktu,
         żeby uzyskać zahaszowane liście. Każde kosztuje 866 gas. Łącznie:
-        $256 \times 866 = 221{,}696$ gas.
+        $256 \times 866 = 221\,696$ gas.
   \item \textbf{\code{\_buildTree(leaves)}} --- buduje drzewo Merkle w~czystym
         Solidity (funkcja \code{pure}): oblicza 255 wewnętrznych węzłów używając
         \code{keccak256(abi.encodePacked(l, r))} w~zagnieżdżonej pętli. Solidity
@@ -399,7 +398,7 @@ robi każdy test. Na przykładzie \code{testRevokeFromBatch\_Depth8}:
         \code{abi.encodePacked}, a~dostęp do dwuwymiarowej tablicy
         \code{bytes32[][]} wymaga podwójnego sprawdzenia granic przy każdym
         odczycie. Efekt: $\approx$9\,000 gas na węzeł, czyli
-        $255 \times 9{,}000 \approx 2{,}200{,}000$ gas łącznie.
+        $255 \times 9\,000 \approx 2\,200\,000$ gas łącznie.
   \item \textbf{\code{reg.issueBatchRoot(BATCH, root)}} --- 50\,939 gas.
   \item \textbf{\code{reg.revokeFromBatch(doc, BATCH, proof)}} z~dowodem
         8-elementowym --- 61\,591 gas (baseline) / 59\,859 gas (G).
@@ -429,37 +428,20 @@ $d$ & Liści & \makecell{Budowa liści\\$2^d \times 866$} & \makecell{Budowa drz
 \noindent Koszty \code{revokeFromBatch} dla głębokości 1 i~4 są interpolowane na
 podstawie zmierzonego przyrostu 919 gas/krok z~danych function-level. Suma dla
 każdego wiersza zgadza się ze zmierzoną wartością testu. W~wierszu $d=8$ budowa
-drzewa ($\approx$2.2M gas) stanowi \textbf{87\% łącznego kosztu testu}, podczas gdy
+drzewa ($\approx$2{,}2M gas) stanowi \textbf{87\% łącznego kosztu testu}, podczas gdy
 rzeczywiste wywołanie \code{revokeFromBatch} kosztuje jedynie 61\,591 gas
-(\textbf{2.4\% całości}).
+(\textbf{2{,}4\% całości}).
 
-\paragraph{Koszt testu vs koszt produkcyjny.}
+Rozziew między kosztem testu a~kosztem produkcyjnym rośnie z~głębokością: przy
+$d=8$ test (2\,553\,539 gas) jest niemal 23-krotnie droższy od rzeczywistej
+pary operacji on-chain (\code{issueBatchRoot} + \code{revokeFromBatch},
+112\,530 gas) --- cała ta różnica to koszt budowania drzewa Merkle w~Solidity,
+co w~produkcji odbywa się off-chain.
 
-\begin{table}[H]
-\centering
-\caption{Koszt testu vs rzeczywisty koszt produkcyjny (Baseline, \code{revokeFromBatch}).}
-\begin{tabular}{crrrr}
-\toprule
-$d$ & Liści & Koszt testu & Koszt produkcyjny & Proporcja \\
-       &       &             & \small(issueBatch + revoke) & \small test/produkcja \\
-\midrule
-0 & 1   & 124\,856    & 105\,178 & $1.2\times$ \\
-1 & 2   & 137\,905    & 106\,097 & $1.3\times$ \\
-4 & 16  & 276\,384    & 108\,854 & $2.5\times$ \\
-8 & 256 & 2\,553\,539 & 112\,530 & \textbf{22.7×} \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-\noindent Przy $d=8$ test jest 22-krotnie droższy od rzeczywistej operacji na
-łańcuchu --- cała ta różnica to koszt budowania drzewa Merkle w~Solidity, co
-w~produkcji odbywa się off-chain.
-
-\begin{tcolorbox}[colback=blue!5!white,colframe=blue!50!black,title=Wniosek praktyczny]
-Niezależnie od tego, czy batch ma 1 czy 256 dyplomów, koszt produkcyjny jednej
-rewokacji to stałe $\approx$105--113\,k~gas (issueBatchRoot + revokeFromBatch).
+\paragraph{Wniosek praktyczny.} Niezależnie od tego, czy partia liczy 1~czy
+256~dyplomów, koszt produkcyjny jednej rewokacji to stałe
+$\approx$105--113~tys.\ gas (\code{issueBatchRoot} + \code{revokeFromBatch}).
 Rozmiar drzewa zmienia koszt testu, ale nie zmienia znacząco kosztu on-chain.
-\end{tcolorbox}
 
 \noindent Dla kompletności, poniższa tabela zestawia pełne wyniki testów
 end-to-end dla obu operacji i~obu wersji kontraktu:
@@ -494,7 +476,7 @@ Obserwując jak oszczędność rośnie z~głębokością, można ją rozłożyć
 
 \begin{equation}
 \Delta(d) =
-  \underbrace{2^d \cdot 42}_{\text{budowa liści w~teście (G4 public)}}
+  \underbrace{\bigl(2^d + 1\bigr) \cdot 42}_{\text{wywołania \code{merkleLeaf} w~teście (G4)}}
   + \underbrace{96}_{\text{ominięte zero-checks (G3)}}
   + \underbrace{d \cdot 199}_{\text{kroki pętli dowodu (G1+G2)}},
   \label{eq:model}
@@ -502,8 +484,9 @@ Obserwując jak oszczędność rośnie z~głębokością, można ją rozłożyć
 
 gdzie:
 \begin{itemize}
-  \item $42$ gas --- oszczędność jednego wywołania publicznego \code{merkleLeaf}
-        (assembly zamiast \code{abi.encodePacked}, G4);
+  \item $42$ gas --- oszczędność jednego publicznego wywołania \code{merkleLeaf}
+        (assembly zamiast \code{abi.encodePacked}, G4); test wykonuje $2^d$ takich
+        wywołań przy budowie liści oraz jedno dodatkowe dla dokumentu badanego;
   \item $96$ gas --- oszczędność na wewnętrznym wywołaniu \code{\_merkleLeaf}
         (G4 + pominięte sprawdzenia G3);
   \item $199$ gas --- oszczędność na jednym kroku pętli \code{\_processProof} (G1+G2).
@@ -518,23 +501,29 @@ gdzie:
 \toprule
 $d$ & $\Delta(d)$ (model) & Zmierzone & Różnica \\
 \midrule
-0 & $1\cdot42 + 96 + 0\cdot199 + 42 = 180$   & 180    & $\mathbf{0}$ \\
-1 & $2\cdot42 + 96 + 1\cdot199 + 42 = 421$   & 421    & $\mathbf{0}$ \\
-4 & $16\cdot42 + 96 + 4\cdot199 + 42 = 1606$ & 1\,606 & $\mathbf{0}$ \\
-8 & $256\cdot42 + 96 + 8\cdot199 + 44 = 12{,}484$ & 12\,484 & $\mathbf{0}$ \\
+0 & $2\cdot42 + 96 + 0\cdot199 = 180$    & 180    & $\mathbf{0}$ \\
+1 & $3\cdot42 + 96 + 1\cdot199 = 421$    & 421    & $\mathbf{0}$ \\
+4 & $17\cdot42 + 96 + 4\cdot199 = 1\,606$  & 1\,606 & $\mathbf{0}$ \\
+8 & $257\cdot42 + 96 + 8\cdot199 = 12\,482$ & 12\,484 & $+2$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\noindent Model \eqref{eq:model} dokładnie odtwarza wyniki pomiarów. Potwierdza to,
-że oszczędności wynikają z~trzech niezależnych i~przewidywalnych źródeł, a~nie
-z~niezamierzonych efektów ubocznych.
+\noindent Model \eqref{eq:model} odtwarza wyniki pomiarów dokładnie dla
+$d \in \{0, 1, 4\}$; przy $d=8$ pozostaje resztkowe $2$~gas (poniżej
+$0{,}02\%$ wartości), przypisywalne nieliniowemu kosztowi rozszerzania pamięci
+EVM przy 256~liściach. Potwierdza to, że oszczędności wynikają z~trzech
+niezależnych i~przewidywalnych źródeł, a~nie z~niezamierzonych efektów
+ubocznych.
 
 \section{Koszt w~przeliczeniu na PLN}
 \label{sec:gaz-pln}
 
-Przyjęto kurs \textbf{1 ETH = \EthPln\ PLN} i~trzy scenariusze ceny gazu (niski:
-20 gwei; typowy: 40 gwei; szczytowy: 80 gwei). Wzór przeliczenia:
+Przyjęto kurs \textbf{1 ETH = 7000 PLN}, spójny z~przyjętym
+w~rozdziale~\ref{ch:l2} kursem $\text{ETH}/\text{USD}=3500$ (migawka
+z~13~maja~2026~r.) przy kursie $\text{USD}/\text{PLN}\approx2{,}00$, oraz trzy
+scenariusze ceny gazu (niski: 20 gwei; typowy: 40 gwei; szczytowy: 80 gwei).
+Wzór przeliczenia:
 \[
 \text{PLN} = \text{gas} \times (\text{gasPrice}_{[\text{gwei}]} \times 10^{-9})
              \times \text{kurs}_{[\text{PLN/ETH}]}.
@@ -542,34 +531,25 @@ Przyjęto kurs \textbf{1 ETH = \EthPln\ PLN} i~trzy scenariusze ceny gazu (niski
 
 \begin{table}[H]
 \centering
-\caption{Koszt kluczowych operacji w~PLN (kurs: \EthPln\ PLN/ETH).}
+\caption{Koszt kluczowych operacji w~PLN (kurs: 7000 PLN/ETH).}
 \begin{tabular}{lrrrr}
 \toprule
 Operacja & Gas (max) & 20 gwei & 40 gwei & 80 gwei \\
 \midrule
-\code{PackedStorage issue}          & 48\,200  & \CostPln{48200}{20} & \CostPln{48200}{40} & \CostPln{48200}{80} \\
-\code{MerkleBaseline issueBatchRoot}& 50\,939  & \CostPln{50939}{20} & \CostPln{50939}{40} & \CostPln{50939}{80} \\
-\code{MerkleBaseline revokeFromBatch}& 61\,591 & \CostPln{61591}{20} & \CostPln{61591}{40} & \CostPln{61591}{80} \\
-\code{MerkleG revokeFromBatch}      & 59\,859  & \CostPln{59859}{20} & \CostPln{59859}{40} & \CostPln{59859}{80} \\
-\code{MerkleG statusWithProof}      & 12\,103  & \CostPln{12103}{20} & \CostPln{12103}{40} & \CostPln{12103}{80} \\
-Deployment \code{PackedStorage}     & 393\,596 & \CostPln{393596}{20} & \CostPln{393596}{40} & \CostPln{393596}{80} \\
-Deployment \code{MerkleBaseline}    & 1\,059\,364 & \CostPln{1059364}{20} & \CostPln{1059364}{40} & \CostPln{1059364}{80} \\
-Deployment \code{MerkleG}           & 1\,018\,273 & \CostPln{1018273}{20} & \CostPln{1018273}{40} & \CostPln{1018273}{80} \\
+\code{PackedStorage issue}          & 48\,200  & 6{,}75 & 13{,}50 & 26{,}99 \\
+\code{MerkleBaseline issueBatchRoot}& 50\,939  & 7{,}13 & 14{,}26 & 28{,}53 \\
+\code{MerkleG revokeFromBatch}      & 59\,859  & 8{,}38 & 16{,}76 & 33{,}52 \\
+\code{MerkleG statusWithProof}      & 12\,103  & 1{,}69 & 3{,}39 & 6{,}78 \\
+Deployment \code{MerkleG}           & 1\,018\,273 & 142{,}56 & 285{,}12 & 570{,}23 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
 \noindent\textbf{Przykład amortyzacji} przy 40 gwei i~partii $N=100$: jeden
-\code{issueBatchRoot} kosztuje $\approx\CostPln{50939}{40}$~PLN. Podzielone na 100
-dyplomów:
-\[
-  \frac{\CostPln{50939}{40}}{100} \approx
-  \fpeval{round(\CostPln{50939}{40}/100, 5)} \text{ PLN / dyplom}
-  \quad \text{vs} \quad
-  \CostPln{48200}{40} \text{ PLN / dyplom (legacy)}.
-\]
-Oszczędność: ponad sto razy tańsze wystawienie jednego dyplomu przy typowej cenie
-gazu i~partii 100 absolwentów.
+\code{issueBatchRoot} kosztuje ${\approx}14{,}26$~PLN, co po podziale na
+100~dyplomów daje ${\approx}0{,}14$~PLN na dyplom --- wobec $13{,}50$~PLN na
+dyplom w~modelu per-dyplom. Wystawienie jednego dyplomu jest więc przy typowej
+cenie gazu i~partii 100~absolwentów niemal stukrotnie tańsze.
 
 \section{Wnioski etapu}
 \label{sec:gaz-wnioski}
@@ -586,8 +566,8 @@ Etap & Typ zmiany & Redukcja kosztu & Metryka \\
 \midrule
 1: \code{StringErrors} $\to$ \code{MinimalRecord} & mikrooptymalizacje kodu   & $\approx$14\%     & gas/dyplom (avg) \\
 1: deployment                                    & mikrooptymalizacje kodu   & $\approx$20\%     & deployment gas \\
-2: \code{PackedStorage} $\to$ \code{MerkleBaseline} & zmiana architektury      & $\approx$98.9\%   & gas/dyplom przy $N=100$ \\
-3: \code{MerkleBaseline} $\to$ \code{MerkleG}       & mikrooptymalizacje hot-path & $\approx$6.6\%  & \code{statusWithProof} avg \\
+2: \code{PackedStorage} $\to$ \code{MerkleBaseline} & zmiana architektury      & $\approx$98{,}9\%   & gas/dyplom przy $N=100$ \\
+3: \code{MerkleBaseline} $\to$ \code{MerkleG}       & mikrooptymalizacje hot-path & $\approx$6{,}6\%  & \code{statusWithProof} avg \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -596,12 +576,12 @@ Cztery wnioski wynikają z~całości. Po pierwsze, \textbf{mikrooptymalizacje ko
 dają realną, ale ograniczoną poprawę}: różnice rzędu 8--20\% są mierzalne i~warte
 uwagi przy wdrożeniu na głównej sieci Ethereum, ale nie zmieniają klasy kosztowej
 --- każdy dyplom nadal kosztuje dziesiątki tysięcy gas. Po drugie, \textbf{zmiana
-architektury to inna liga}: model Merkle batch nie ,,poprawia'' istniejącego kodu
---- zadaje inne pytanie na poziomie projektu. Przy partii 100 dyplomów koszt
+architektury działa o~rząd wielkości silniej}: model Merkle batch nie poprawia
+istniejącego kodu, lecz zmienia model danych na poziomie projektu. Przy partii 100 dyplomów koszt
 jednostkowy spada o~niemal 99\%, co jest efektem amortyzacji stałego kosztu
 transakcji, a~nie szybszego algorytmu. Po trzecie, \textbf{optymalizacje hot-path
-Merkle są przewidywalne i~liniowe}: wzór $\Delta(d) = 2^d \cdot 42 + 96 + d \cdot
-199$ dokładnie opisuje zmierzone oszczędności --- wiemy \emph{skąd} pochodzi każdy
+Merkle są przewidywalne i~liniowe}: wzór $\Delta(d) = (2^d+1) \cdot 42 + 96 + d \cdot
+199$ opisuje zmierzone oszczędności z~dokładnością do 2~gas --- wiemy \emph{skąd} pochodzi każdy
 zaoszczędzony gas i~możemy ekstrapolować na inne rozmiary drzew. Po czwarte,
 \textbf{dobór optymalizacji zależy od modelu użycia}: dla systemu z~małymi partiami
 ($N < 5$) różnice architektur są marginalne, dla masowej emisji ($N \geq 50$)

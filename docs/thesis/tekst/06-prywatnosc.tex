@@ -5,7 +5,7 @@ System podstawowy zakotwicza w~łańcuchu bloków skrót całej treści dyplomu.
 Rozdział ten pokazuje, jak --- bez żadnej zmiany w~kontrakcie --- zastąpić ten
 monolityczny skrót strukturą zobowiązań kryptograficznych, dzięki której posiadacz
 dyplomu może ujawnić weryfikatorowi jedynie wybrane pola, zachowując pozostałe
-w~tajemnicy. Jest to pierwszy z~trzech głównych wkładów pracy.
+w~tajemnicy.
 
 \section{Problem: minimalizacja danych}
 \label{sec:priv-problem}
@@ -71,6 +71,41 @@ Prywatna koperta dyplomu (\code{PrivateDiplomaEnvelope}) zawiera trzy części:
   \item \textbf{dowód Merkle} --- ścieżka od liścia do korzenia partii, identyczna
         jak w~kopercie standardowej.
 \end{itemize}
+
+Strukturę koperty i~drogę od pól do korzenia partii ilustruje
+rys.~\ref{fig:koperta}.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=4mm and 7mm]
+  \node[blok] (p1) {\code{student}\\\footnotesize + sól$_1$};
+  \node[blok, right=of p1] (p2) {\code{degree}\\\footnotesize + sól$_2$};
+  \node[blok, right=of p2] (p3) {\code{issuedAt}\\\footnotesize + sól$_3$};
+  \node[blok, right=of p3] (p4) {\code{diplomaNumber}\\\footnotesize + sól$_4$};
+  \node[blokakcent, below=7mm of p1] (c1) {$c_1$};
+  \node[blokakcent, below=7mm of p2] (c2) {$c_2$};
+  \node[blokakcent, below=7mm of p3] (c3) {$c_3$};
+  \node[blokakcent, below=7mm of p4] (c4) {$c_4$};
+  \node[blokszary, below=8mm of $(c2)!0.5!(c3)$, minimum width=50mm]
+    (dochash) {\code{docHash} $= H(c_1 \Vert c_2 \Vert c_3 \Vert c_4)$};
+  \node[blokszary, below=5mm of dochash, minimum width=50mm]
+    (leaf) {liść $= H(\code{registry} \Vert \code{chainId} \Vert \code{issuer}
+            \Vert \code{batchId} \Vert \code{docHash})$};
+  \node[blokszary, below=5mm of leaf] (root) {korzeń partii (on-chain)};
+  \foreach \i in {1,2,3,4}
+    \draw[strz] (p\i) -- node[etyk, right=0.5mm] {$H$} (c\i);
+  \draw[strz] (c1.south) -- (dochash.north west);
+  \draw[strz] (c2) -- (dochash);
+  \draw[strz] (c3) -- (dochash);
+  \draw[strz] (c4.south) -- (dochash.north east);
+  \draw[strz] (dochash) -- (leaf);
+  \draw[strz] (leaf) -- node[etyk, right=0.5mm] {dowód Merkle} (root);
+\end{tikzpicture}
+\caption[Struktura koperty prywatnej]{Koperta prywatna: każde pole wraz z~tajną solą daje zobowiązanie
+$c_i$; skrót dokumentu powstaje z~zobowiązań, nie z~jawnych wartości. Pole
+ujawnione = wartość + sól; pole ukryte = samo $c_i$.}
+\label{fig:koperta}
+\end{figure}
 
 Sól pełni tu podwójną rolę. Dla pola \emph{ujawnionego} jest przekazywana
 weryfikatorowi, aby mógł odtworzyć i~sprawdzić zobowiązanie. Dla pola
@@ -149,7 +184,11 @@ zapewnia też dowodów o~ujawnionej wartości typu „stopień jest co najmniej
 licencjatem'' bez podania konkretnej wartości. Takie własności wymagałyby dowodów
 z~wiedzą zerową (ZK), które --- zgodnie z~przyjętym zakresem pracy --- pozostają poza
 jej ramami; obecna konstrukcja realizuje selektywne ujawnianie pełnych pól, co
-odpowiada założonemu wymaganiu minimalizacji danych.
+odpowiada założonemu wymaganiu minimalizacji danych. Funkcjonalnie odpowiada to
+selektywnemu ujawnianiu znanemu z~poświadczeń weryfikowalnych
+W3C~\cite{w3c-vc}, przy czym tam realizuje się je specjalizowanymi schematami
+podpisów, a~tu --- wyłącznie funkcją skrótu i~solą, kosztem ujawnienia
+struktury koperty.
 
 \section{Zgodność wstecz}
 \label{sec:priv-zgodnosc}

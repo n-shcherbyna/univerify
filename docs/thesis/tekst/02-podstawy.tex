@@ -22,16 +22,33 @@ Rozwiązania pośrednie próbują ten problem złagodzić. Centralne rejestry dy
 lecz nie usuwają pojedynczego punktu kontroli i~awarii. Dokumenty podpisane cyfrowo
 w~ramach infrastruktury klucza publicznego (sekcja~\ref{sec:pki}) pozwalają na
 niezależną weryfikację offline, ale nie dają publicznego zapisu tego, kto był
-uprawniony do wydawania. Kierunek oparty na łańcuchu bloków --- reprezentowany m.in.\
-przez inicjatywy takie jak Blockcerts oraz szereg raportów wdrożeniowych dla sektora
+uprawniony do wydawania. Kierunek oparty na łańcuchu bloków~\cite{nakamoto2008}
+--- reprezentowany m.in.\ przez inicjatywy takie jak
+Blockcerts~\cite{blockcerts} oraz szereg raportów wdrożeniowych dla sektora
 edukacji~\cite{grech2017} --- publikuje odciski dokumentów w~publicznym,
-niemodyfikowalnym rejestrze. Niniejsza praca rozwija ten kierunek, koncentrując się
-na trzech osiach: koszcie, prywatności oraz modelu zarządzania uprawnieniami.
+niemodyfikowalnym rejestrze.
+
+Osobną, dynamicznie rozwijaną rodziną są \emph{poświadczenia weryfikowalne}
+(\emph{verifiable credentials}, VC) standaryzowane przez W3C~\cite{w3c-vc},
+w~których dokument jest podpisanym cyfrowo zbiorem twierdzeń o~posiadaczu,
+a~wybrane schematy podpisów umożliwiają selektywne ujawnianie pojedynczych
+twierdzeń. Na tym modelu opiera się europejska infrastruktura
+EBSI~\cite{ebsi}, łącząca poświadczenia edukacyjne z~rejestrem zaufanych
+wydawców prowadzonym na~łańcuchu konsorcyjnym. Poświadczenia weryfikowalne są
+więc bezpośrednim punktem odniesienia dla mechanizmu selektywnego ujawniania
+z~rozdziału~\ref{ch:prywatnosc}; różnica polega na tym, że UniVerify uzyskuje
+zbliżoną funkcjonalność najprostszymi środkami --- funkcją skrótu i~solą ---
+bez specjalizowanych schematów podpisu, a~rejestr uprawnień utrzymuje na
+publicznym, bezzezwoleniowym łańcuchu. Niniejsza praca rozwija kierunek
+blockchainowy, koncentrując się na trzech osiach: koszcie, prywatności oraz
+modelu zarządzania uprawnieniami.
 
 \section{Drzewa Merkle}
 \label{sec:merkle}
 
-Drzewo Merkle~\cite{merkle1987} to binarne drzewo skrótów, w~którym każdy liść jest
+Drzewo Merkle~\cite{merkle1987} --- konstrukcja wykorzystywana m.in.\
+w~znakowaniu czasem dokumentów cyfrowych~\cite{haber1991} --- to binarne drzewo
+skrótów, w~którym każdy liść jest
 skrótem pojedynczego elementu danych, a~każdy węzeł wewnętrzny --- skrótem
 konkatenacji swoich dzieci:
 \[
@@ -93,10 +110,11 @@ zweryfikować stan. Wyróżnia się dwie rodziny:
 
 \begin{description}
   \item[Rollupy optymistyczne] (np.\ Arbitrum~\cite{arbitrum-nitro}, Base)
-        zakładają poprawność transakcji domyślnie i~dopuszczają \emph{dowody
-        oszustwa} w~oknie sporu.
-  \item[Rollupy zk] (np.\ zkSync) dołączają do każdej partii \emph{dowód ważności}
-        (zero-knowledge), matematycznie potwierdzający poprawność przejścia stanu.
+        zakładają poprawność transakcji domyślnie i~dopuszczają dowody
+        \emph{fraud proof} w~oknie sporu.
+  \item[Rollupy zk] (np.\ zkSync) dołączają do każdej partii dowód
+        \emph{validity proof}, matematycznie potwierdzający poprawność przejścia
+        stanu.
 \end{description}
 
 Kluczowym parametrem kosztu jest \emph{dostępność danych} (\emph{data

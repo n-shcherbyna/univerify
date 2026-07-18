@@ -29,7 +29,7 @@ na nieuprawnioną modyfikację, a~zarazem odpowiada na trzy praktyczne pytania:
 oraz \emph{czy przewaga łańcucha bloków nad tańszymi alternatywami jest realna}.
 
 Zakres obejmuje: rdzeń systemu oparty na drzewach Merkle (korzenie partii
-publikowane w~kontrakcie inteligentnym), pomiary kosztu w~warstwie pierwszej oraz
+publikowane w~smart contract), pomiary kosztu w~warstwie pierwszej oraz
 w~trzech rollupach warstwy drugiej, mechanizm selektywnego ujawniania pól dyplomu
 oraz model zarządzania uprawnieniami eliminujący pojedynczy punkt zaufania. Poza
 zakresem świadomie pozostawiono dowody z~wiedzą zerową oraz zaawansowane akumulatory
@@ -38,8 +38,10 @@ kryptograficzne --- jako kierunki dalszych prac (rozdz.~\ref{ch:podsumowanie}).
 \section{Wkład własny}
 \label{sec:wklad}
 
-Praca wnosi trzy zasadnicze rozszerzenia względem systemu podstawowego, mapujące się
-na rozdziały merytoryczne:
+Punktem wyjścia jest system podstawowy UniVerify, którego architekturę
+i~pomiary kosztów w~warstwie pierwszej autor opisał we wcześniejszym artykule
+konferencyjnym~\cite{sitee2026}. Praca wnosi względem niego trzy
+zasadnicze rozszerzenia, mapujące się na rozdziały merytoryczne:
 
 \begin{enumerate}
   \item \textbf{Selektywne ujawnianie pól} przez kryptograficzne zobowiązania
@@ -49,7 +51,8 @@ na rozdziały merytoryczne:
   \item \textbf{Wdrożenie i~pomiary kosztów} w~warstwie pierwszej
         (rozdz.~\ref{ch:gaz}) oraz w~trzech sieciach warstwy drugiej wraz z~analizą
         wrażliwości na wahania cen (rozdz.~\ref{ch:l2}), pokazujące, że koszt
-        rejestracji pojedynczego dyplomu jest rzędu $10^{-6}$~USD.
+        rejestracji pojedynczego dyplomu spada w~najtańszej z~badanych sieci
+        poniżej $10^{-6}$~USD.
   \item \textbf{Model zarządzania} łączący portfel wielopodpisowy z~mechanizmem
         opóźnienia czasowego oraz \textbf{analiza wartości} porównująca łańcuch
         bloków ze status quo i~infrastrukturą klucza publicznego
