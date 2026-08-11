@@ -131,12 +131,13 @@
   urldate      = {2026-08-10},
 }
 
-@misc{consensys-multisig,
-  author       = {{ConsenSys}},
+@misc{gnosis-multisig,
+  author       = {{Gnosis}},
   title        = {{MultiSigWallet}},
   year         = {2016},
-  url          = {https://github.com/ConsenSysMesh/MultiSigWallet},
-  urldate      = {2026-08-10},
+  note         = {Repozytorium zarchiwizowane w~2021~r.\ na rzecz Safe},
+  url          = {https://github.com/gnosis/MultiSigWallet},
+  urldate      = {2026-08-11},
 }
 
 @techreport{wood-yellowpaper,
@@ -201,10 +202,12 @@
 }
 
 @misc{gdpr,
-  author       = {{European Parliament and Council}},
-  title        = {Regulation ({EU}) 2016/679 (General Data Protection Regulation)},
+  author       = {{Parlament Europejski i Rada}},
+  title        = {Rozporządzenie ({UE}) 2016/679 w sprawie ochrony osób
+                  fizycznych w związku z przetwarzaniem danych osobowych
+                  (ogólne rozporządzenie o ochronie danych)},
   year         = {2016},
-  howpublished = {Official Journal of the European Union, L 119},
+  howpublished = {Dziennik Urzędowy Unii Europejskiej, L 119},
 }
 
 @techreport{grech2017,
@@ -281,6 +284,7 @@
   author      = {{Commission Nationale de l'Informatique et des Libert{\'e}s}},
   title       = {Blockchain: Solutions for a Responsible Use of the Blockchain in the Context of Personal Data},
   institution = {CNIL},
+  type        = {Report},
   year        = {2018},
 }
 
@@ -318,6 +322,74 @@
   number      = {6962},
   year        = {2013},
   doi         = {10.17487/RFC6962},
+}
+
+@techreport{rfc9162,
+  author      = {B. Laurie and E. Messeri and R. Stradling},
+  title       = {Certificate Transparency Version 2.0},
+  institution = {IETF},
+  type        = {RFC},
+  number      = {9162},
+  year        = {2021},
+  note        = {Kategoria: Experimental; zastępuje RFC 6962},
+  doi         = {10.17487/RFC9162},
+}
+
+@misc{cve2012-2459,
+  author       = {{MITRE}},
+  title        = {{CVE-2012-2459}: {Bitcoin} block validation, duplicate transactions in the {Merkle} tree},
+  year         = {2012},
+  url          = {https://nvd.nist.gov/vuln/detail/CVE-2012-2459},
+  urldate      = {2026-08-11},
+}
+
+@misc{eip2929,
+  author       = {Vitalik Buterin and Martin Swende},
+  title        = {{EIP-2929}: Gas Cost Increases for State Access Opcodes},
+  year         = {2020},
+  url          = {https://eips.ethereum.org/EIPS/eip-2929},
+  urldate      = {2026-08-11},
+}
+
+@misc{bbs-signatures,
+  author       = {Tobias Looker and Vasilis Kalos and Andrew Whitehead and Mike Lodder},
+  title        = {The {BBS} Signature Scheme},
+  year         = {2026},
+  howpublished = {Internet-Draft \texttt{draft-irtf-cfrg-bbs-signatures}, IRTF CFRG (praca w~toku)},
+  url          = {https://datatracker.ietf.org/doc/draft-irtf-cfrg-bbs-signatures/},
+  urldate      = {2026-08-11},
+}
+
+@article{rustemi2023,
+  author  = {Avni Rustemi and Fisnik Dalipi and Vladimir Atanasovski and Aleksandar Risteski},
+  title   = {A Systematic Literature Review on Blockchain-Based Systems for Academic Certificate Verification},
+  journal = {IEEE Access},
+  volume  = {11},
+  pages   = {64679--64696},
+  year    = {2023},
+  doi     = {10.1109/ACCESS.2023.3289598},
+}
+
+@article{tan2023,
+  author  = {Evrim Tan and Ellen Lerouge and Jan Du Caju and Dani{\"e}l Du Seuil},
+  title   = {Verification of Education Credentials on European Blockchain Services Infrastructure ({EBSI}):
+             Action Research in a Cross-Border Use Case between Belgium and Italy},
+  journal = {Big Data and Cognitive Computing},
+  volume  = {7},
+  number  = {2},
+  pages   = {79},
+  year    = {2023},
+  doi     = {10.3390/bdcc7020079},
+}
+
+@misc{frutuoso2026,
+  author       = {Gon{\c c}alo Frutuoso and Diogo Rodrigues and Alexandre P. Francisco and C{\'a}tia Vaz},
+  title        = {Identity-Bound Academic Credentials on Blockchain:
+                  On-Chain Issuer Accreditation with {ERC-3643} and {OnchainID}},
+  year         = {2026},
+  howpublished = {arXiv:2607.16383 [cs.CR]},
+  url          = {https://arxiv.org/abs/2607.16383},
+  urldate      = {2026-08-11},
 }
 
 @misc{trans-gossip,

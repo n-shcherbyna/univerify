@@ -35,37 +35,40 @@ na nieuprawnioną modyfikację, a~zarazem odpowiada na trzy praktyczne pytania:
 \emph{ile taki system kosztuje}, \emph{czy da się go pogodzić z~ochroną prywatności}
 oraz \emph{czy przewaga blockchaina nad tańszymi alternatywami jest realna}.
 
-Zakres wyznaczają rdzeń systemu oparty na drzewach Merkle oraz trzy rozszerzenia
-wymienione w~sekcji~\ref{sec:wklad}. Poza zakresem świadomie pozostawiono dowody
+Zakres obejmuje pełny cykl: projekt systemu, jego implementację oraz pomiary
+przeprowadzone na tej implementacji. Powstały kontrakt rejestru, biblioteka
+kryptograficzna współdzielona przez wszystkich klientów, SDK, narzędzia wiersza
+poleceń oraz aplikacja webowa, a~następnie stanowisko pomiarowe, którym zebrano
+dane z~czterech sieci Ethereum. Poza zakresem świadomie pozostawiono dowody
 z~wiedzą zerową oraz zaawansowane akumulatory kryptograficzne --- jako kierunki
 dalszych prac (rozdz.~\ref{ch:podsumowanie}).
 
 \section{Wkład własny}
 \label{sec:wklad}
 
-Całość systemu UniVerify --- zarówno rdzeń, jak i~opisane niżej rozszerzenia ---
-powstała w~ramach niniejszej pracy; podział na ,,system podstawowy'' i~trzy
-rozszerzenia jest porządkiem wykładu, nie rozgraniczeniem autorstwa. Przez
-\emph{system podstawowy} rozumie się rejestr korzeni Merkle publikowanych
-w~kontrakcie, którego podstawy teoretyczne zbiera rozdział~\ref{ch:podstawy},
-a~architekturę --- rozdział~\ref{ch:architektura}. Na tym rdzeniu praca buduje
-trzy zasadnicze rozszerzenia, realizowane kolejno
-w~rozdziałach~\ref{ch:gaz}--\ref{ch:governance} i~podsumowane
-w~rozdziale~\ref{ch:podsumowanie}:
+Wszystkie opisane niżej elementy --- zarówno system, jak i~stanowisko pomiarowe
+oraz zebrane dane --- powstały w~ramach niniejszej pracy. Rozdziały
+\ref{ch:podstawy} i~\ref{ch:architektura} przedstawiają podstawy teoretyczne
+i~budowę systemu, a~rozdziały \ref{ch:gaz}--\ref{ch:governance} --- wyniki,
+ułożone tak, by odpowiadać kolejno na trzy pytania postawione wyżej:
 
 \begin{enumerate}
-  \item \textbf{Selektywne ujawnianie pól} przez kryptograficzne zobowiązania
-        z~solą, pozwalające posiadaczowi ujawnić jedynie wybrane pola dyplomu
-        zgodnie z~zasadą minimalizacji danych --- bez żadnej zmiany w~kontrakcie
-        (rozdz.~\ref{ch:prywatnosc}).
-  \item \textbf{Wdrożenie i~pomiary kosztów} w~warstwie pierwszej
-        (rozdz.~\ref{ch:gaz}) oraz w~trzech sieciach warstwy drugiej wraz z~analizą
-        wrażliwości na wahania cen (rozdz.~\ref{ch:l2}), pokazujące, że przejście
-        na architekturę wsadową i~warstwę drugą obniża koszt publikacji
-        w~przeliczeniu na jeden dyplom o~kilka rzędów wielkości.
-  \item \textbf{Model zarządzania} łączący portfel wielopodpisowy z~mechanizmem
-        opóźnienia czasowego oraz \textbf{analiza wartości} zestawiająca
-        blockchain ze status quo, z~infrastrukturą klucza publicznego i~z~modelem
-        przejrzystości certyfikatów, prowadząca do stopniowanej rekomendacji
-        wyboru technologii (rozdz.~\ref{ch:governance}).
+  \item \textbf{Koszt} (rozdz.~\ref{ch:gaz} i~\ref{ch:l2}). Trzyetapowa analiza
+        zużycia gazu na siedmiu wariantach kontraktu, a~następnie wdrożenie
+        identycznego kontraktu w~warstwie pierwszej i~trzech sieciach warstwy
+        drugiej wraz z~analizą wrażliwości na wahania cen. Wynik: przejście na
+        architekturę wsadową i~warstwę drugą obniża koszt publikacji
+        w~przeliczeniu na jeden dyplom o~kilka rzędów wielkości, podczas gdy
+        mikrooptymalizacje kodu nie dają nic.
+  \item \textbf{Prywatność} (rozdz.~\ref{ch:prywatnosc}). Mechanizm selektywnego
+        ujawniania pól oparty na kryptograficznych zobowiązaniach z~solą,
+        pozwalający posiadaczowi ujawnić jedynie wybrane pola dyplomu zgodnie
+        z~zasadą minimalizacji danych --- w~całości poza łańcuchem, bez żadnej
+        zmiany w~kontrakcie.
+  \item \textbf{Zarządzanie i~wartość} (rozdz.~\ref{ch:governance}). Model zarządzania
+        uprawnieniami łączący portfel wielopodpisowy z~mechanizmem opóźnienia
+        czasowego, wraz z~pomiarem jego narzutu, oraz analiza zestawiająca
+        blockchain ze status quo, z~infrastrukturą klucza publicznego
+        i~z~modelem przejrzystości certyfikatów, prowadząca do stopniowanej
+        rekomendacji wyboru technologii.
 \end{enumerate}

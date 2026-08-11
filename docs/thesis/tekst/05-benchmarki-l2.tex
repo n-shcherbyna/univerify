@@ -36,7 +36,9 @@ Ethereum przez \code{eth\_feeHistory}. Ponieważ okno 90~dni obejmuje około
 648~tys.\ bloków, a~pojedyncze wywołanie zwraca ich ograniczoną liczbę, zebrano
 \emph{próbkę systematyczną}: 90~wywołań z~parametrem \code{blockCount} równym~1,
 po jednym na dobę, w~odstępie 7200~bloków (dobowa liczba bloków przy czasie
-bloku 12~s). Z~każdej próbki pobrano \code{baseFeePerGas} oraz
+bloku 12~s). Ponieważ krok próbkowania jest równy okresowi dobowemu, wszystkie
+próbki przypadają na zbliżoną porę dnia --- ograniczenie omówione
+w~sekcji~\ref{sec:l2-dyskusja}. Z~każdej próbki pobrano \code{baseFeePerGas} oraz
 \code{baseFeePerBlobGas}, a~zbiór 90~wartości sprowadzono do percentyli p10, p50
 i~p90. Ceny gazu sekwenserów pobrano z~głównych sieci badanych rollupów.
 Wszystkie wyniki przeliczono kursem $\text{ETH}/\text{USD}=3500$ (migawka z~dnia
@@ -77,6 +79,19 @@ Ponieważ na łańcuchu zapisywany jest zawsze pojedynczy 32-bajtowy korzeń, zu
 gazu i~koszt transakcji są praktycznie niezależne od liczby dyplomów w~partii
 (tab.~\ref{tab:issue-tx}); różnicę kosztu między sieciami tworzy sposób
 rozliczania danych, nie ich rozmiar.
+
+Jeden wynik odbiega od tej reguły i~wymaga komentarza. W~zkSync~Era publikacja
+dla $N=1$ kosztuje 151\,171 jednostek gazu wobec 131--132~tys.\ dla wszystkich
+pozostałych rozmiarów --- o~15\% więcej. Nie jest to zależność od~$N$: partie
+mierzono w~kolejności rosnącej, więc $N=1$ było \emph{pierwszą} transakcją
+wysłaną do świeżo wdrożonego kontraktu, a~kolejne cztery pomiary, mimo
+tysiąckrotnej różnicy rozmiaru partii, mieszczą się w~przedziale 0{,}4\%.
+Nadwyżka jest zatem kosztem inicjalizacji, nie kosztem partii. Jej dokładnej
+atrybucji nie da się odczytać z~potwierdzenia transakcji, ponieważ zkSync
+raportuje jedną, zbiorczą wartość \code{gasUsed}
+(sekcja~\ref{sec:l2-dyskusja}); w~sieciach EVM analogiczna nadwyżka nie
+występuje, a~cały rozrzut sprowadza się tam do 24~jednostek gazu, czyli
+kilku bajtów \code{calldata}.
 
 \begin{table}[H]
   \centering
@@ -129,7 +144,10 @@ odwróceniu, przez co zkSync staje się tu operacją najdroższą.
 \begin{table}[H]
   \centering
   \caption[Koszt operacji \code{revokeFromBatch}]{Koszt operacji \code{revokeFromBatch} (pojedyncza transakcja,
-  mediana). Gaz zkSync~Era w~jednostce natywnej, nieporównywalnej z~EVM.}
+  mediana). Gaz zkSync~Era w~jednostce natywnej, nieporównywalnej z~EVM.
+  Zerowa opłata za dane L1 oznacza w~warstwie pierwszej brak takiej pozycji,
+  a~w~zkSync~Era --- jej wliczenie do \code{gasUsed}
+  (sekcja~\ref{sec:l2-dyskusja}), nie zaś darmową dostępność danych.}
   \label{tab:revoke}
   \begin{tabular}{lrcr}
   \toprule
@@ -146,15 +164,11 @@ odwróceniu, przez co zkSync staje się tu operacją najdroższą.
 \section{Latencja}
 \label{sec:l2-latencja}
 
-Poza kosztem istotny jest czas odpowiedzi. Latencja \emph{odczytu}
-\code{statusWithProof} mieści się we wszystkich czterech sieciach w~przedziale od
-kilkudziesięciu do~ok.\ 200~ms (mediana; $N=300$ próbek na sieć, rozstęp
-międzykwartylowy od~6 do~76~ms). Różnic między sieciami nie należy jednak
-interpretować jako ich własności: odczyt jest wywołaniem bezstanowym,
-realizowanym w~całości po stronie węzła, więc pomiar odzwierciedla lokalizację
-i~konfigurację konkretnego punktu dostępu RPC, nie mechanikę rollupa. Wniosek
-ogranicza się zatem do stwierdzenia, że weryfikacja jest w~każdej z~badanych
-sieci operacją rzędu setek milisekund.
+Latencja \emph{odczytu} \code{statusWithProof} mieści się we wszystkich czterech
+sieciach w~przedziale od kilkudziesięciu do~ok.\ 200~ms (mediana; $N=300$ próbek
+na sieć). Ponieważ odczyt wykonuje się w~całości po stronie węzła, pomiar
+charakteryzuje punkt dostępu RPC, nie rollup; jedyny wniosek to że weryfikacja
+nigdzie nie jest wąskim gardłem.
 
 Wielkością istotniejszą jest czas od wysłania transakcji zapisu do odebrania
 potwierdzenia (tab.~\ref{tab:inclusion-latency}) --- ten zależy już od czasu
@@ -220,15 +234,15 @@ Pierwszym czynnikiem jest opłata bazowa L1: rysunek~\ref{fig:basefee} pokazuje 
       width=0.85\textwidth, height=8cm,
     ]
       \addplot+[point meta=rawy, nodes near coords={%
-          \pgfmathprintnumber[fixed, precision=4, use comma]{\pgfplotspointmeta}},
+          \pgfmathprintnumber[fixed, zerofill, precision=4, use comma]{\pgfplotspointmeta}},
         every node near coord/.append style={font=\tiny, rotate=90, anchor=west}]
         table[x=chain, y=quiet_usd] {\DataDir/fig4-basefee-scenarios.dat};
       \addplot+[point meta=rawy, nodes near coords={%
-          \pgfmathprintnumber[fixed, precision=4, use comma]{\pgfplotspointmeta}},
+          \pgfmathprintnumber[fixed, zerofill, precision=4, use comma]{\pgfplotspointmeta}},
         every node near coord/.append style={font=\tiny, rotate=90, anchor=west}]
         table[x=chain, y=normal_usd] {\DataDir/fig4-basefee-scenarios.dat};
       \addplot+[point meta=rawy, nodes near coords={%
-          \pgfmathprintnumber[fixed, precision=4, use comma]{\pgfplotspointmeta}},
+          \pgfmathprintnumber[fixed, zerofill, precision=4, use comma]{\pgfplotspointmeta}},
         every node near coord/.append style={font=\tiny, rotate=90, anchor=west}]
         table[x=chain, y=congested_usd] {\DataDir/fig4-basefee-scenarios.dat};
       \legend{p10 (spokój), p50 (typowo), p90 (kongestia)}
@@ -282,7 +296,8 @@ a~parametry konfiguracyjne każdego przebiegu (ziarno losowości, dostawca, regi
 kurs ETH/USD) zapisano w~pliku \code{meta.json} towarzyszącym eksportowi danych.
 
 \subsection{Ograniczenia pomiaru}
-Poniżej zebrano cztery ograniczenia metodologiczne, które należy uwzględnić przy
+\label{sec:l2-ograniczenia}
+Poniżej zebrano pięć ograniczeń metodologicznych, które należy uwzględnić przy
 interpretacji wyników.
 
 \paragraph{Założenie kompresji Brotli dla Arbitrum.} Model kosztu zapisu danych na
@@ -307,6 +322,19 @@ jego dokładną wartością, z~uwagi na~cykl odpytywania klienta viem
 (\textasciitilde 4~s). Porównanie międzysieciowe zniekształca dodatkowo interakcja
 czasu bloku z~tym interwałem, a~w~przypadku latencji odczytu --- lokalizacja
 i~konfiguracja pojedynczego punktu dostępu RPC.
+
+\paragraph{Aliasing dobowy w~próbce opłaty bazowej.} Krok próbkowania równy
+7200~blokom pokrywa się z~okresem dobowym, więc wszystkie 90~próbek pochodzi
+z~tej samej pory dnia. Opłata bazowa L1 ma wyraźny cykl dobowy, zatem
+percentyle p10/p50/p90 opisują rozkład \emph{tej godziny}, a~nie rozkład
+dziewięćdziesięciodniowy; scenariusze z~rysunku~\ref{fig:basefee} należy czytać
+jako warunki typowe dla ustalonej pory doby. Usunięcie tego obciążenia wymaga
+losowego przesunięcia w~każdej dobie albo kroku niebędącego dzielnikiem okresu
+dobowego (np.\ co~4~h) --- zmiana jednego parametru w~potoku pomiarowym,
+pozostawiona poza zakresem pracy, ponieważ wymaga powtórzenia całego,
+dziewięćdziesięciodniowego okna. Wniosek jakościowy --- że wahania opłaty
+bazowej uderzają w~warstwę pierwszą, a~nie w~rollupy --- pozostaje w~mocy,
+ponieważ wynika z~samej struktury kosztu, nie z~wartości percentyli.
 
 \paragraph{Migawka parametrów rynkowych.} Trzy wielkości wchodzące do wyceny są
 odczytami z~jednego dnia i~razem stanowią jedno ograniczenie: wyniki w~USD są

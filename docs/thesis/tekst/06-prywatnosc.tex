@@ -10,8 +10,8 @@ w~tajemnicy.
 \section{Problem: minimalizacja danych}
 \label{sec:priv-problem}
 
-W~systemie podstawowym skrót dokumentu powstaje przez kanonizację i~zahaszowanie
-\emph{całego} ładunku dyplomu: \code{docHash = keccak256(canonicalize(payload))}.
+W~konstrukcji z~rozdziału~\ref{ch:architektura} skrót dokumentu powstaje przez
+kanonizację i~zahaszowanie \emph{całego} ładunku dyplomu: \code{docHash = keccak256(canonicalize(payload))}.
 Aby zweryfikować dyplom, posiadacz musi przekazać weryfikatorowi pełny ładunek ---
 inaczej weryfikator nie odtworzy skrótu. Oznacza to, że dowód posiadania stopnia
 naukowego wymusza ujawnienie wszystkich danych: imienia i~nazwiska, numeru dyplomu,
@@ -47,7 +47,7 @@ zobowiązań}, a~nie z~jawnych wartości:
     \Vert c_{\text{issuedAt}} \Vert c_{\text{diplomaNumber}}\bigr).
 \]
 Liść drzewa Merkle pozostaje związany z~kontekstem wdrożenia dokładnie tak, jak
-w~systemie podstawowym:
+w~kopercie standardowej:
 \[
   \code{leaf} = \operatorname{keccak256}
     \bigl(\code{registry} \Vert \code{chainId} \Vert \code{issuer}
@@ -172,14 +172,14 @@ posiadacz zaznacza pola do ujawnienia i~generuje prywatną kopertę.
 
 Fakt, że tak istotna funkcja realizowana jest bez ani jednej zmiany w~kontrakcie,
 jest sam w~sobie wynikiem: pokazuje, że model zakotwiczenia korzenia Merkle jest na
-tyle ogólny, iż selektywne ujawnianie mieści się w~nim jako czysto klienckie
-rozszerzenie.
+tyle ogólny, iż selektywne ujawnianie mieści się w~nim w~całości po stronie
+klienta.
 
 \section{Koszt po stronie klienta}
 \label{sec:priv-pomiary}
 
-Skoro koszt on-chain nie zmienia się wcale, jedyną ceną rozszerzenia jest praca
-po stronie klienta: większa koperta oraz dodatkowe operacje haszowania. Obie
+Skoro koszt on-chain nie zmienia się wcale, jedyną ceną selektywnego ujawniania
+jest praca po stronie klienta: większa koperta oraz dodatkowe operacje haszowania. Obie
 wielkości zmierzono skryptem \code{npm run benchmarks:privacy}, na partii
 $N=1000$ (dowód 10-elementowy), dla ładunku odpowiadającego przykładowemu
 dyplomowi z~repozytorium. Czasy podano jako medianę z~2000~powtórzeń po fazie
@@ -248,7 +248,7 @@ Zakres redakcji & dowolne pole dokumentu & cztery pola o~ustalonej granulacji \\
 \addlinespace
 Rejestr uprawnień & centralna lista poza łańcuchem, prowadzona przez agencję & rejestr on-chain z~progiem podpisów i~opóźnieniem (rozdz.~\ref{ch:governance}) \\
 \addlinespace
-Zmiana kontraktu & własny kontrakt na dokument lub partię & brak --- rozszerzenie czysto klienckie \\
+Zmiana kontraktu & własny kontrakt na dokument lub partię & brak --- mechanizm czysto kliencki \\
 \addlinespace
 Format \code{docHash} & zmienny wraz z~liczbą pól & stały, 32-bajtowy, niezależny od trybu \\
 \bottomrule
@@ -312,8 +312,8 @@ lecz uboższym o~jedną istotną własność: \emph{nieskorelowalność prezenta
 (\emph{unlinkability}). Zobowiązania $c_i$ są statyczne, więc dwie prezentacje
 tego samego dyplomu u~dwóch różnych weryfikatorów niosą identyczną czwórkę
 wartości i~są trywialnie powiązywalne; koperta działa jak stały identyfikator.
-Schematy podpisów typu BBS+ pozwalają przy każdej prezentacji wyprowadzić świeży,
-nieskorelowany dowód. Wobec deklarowanego celu minimalizacji danych jest to
+Schematy podpisów typu BBS+~\cite{bbs-signatures} pozwalają przy każdej
+prezentacji wyprowadzić świeży, nieskorelowany dowód. Wobec deklarowanego celu minimalizacji danych jest to
 ograniczenie realne: konstrukcja minimalizuje \emph{zakres} ujawnianych pól, nie
 zaś możliwość śledzenia posiadacza między weryfikatorami.
 
@@ -360,8 +360,11 @@ wykracza poza zakres tej pracy.
 \section{Zgodność wstecz}
 \label{sec:priv-zgodnosc}
 
-Koperta standardowa działa bez zmian --- weryfikator, który nie zna rozszerzenia
-prywatnego, przetwarza ją tak jak dotąd. Na poziomie partii przyjęto regułę
-rozłączności: dana partia jest w~całości standardowa albo w~całości prywatna, co
-usuwa dwuznaczność formatu \code{docHash} przy odtwarzaniu liścia i~pozwala obu
-trybom współistnieć w~jednym kontrakcie.
+Koperta standardowa działa bez zmian, a~na poziomie partii przyjęto regułę
+rozłączności: partia jest w~całości standardowa albo w~całości prywatna, co usuwa
+dwuznaczność formatu \code{docHash} przy odtwarzaniu liścia. Reguła ta jest
+konwencją operacyjną wystawcy, nie niezmiennikiem kontraktu --- rejestr
+przechowuje wyłącznie korzeń i~nie rozróżnia trybów --- lecz skutki jej
+naruszenia ograniczają się do niedogodności: koperta zinterpretowana w~złym
+trybie daje inny \code{docHash}, więc inny liść, więc dowód Merkle jej nie
+potwierdzi. Weryfikacja kończy się wtedy odrzuceniem, nie fałszywym przyjęciem.

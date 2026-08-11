@@ -33,6 +33,29 @@ dostarcza dwie granulacje danych:
         w~przebiegu jako minimum, średnia i~maksimum (dalej: min., śr., maks.).
 \end{itemize}
 
+\paragraph{Obie granulacje nie sumują się.} Rozróżnienie to jest ostrzejsze, niż
+sugerowałaby sama nazwa, ponieważ przełącznik \code{--gas-report} wymusza
+w~Foundry tryb izolacji (\code{-{}-isolate}): każde zewnętrzne wywołanie
+zmieniające stan jest wykonywane jako \emph{osobna transakcja}. Doliczany jest
+wtedy koszt bazowy 21\,000~gazu wraz z~kosztem \code{calldata}, a~znaczniki
+ciepłych adresów i~slotów (EIP-2929~\cite{eip2929}) są zerowane między
+wywołaniami. Bez tego przełącznika cały scenariusz jest jedną transakcją,
+w~której koszt bazowy pojawia się raz, a~drugi dostęp do tego samego slotu jest
+już tani.
+
+Konsekwencja praktyczna: wartości z~obu tabel tego rozdziału \emph{nie są
+addytywne}. Scenariusz \code{testGas\_revoke} --- 43\,164~gazu dla wersji
+\code{StringErrors} --- zawiera wywołania \code{issue} i~\code{revoke}
+w~jednej transakcji, podczas gdy odpowiadające im wiersze poziomu funkcji
+(48\,458 i~31\,274) opisują dwie niezależne transakcje, każdą z~własnym kosztem
+bazowym i~własnym zimnym dostępem do pamięci trwałej. Porównania w~ramach jednej
+granulacji pozostają w~pełni poprawne; mieszanie granulacji --- nie.
+
+Z~tego samego powodu poziom scenariusza i~poziom funkcji wymagają
+\emph{różnych} poleceń: liczby z~tabeli~\ref{tab:etap1-suite} pochodzą
+z~przebiegu bez \code{--gas-report}, a~liczby z~tabeli~\ref{tab:etap1-fun} ---
+z~przebiegu z~tym przełącznikiem.
+
 \paragraph{Dlaczego nie średnia.} Kolumna średniej jest w~tym zestawieniu
 \emph{nieporównywalna między wersjami kontraktu}, ponieważ Foundry uśrednia po
 wszystkich wywołaniach w~przebiegu, a~poszczególne zestawy testów wywołują te
@@ -47,6 +70,9 @@ zignorowanie tej różnicy prowadzi do wniosku wprost przeciwnego do prawdziwego
 \noindent Komendy użyte do pomiarów:
 \begin{verbatim}
 cd contracts
+# poziom scenariusza: bez --gas-report, caly test to jedna transakcja
+forge test --match-path "test/DiplomaRegistry[ABCDEF]*.t.sol"
+# poziom funkcji: --gas-report wlacza tryb izolacji
 forge test --match-path "test/DiplomaRegistry[ABCDEF]*.t.sol" --gas-report
 forge test --match-path "test/DiplomaRegistryGasComparison.t.sol" --gas-report
 forge test --match-path "test/DiplomaRegistryMerkle.t.sol"        --gas-report
@@ -65,30 +91,23 @@ odróżniającą każdą z~nich od poprzedniej.
 \subsection{Wersje kontraktu}
 
 \begin{description}
-  \item[\code{StringErrors}.] Punkt startowy: kontrakt pisany intuicyjnie, bez
-        optymalizacji. Warunki wyrażone przez \code{require(..., "STRING")},
-        rekord \code{\{address issuer, uint64 issuedAt, bool revoked\}}, zmienny
+  \item[\code{StringErrors}.] Punkt startowy: kontrakt pisany intuicyjnie,
+        z~\code{require(..., "STRING")}, rekordem
+        \code{\{address issuer, uint64 issuedAt, bool revoked\}} i~zmiennym
         \code{owner} w~pamięci trwałej.
-  \item[\code{TimestampRevoke}.] \code{uint64 revokedAt} zamiast \code{bool}.
-        Hipoteza: znacznik czasu unieważnienia przyda się audytorom. Efekt okazał
-        się regresem, którego mechanizm omawia sekcja~\ref{sec:gaz-slot}.
-  \item[\code{CustomErrors}.] Błędy własne (\emph{custom errors}) zamiast
-        komunikatów tekstowych. Komunikat tekstowy jest kodowany jako dane
-        w~bytecode kontraktu, błąd własny --- jako czterobajtowy selektor.
-  \item[\code{ImmutableOwner}.] \code{owner} zadeklarowany jako
-        \code{immutable}, czyli przechowywany w~bytecode zamiast w~pamięci
-        trwałej. Eliminuje odczyt \code{SLOAD} w~modyfikatorze dostępu.
-  \item[\code{Idempotent}.] \code{addIssuer} i~\code{removeIssuer} nie zgłaszają
-        błędu przy ponownym wywołaniu, co zabezpiecza przed kosztownym wycofaniem
-        transakcji w~razie wyścigu.
-  \item[\code{MinimalRecord}.] Usunięcie znaczników czasu z~pamięci trwałej;
-        rekord ograniczony do \code{\{address issuer, bool revoked\}}. Daty
-        pozostają dostępne w~logach zdarzeń, więc ich duplikowanie w~pamięci
-        trwałej jest zbędne.
-  \item[\code{PackedStorage}.] \code{mapping(bytes32 => uint256)}: adres wystawcy
-        (160~bitów) i~bit unieważnienia pakowane ręcznie w~jedną wartość
-        256-bitową, rozkładane maskami i~przesunięciami. Hipoteza: jeden odczyt
-        zamiast dwóch.
+  \item[\code{TimestampRevoke}.] \code{uint64 revokedAt} zamiast \code{bool} ---
+        hipoteza: znacznik czasu unieważnienia przyda się audytorom.
+  \item[\code{CustomErrors}.] Błędy własne zamiast komunikatów tekstowych ---
+        czterobajtowy selektor zamiast danych w~bytecode.
+  \item[\code{ImmutableOwner}.] \code{owner} jako \code{immutable}, co eliminuje
+        \code{SLOAD} w~modyfikatorze dostępu.
+  \item[\code{Idempotent}.] \code{addIssuer} i~\code{removeIssuer} bez błędu przy
+        ponownym wywołaniu, co chroni przed kosztownym wycofaniem w~razie wyścigu.
+  \item[\code{MinimalRecord}.] Rekord ograniczony do
+        \code{\{address issuer, bool revoked\}}; daty pozostają w~logach zdarzeń.
+  \item[\code{PackedStorage}.] \code{mapping(bytes32 => uint256)} z~ręcznym
+        pakowaniem adresu i~bitu unieważnienia --- hipoteza: jeden odczyt zamiast
+        dwóch.
 \end{description}
 
 \subsection{Wyniki}
@@ -97,7 +116,8 @@ Tabela~\ref{tab:etap1-suite} podaje koszt scenariuszy testowych, a~tabela
 \ref{tab:etap1-fun} --- koszt wdrożenia oraz maksymalny koszt pojedynczego
 wywołania każdej funkcji. Test \code{testGas\_revoke} zawiera wywołanie
 \code{issue} jako przygotowanie stanu, więc wartości w~tej kolumnie są wyższe niż
-sam koszt unieważnienia.
+sam koszt unieważnienia --- lecz nie są jego sumą z~kolumną \code{issue},
+z~przyczyn wyjaśnionych w~sekcji~\ref{sec:gaz-metodyka}.
 
 \begin{table}[H]
 \centering
@@ -153,11 +173,21 @@ Mechanizm regresu w~wersji \code{TimestampRevoke} wyjaśnia układ pamięci trwa
 Rekord \code{StringErrors} zajmuje $20 + 8 + 1 = 29$~bajtów i~mieści się
 w~jednym 32-bajtowym slocie, który kompilator wypełnia automatycznie. Zamiana
 \code{bool revoked} na \code{uint64 revokedAt} daje $20 + 8 + 8 = 36$~bajtów,
-czyli \emph{dwa} sloty. Unieważnienie wykonuje wówczas drugi zapis
-\code{SSTORE} z~zera na wartość niezerową, którego cena cennikowa wynosi
-20\,000~gazu. Zmierzony przyrost to 19\,095~gazu (+61{,}1\%); zgodność z~ceną
-cennikową potwierdza, że obserwowany regres jest właśnie tym zapisem, a~nie
-efektem ubocznym pozostałych zmian.
+czyli \emph{dwa} sloty. Unieważnienie wykonuje wówczas zapis \code{SSTORE}
+w~drugim slocie, i~to z~zera na wartość niezerową.
+
+Bilans tej zmiany warto rozpisać, ponieważ na nim opiera się główna teza
+etapu~1. Po stronie kosztów przybywa: zapis do dziewiczego slotu, wyceniany na
+20\,000~gazu, oraz pierwszy dostęp do tego slotu --- 2\,100~gazu według
+EIP-2929~\cite{eip2929}. Ubywa natomiast zapis pola \code{bool} w~slocie
+pierwszym, który był modyfikacją slotu już niezerowego i~ciepłego, a~więc
+kosztował 100~gazu, oraz --- wobec obecności obu pól w~tym samym slocie ---
+odpowiadający mu odczyt. Przewidywany przyrost netto mieści się zatem
+w~przedziale około 19--22~tys.\ gazu, zależnie od tego, ile z~kosztu zimnego
+dostępu przypada na sam zapis. Zmierzony przyrost to 19\,095~gazu (+61{,}1\%);
+mieści się w~tym przedziale i~jest zdominowany przez pozycję 20\,000, co
+potwierdza, że obserwowany regres jest właśnie tym zapisem, a~nie efektem
+ubocznym pozostałych zmian.
 
 Wersje \code{CustomErrors}, \code{ImmutableOwner} i~\code{Idempotent} nie
 zmieniają układu pamięci, więc ich wpływ na koszt wykonania jest zerowy
@@ -185,9 +215,11 @@ maksima \code{addIssuer} (44\,855). Za tę zerową zmianę kosztu wykonania
 373\,484).
 
 Wniosek ten jest widoczny wyłącznie w~maksimach. W~kolumnie średniej
-\code{PackedStorage} wypada gorzej o~1\,477~gazu na \code{issue}, co mogłoby
-sugerować realną różnicę --- jest to jednak artefakt liczby wywołań (9~wobec 7),
-nie kosztu operacji. Na poziomie scenariusza jest odwrotnie:
+\code{PackedStorage} wypada gorzej o~1\,477~gazu na \code{issue}
+(43\,084 wobec 41\,607), co mogłoby sugerować realną różnicę --- jest to jednak
+artefakt liczby wywołań (9~wobec 7), nie kosztu operacji: dodatkowe wywołania
+w~zestawie \code{PackedStorage} trafiają na ścieżki tanie, a~te przesuwają
+średnią, nie zmieniając kosztu samej operacji. Na poziomie scenariusza jest odwrotnie:
 \code{PackedStorage} wygrywa o~38--71~gazu, czyli o~wielkość rzędu szumu.
 Dopiero maksima na poziomie funkcji rozstrzygają sprawę jednoznacznie i~jest to
 najlepsza ilustracja zastrzeżenia z~sekcji~\ref{sec:gaz-metodyka}.
@@ -259,7 +291,7 @@ ponieważ jedna transakcja \code{issueBatchRoot} obejmuje $N$ dyplomów:
 \label{tab:gaz-na-dyplom}
 \begin{tabular}{rrrr}
 \toprule
-$N$ & Merkle (gaz/dyplom) & Per-dyplom (gaz/dyplom) & Stosunek kosztów \\
+$N$ & Merkle (gaz/dyplom) & Per-dyplom (gaz/dyplom) & \makecell{Krotność oszczędności\\(per-dyplom~/~Merkle)} \\
 \midrule
 1    & 51\,012 & 48\,194 & $0{,}94\times$ --- per-dyplom tańszy \\
 100  &    510  & 48\,194 & $94{,}5\times$ \\
@@ -347,7 +379,15 @@ Wdrożenie
 \end{tabular}
 \end{table}
 
-\noindent \code{issueBatchRoot} nie wywołuje \code{\_processProof} ani
+\noindent Maksimum \code{issueBatchRoot} dla \code{MerkleBaseline} wynosi tu
+51\,000~gazu wobec 51\,012 w~tabeli~\ref{tab:packed-vs-merkle}. Nie jest to
+rozbieżność pomiaru, lecz skutek innych danych testowych: oba zestawy publikują
+inne wartości korzenia i~numeru partii, a~różnica 12~gazu to dokładnie koszt
+jednego bajtu \code{calldata}, który w~jednym zestawie jest zerowy (4~gazu),
+a~w~drugim niezerowy (16~gazu). Porównania wewnątrz każdej z~tabel pozostają
+przez to poprawne.
+
+\code{issueBatchRoot} nie wywołuje \code{\_processProof} ani
 \code{\_merkleLeaf} w~ścieżce zapisu, więc oszczędność tam jest pomijalna.
 Pozostałe dwie operacje zyskują dokładnie tyle samo w~wartościach bezwzględnych
 --- 2\,536~gazu w~maksimum i~144~gazu w~minimum --- co jest pierwszą przesłanką,
@@ -404,10 +444,16 @@ równania~\eqref{eq:model}. Ten sam rachunek dla \code{statusWithProof} daje
 Porównanie obu par ujawnia przy okazji, skąd bierze się reszta kosztu kroku:
 \code{revokeFromBatch} płaci za element dowodu o~509~gazu więcej niż
 \code{statusWithProof} ($920 - 411$). Jest to koszt przesłania dodatkowych
-32~bajtów \code{calldata} w~transakcji zapisu, przy cenniku 16~gazu za bajt
-niezerowy. Weryfikacja odczytem tego kosztu nie ponosi, ponieważ nie jest
-transakcją --- co czyni ją tanią w~sposób, którego sam model wykonania nie
-tłumaczy.
+32~bajtów \code{calldata} w~transakcji zapisu: przy cenniku 16~gazu za bajt
+niezerowy górna granica wynosi 512~gazu, a~zmierzone 509 leży tuż poniżej.
+Współczynnik jest bowiem wartością uśrednioną po dowodach o~różnych
+głębokościach, a~w~pseudolosowych skrótach sporadycznie trafiają się bajty
+zerowe, wyceniane na 4~zamiast 16~gazu; każdy taki bajt obniża koszt elementu
+dowodu o~12~gazu.
+Weryfikacja odczytem tego kosztu w~ogóle nie ponosi, ponieważ nie jest
+transakcją --- \code{eth\_call} wykonuje się lokalnie na węźle i~nie płaci ani
+za \code{calldata}, ani za koszt bazowy. Różnica ta nie wynika więc z~modelu
+wykonania EVM, lecz z~modelu rozliczania transakcji.
 
 \section{Wnioski etapu}
 \label{sec:gaz-wnioski}
@@ -460,6 +506,13 @@ niezależnie z~przyrostów kosztu na krok dowodu. Pozwala to wskazać źródło 
 zaoszczędzonego gazu i~ekstrapolować wynik na inne rozmiary drzew. Praktycznie:
 techniki G1--G4 mają sens przy systemach z~intensywną weryfikacją lub głębokimi
 drzewami, gdzie 199~gazu na krok mnoży się przez liczbę wywołań.
+
+Wartość etapu~3 jest przy tym metodyczna, nie ekonomiczna, i~należy to
+powiedzieć wprost. Wyceniona w~warunkach rozdziału~\ref{ch:l2} oszczędność
+2\,536~gazu na wywołanie to ułamki mikrocenta, a~sekcja~\ref{sec:gov-wniosek}
+wykazuje, że koszt transakcyjny nie rozstrzyga o~wyborze technologii w~żadnym
+realistycznym scenariuszu wdrożenia. Etap ten wnosi więc model wyjaśniający,
+skąd bierze się koszt weryfikacji dowodu --- nie argument za jej optymalizowaniem.
 
 Pomiary mają dwa ograniczenia. Są lokalne, więc nie obejmują rzeczywistej
 zmienności opłaty bazowej --- uzupełnia je rozdział~\ref{ch:l2}. Nie mierzono

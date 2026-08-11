@@ -94,16 +94,13 @@ utrzymywany jest wyłącznie kontrakt rejestru.}
 \label{fig:architektura}
 \end{figure}
 
-\begin{description}
-  \item[\code{verifier-core}.] Warstwa fundamentalna: kanonizacja i~haszowanie
-        ładunku, haszowanie liścia z~separacją domen, budowa drzewa i~odtwarzanie
-        korzenia z~dowodu, a~także ABI kontraktu i~schemat walidacji ładunku.
-  \item[\code{sdk}.] Klasa \code{UniverifySdk} opakowuje odczyty z~kontraktu
-        i~pełną weryfikację koperty wraz z~metadanymi uczelni.
-  \item[\code{verifier-cli}.] Wiersz poleceń: wystawianie, weryfikacja oraz
-        grupa poleceń \code{gov} obsługująca model zarządzania
-        z~rozdziału~\ref{ch:governance}.
-\end{description}
+Pakiet \code{verifier-core} skupia całą logikę kryptograficzną: kanonizację
+i~haszowanie ładunku, haszowanie liścia z~separacją domen, budowę drzewa
+i~odtwarzanie korzenia z~dowodu, a~także ABI kontraktu i~schemat walidacji
+ładunku. Nadbudowują go \code{sdk} (klasa \code{UniverifySdk}: odczyty
+z~kontraktu i~pełna weryfikacja koperty) oraz \code{verifier-cli} (wystawianie,
+weryfikacja i~grupa poleceń \code{gov} obsługująca model zarządzania
+z~rozdziału~\ref{ch:governance}).
 
 Rozdzielenie logiki do \code{verifier-core} sprawia, że ta sama, przetestowana
 implementacja haszowania i~drzew Merkle jest używana zarówno przy wystawianiu, jak
@@ -113,29 +110,13 @@ a~sprawdzającą.
 \section{Aplikacja webowa}
 \label{sec:web}
 
-Interfejs użytkownika to aplikacja Next.js udostępniająca trasy dopasowane do ról
-w~systemie (tab.~\ref{tab:web-routes}) oraz dwa punkty API.
-
-\begin{table}[H]
-\centering
-\caption{Trasy aplikacji webowej i~ich role.}
-\label{tab:web-routes}
-\begin{tabular}{@{}lll@{}}
-\toprule
-Trasa & Rola & Przeznaczenie \\
-\midrule
-\code{/issuer}   & wystawca  & budowa partii Merkle, publikacja korzeni, eksport dowodów \\
-\code{/verifier} & publiczna & weryfikacja koperty i~sprawdzenie statusu on-chain \\
-\code{/revoke}   & wystawca  & unieważnianie dyplomów przez dowód Merkle \\
-\code{/present}  & posiadacz & selektywne ujawnianie pól (rozdz.~\ref{ch:prywatnosc}) \\
-\code{/admin}    & właściciel & zarządzanie wystawcami i~uczelniami (rozdz.~\ref{ch:governance}) \\
-\bottomrule
-\end{tabular}
-\end{table}
-
-Punkty \code{/api/verify} (pełna weryfikacja z~metadanymi uczelni) oraz
-\code{/api/status} (lekki odczyt statusu) chroni wspólna warstwa pośrednicząca:
-opcjonalne uwierzytelnianie kluczem API oraz ograniczanie liczby żądań na adres IP.
+Interfejsem użytkownika jest aplikacja Next.js z~trasami dopasowanymi do ról:
+wystawcy (\code{/issuer}, \code{/revoke}), weryfikatora (\code{/verifier}),
+posiadacza (\code{/present}, selektywne ujawnianie pól,
+rozdz.~\ref{ch:prywatnosc}) oraz właściciela rejestru (\code{/admin},
+rozdz.~\ref{ch:governance}). Te same operacje udostępniają dwa punkty API
+(\code{/api/verify}, \code{/api/status}) chronione uwierzytelnianiem kluczem
+i~ograniczaniem liczby żądań.
 
 \section{Przepływy: wydanie, weryfikacja, unieważnienie}
 \label{sec:przeplywy}
@@ -206,8 +187,12 @@ dziedziczone z~L1 przez mechanizmy rollupa, sekcja~\ref{sec:l2-podstawy});
 uczciwość co najmniej $n-m+1$ sygnatariuszy progu zarządzania
 (rozdz.~\ref{ch:governance}). Weryfikator musi ponadto ufać własnemu punktowi
 dostępu do łańcucha: złośliwy dostawca RPC może zwrócić sfałszowany stan
-rejestru, czego eliminacja wymaga własnego węzła lub odpytania kilku
-niezależnych dostawców.
+rejestru. Jest to jednak założenie innego rodzaju niż pozostałe --- weryfikator
+może je usunąć \emph{jednostronnie}, uruchamiając własny węzeł lub lekkiego
+klienta weryfikującego reguły konsensusu, bez uzgodnień z~kimkolwiek. Ta
+różnica --- między zaufaniem, które można znieść samodzielnie, a~zaufaniem
+wymagającym koordynacji wielu obserwatorów --- jest w~sekcji~\ref{sec:gov-wniosek}
+podstawą rozgraniczenia wobec logów przejrzystości certyfikatów.
 
 \paragraph{Zdolności przeciwnika.} Przeciwnik może przechwytywać i~modyfikować
 komunikację poza łańcuchem, przedstawiać spreparowane koperty, przenosić ważne
@@ -218,7 +203,14 @@ partie do czasu odebrania uprawnień przez właściciela (stąd jednostkowe
 unieważnianie i~możliwość usunięcia wystawcy), a~klucz \emph{właściciela} ---
 przepisać samą warstwę uprawnień, co stanowi najpoważniejsze zagrożenie
 systemu i~motywuje model zarządzania z~rozdziału~\ref{ch:governance}. Sekwenser
-L2 może transakcje opóźniać (cenzura), lecz nie może sfałszować stanu.
+L2 może transakcje opóźniać (cenzura), lecz nie może sfałszować stanu:
+partia niezgodna z~regułami przejścia zostanie odrzucona --- w~rollupie
+optymistycznym przez dowód oszustwa, w~rollupie zk przez brak poprawnego dowodu.
+Gwarancja ta dotyczy jednak stanu \emph{opublikowanego na~L1}; potwierdzenie
+wydane przez sekwenser przed publikacją partii jest wyłącznie jego przyrzeczeniem
+i~może się różnić między odbiorcami. Ma to znaczenie dla
+sekcji~\ref{sec:gov-wniosek}, która z~jednolitości widoku czyni resztkową
+przewagę łańcucha.
 
 \paragraph{Brak wiązania z~posiadaczem.} System uwierzytelnia \emph{dokument},
 nie \emph{okaziciela}. Koperta jest tokenem na okaziciela: kto nią dysponuje,
@@ -247,13 +239,12 @@ Ponieważ kontrakt jest jedynym elementem systemu, którego nie da się poprawi�
 wdrożeniu, jego implementację poddano trzem kontrolom automatycznym w~środowisku
 Foundry~\cite{foundry} w~wersji 1.5.1 (Solidity 0.8.20).
 
-\paragraph{Testy.} Repozytorium zawiera 172~testy jednostkowe i~scenariuszowe,
-z~których wszystkie przechodzą. Ścieżkę produkcyjną --- \code{DiplomaRegistry},
-\code{RegistryMultisig} oraz przepływy zarządzania z~rozdziału~\ref{ch:governance}
---- pokrywają 53~z~nich; pozostałe dotyczą wariantów eksperymentalnych zbudowanych
-na potrzeby pomiarów z~rozdziału~\ref{ch:gaz}.
-
-\paragraph{Pokrycie kodu.} Wyniki \code{forge coverage} dla kontraktów
+\paragraph{Testy i~pokrycie kodu.} Repozytorium zawiera 177~testów jednostkowych
+i~scenariuszowych, z~których wszystkie przechodzą; ścieżkę produkcyjną ---
+\code{DiplomaRegistry}, \code{RegistryMultisig} oraz przepływy zarządzania
+z~rozdziału~\ref{ch:governance} --- pokrywa 55~z~nich, a~pozostałe dotyczą
+wariantów eksperymentalnych zbudowanych na potrzeby pomiarów
+z~rozdziału~\ref{ch:gaz}. Wyniki \code{forge coverage} dla kontraktów
 produkcyjnych zebrano w~tabeli~\ref{tab:coverage}. Niższe pokrycie gałęzi wynika
 z~gałęzi obronnych (kontrola parametrów zerowych, ponowne wywołania idempotentne),
 których część nie jest osiągalna z~poziomu zewnętrznego interfejsu.

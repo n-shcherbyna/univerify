@@ -29,10 +29,17 @@ uprawniony do wydawania. Kierunek oparty na blockchainie
 publikuje odciski dokumentów w~publicznym, niemodyfikowalnym rejestrze; jego
 potencjał dla sektora edukacji sygnalizowano od połowy poprzedniej
 dekady~\cite{sharples2016,chen2018}, a~przeglądy
-literatury~\cite{grech2017,alammary2019} odnotowują liczne prototypy, wskazując
-zarazem koszt wdrożenia wśród głównych barier adopcji.
+literatury~\cite{grech2017,alammary2019,rustemi2023} odnotowują liczne prototypy,
+wskazując zarazem koszt wdrożenia wśród głównych barier adopcji; najnowszy
+z~nich~\cite{rustemi2023} podkreśla dodatkowo niedostatek wdrożeń
+przechodzących poza fazę prototypu oraz brak systematycznych danych kosztowych.
 
 Trzy wdrożone systemy tego kierunku są bezpośrednimi punktami odniesienia.
+Wybrano je celowo, a~nie w~drodze przeglądu systematycznego: kryterium było
+udokumentowane wdrożenie poza fazą prototypu oraz publicznie dostępna
+specyfikacja mechanizmu kotwiczenia, co wyklucza pozycje opisane wyłącznie
+w~publikacjach konferencyjnych. Rolę przeglądu systematycznego pełnią
+tu prace~\cite{alammary2019,rustemi2023}.
 \emph{Blockcerts}~\cite{blockcerts} --- najstarszy otwarty standard ---
 grupuje certyfikaty w~drzewo Merkle i~kotwiczy korzeń w~publicznym łańcuchu,
 lecz profil wystawcy oraz lista unieważnień pozostają plikami hostowanymi pod
@@ -52,29 +59,39 @@ w~których dokument jest podpisanym cyfrowo zbiorem twierdzeń o~posiadaczu,
 a~wybrane schematy podpisów umożliwiają selektywne ujawnianie pojedynczych
 twierdzeń. Na tym modelu opiera się europejska infrastruktura
 EBSI~\cite{ebsi}, łącząca poświadczenia edukacyjne z~rejestrem zaufanych
-wystawców prowadzonym na~blockchainie konsorcyjnym.
+wystawców prowadzonym na~blockchainie konsorcyjnym; jej transgraniczne
+zastosowanie do dyplomów udokumentowano w~pilotażu belgijsko-włoskim~\cite{tan2023}.
 
 Tabela~\ref{tab:related-work} zestawia wymienione systemy wobec czterech
-własności istotnych dla tej pracy.
+własności istotnych dla tej pracy. Kolumna wersji jest konieczna, ponieważ
+oceny dotyczą konkretnych, publicznie udokumentowanych wydań --- nowsze
+warianty niektórych z~tych systemów wypadłyby inaczej.
 
 \begin{table}[H]
 \centering
 \caption{Systemy weryfikacji poświadczeń edukacyjnych: zestawienie własności.}
 \label{tab:related-work}
-\begin{tabular}{@{}l>{\raggedright\arraybackslash}p{2.6cm}ccc@{}}
+\begin{tabular}{@{}l>{\raggedright\arraybackslash}p{1.75cm}>{\raggedright\arraybackslash}p{2.45cm}ccc@{}}
 \toprule
-System & Łańcuch & \makecell{Rejestr uprawnień\\on-chain} & \makecell{Selektywne\\ujawnianie} & \makecell{Unieważnienie\\pojedyncze on-chain} \\
+System & Wersja & Łańcuch & \makecell{Rejestr uprawnień\\on-chain} & \makecell{Selektywne\\ujawnianie} & \makecell{Unieważnienie\\pojedyncze on-chain} \\
 \midrule
-Blockcerts & publiczny            & nie (URL wystawcy)   & nie & nie (lista pod URL) \\
-OpenCerts  & publiczny            & nie (lista centralna) & tak & tak \\
-EduCTX     & konsorcyjny          & członkostwo         & nie & n/d \\
-EBSI (VC)  & konsorcyjny          & tak                 & tak & lista statusów \\
-UniVerify  & publiczny (L1/L2)    & tak                 & tak & tak (dowód Merkle) \\
+Blockcerts & v2 (2018)   & publiczny            & nie (URL wystawcy)   & nie & nie (lista pod URL) \\
+OpenCerts  & v2 (2019)   & publiczny            & nie (lista centralna) & tak & tak \\
+EduCTX     & 2018        & konsorcyjny          & członkostwo         & nie & n/d (brak) \\
+EBSI (VC)  & 2023        & konsorcyjny          & tak                 & tak & lista statusów \\
+UniVerify  & 2026        & publiczny (L1/L2)    & tak                 & tak & tak (dowód Merkle) \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Żaden z~istniejących systemów nie łączy zatem publicznego, bezzezwoleniowego
+\noindent Zastrzeżenia do dwóch pozycji. Blockcerts w~wersji v3 przeszedł na
+model poświadczeń weryfikowalnych W3C i~może --- zależnie od użytego schematu
+podpisu --- wspierać selektywne ujawnianie; ocena ,,nie'' dotyczy wersji v2,
+opisanej w~cytowanej specyfikacji. W~EduCTX unieważnienie pojedynczego wpisu nie
+jest przewidziane w~modelu punktów zaliczeniowych, stąd ,,brak'' zamiast oceny
+negatywnej.
+
+Żaden z~wymienionych systemów nie łączy zatem publicznego, bezzezwoleniowego
 łańcucha z~prowadzonym na~nim rejestrem uprawnień, selektywnym ujawnianiem
 i~jednostkowym unieważnianiem on-chain --- a~literatura przeglądowa nie
 dostarcza pomiarów kosztu takiej konstrukcji w~rollupach warstwy drugiej.
@@ -83,9 +100,24 @@ stosuje już OpenCerts, a~selektywne ujawnianie --- poświadczenia weryfikowalne
 Nowością jest ich \emph{złożenie} z~rejestrem uprawnień prowadzonym na łańcuchu
 publicznym, wraz z~pomiarem kosztu tak zbudowanego systemu. Różnice wobec
 najbliższej konstrukcji, czyli OpenCerts, omawia szczegółowo
-sekcja~\ref{sec:priv-porownanie}. Niniejsza praca rozwija kierunek blockchainowy,
-koncentrując się na trzech osiach: koszcie, prywatności oraz modelu zarządzania
-uprawnieniami.
+sekcja~\ref{sec:priv-porownanie}.
+
+\paragraph{Praca równoległa.} Twierdzenie o~nowości wymaga jednego istotnego
+zastrzeżenia czasowego. Już po wykonaniu pomiarów opisanych w~tej pracy
+(maj~2026, sekcja~\ref{sec:l2-metodyka}) opublikowano konstrukcję niezależnie
+łączącą te same trzy elementy: rejestr akredytacji wystawców prowadzony na
+łańcuchu publicznym, selektywne ujawnianie oraz unieważnianie pojedynczych
+poświadczeń, także z~oceną kosztu gazu~\cite{frutuoso2026}. Rozwiązanie to
+opiera się na standardach tokenowych ERC-3643 i~OnchainID, a~poświadczenie wiąże
+z~tożsamością posiadacza --- czyli domyka lukę, którą niniejsza praca pozostawia
+otwartą (sekcja~\ref{sec:model-zagrozen}). Wobec tej pracy pozostają odrębne:
+architektura wsadowa oparta na drzewach Merkle wraz z~wynikającą z~niej
+niezależnością kosztu od rozmiaru partii, pomiary kosztu w~czterech sieciach
+(rozdz.~\ref{ch:l2}) oraz analiza wartości zestawiająca blockchain
+z~infrastrukturą klucza publicznego i~przejrzystością certyfikatów
+(rozdz.~\ref{ch:governance}). Niniejsza praca rozwija kierunek blockchainowy,
+koncentrując się właśnie na tych trzech osiach: koszcie, prywatności oraz modelu
+zarządzania uprawnieniami.
 
 \section{Drzewa Merkle}
 \label{sec:merkle}
@@ -123,7 +155,8 @@ następująco.
 \begin{description}
   \item[Kolejność rodzeństwa.] Para węzłów jest przed zhashowaniem
         \emph{sortowana leksykograficznie}, zgodnie z~konwencją biblioteki
-        OpenZeppelin: $H(\min(a,b) \Vert \max(a,b))$. Dzięki temu dowód nie musi
+        OpenZeppelin~\cite{oz-contracts}: $H(\min(a,b) \Vert \max(a,b))$.
+        Dzięki temu dowód nie musi
         nieść bitów kierunku, co skraca go i~upraszcza weryfikację, kosztem
         utraty informacji o~pozycji liścia w~drzewie --- nieistotnej dla samego
         potwierdzenia przynależności.
@@ -139,7 +172,8 @@ następująco.
         ostatni jest \emph{duplikowany} i~parowany sam ze sobą. Jest to
         rozwiązanie najprostsze, lecz nie neutralne: w~drzewach Merkle Bitcoina
         ta sama technika umożliwiła konstrukcję dwóch różnych zbiorów liści
-        o~identycznym korzeniu. W~rozważanym tu zastosowaniu skutki są ograniczone
+        o~identycznym korzeniu (CVE-2012-2459~\cite{cve2012-2459}).
+        W~rozważanym tu zastosowaniu skutki są ograniczone
         do możliwości przedstawienia zduplikowanego liścia jako odrębnego
         dokumentu, co nie tworzy nowego dyplomu ani nie zmienia korzenia partii.
         Konstrukcją usuwającą ten kompromis w~całości jest dopełnianie drzewa
@@ -241,12 +275,15 @@ wystawia dwa rodzaje dowodów: \emph{dowód przynależności} certyfikatu do log
 usunięcie lub podmianę wcześniejszego wpisu. Niezależni audytorzy i~monitory
 mogą dzięki temu wykryć certyfikat wystawiony przez urząd certyfikacji poza
 procedurą. CT działa w~ekosystemie webowym od ponad dekady i~jest wymagane przez
-główne przeglądarki.
+główne przeglądarki. Wersja~2.0 protokołu~\cite{rfc9162} zastąpiła formalnie
+specyfikację z~2013~r., lecz --- podobnie jak ona --- ma status
+eksperymentalny, a~polityki przeglądarek pozostają oparte na wersji
+pierwszej; dalsze rozważania odnoszą się więc do obu wydań łącznie, wskazując
+tam, gdzie różnica ma znaczenie.
 
 Dla tej pracy CT jest istotny, ponieważ celuje dokładnie w~tę własność, którą
 zwykle uzasadnia się użyciem blockchaina: publiczny, niemodyfikowalny zapis tego,
-kto co wystawił --- i~osiąga ją bez łańcucha bloków, taniej i~w~technologii
-dojrzalszej. Rozgraniczenie obu rozwiązań przeprowadza
+kto co wystawił. Rozgraniczenie obu rozwiązań przeprowadza
 sekcja~\ref{sec:gov-wniosek}, po zebraniu pełnego obrazu kosztów i~gwarancji.
 
 \section{Ochrona danych osobowych i minimalizacja danych}

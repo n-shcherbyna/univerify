@@ -13,7 +13,7 @@ zastosowanie.
 \section{Problem centralizacji uprawnień}
 \label{sec:gov-problem}
 
-W~systemie podstawowym zbiorem autoryzowanych wystawców zarządza jedno konto
+W~konstrukcji z~rozdziału~\ref{ch:architektura} zbiorem autoryzowanych wystawców zarządza jedno konto
 zewnętrzne (\emph{externally owned account}, EOA) pełniące rolę właściciela
 kontraktu \code{DiplomaRegistry}. Właściciel może dodawać i~usuwać wystawców oraz
 uczelnie. Taka konstrukcja jest prosta, lecz wprowadza pojedynczy punkt awarii
@@ -56,8 +56,9 @@ portfel wielopodpisowy opisany niżej. Adres administratora timelocka ustawiono 
 
 \paragraph{Warstwa progu.} Jedynym podmiotem uprawnionym do planowania
 i~anulowania operacji jest \code{RegistryMultisig} --- portfel $m$-z-$n$ napisany
-na potrzeby tej pracy, w~konwencji klasycznego \code{MultiSigWallet} firmy
-ConsenSys~\cite{consensys-multisig}. Wybór implementacji własnej zamiast
+na potrzeby tej pracy, w~konwencji klasycznego \code{MultiSigWallet}
+Gnosis~\cite{gnosis-multisig} (rozpowszechnionego również przez fork
+ConsenSys). Wybór implementacji własnej zamiast
 audytowanego standardu branżowego (Safe) jest podyktowany celem pomiarowym:
 Safe zbiera podpisy \emph{poza łańcuchem} i~wykonuje operację jedną transakcją,
 przez co narzut progu staje się w~pomiarze niewidoczny. Konstrukcja użyta tutaj
@@ -86,9 +87,8 @@ zmiana listy wystawców nie paraliżowała administracji. Próg $3$ z~$5$ toleru
 niedostępność dwóch sygnatariuszy bez utraty żywotności i~wymaga przejęcia trzech
 niezależnych kluczy do złamania bezpieczeństwa.
 
-Pomiary kosztu w~sekcji~\ref{sec:gov-koszt} wykonano w~konfiguracji minimalnej
-$m=n=2$; narzut rośnie z~$n$, ponieważ \code{execute} przelicza liczbę
-potwierdzeń, iterując po bieżącym zbiorze właścicieli. We wdrożeniu testowym na
+Sekcja~\ref{sec:gov-koszt} podaje koszt zarówno tej konfiguracji, jak
+i~konfiguracji minimalnej $m=n=2$, która służy za punkt odniesienia. We wdrożeniu testowym na
 sieci Sepolia użyto $\code{minDelay} = 120$~sekund --- wartości wyłącznie
 technicznej, pozwalającej przejść pełną ścieżkę zarządzania w~jednej sesji
 testowej i~nieodpowiadającej żadnemu założeniu bezpieczeństwa.
@@ -191,7 +191,7 @@ i~jawne, a~\emph{ograniczające} --- natychmiastowe.
 \paragraph{Ograniczenie rezydualne.} Operacja \code{removeOwner} nie czyści
 potwierdzeń usuniętego właściciela na transakcjach nadal oczekujących. Jeśli ten sam
 adres zostanie później ponownie dodany, jego stare potwierdzenie zaczyna liczyć się
-na nowo. Jest to standardowy kompromis wzorca ConsenSys, unikający nieograniczonej
+na nowo. Jest to standardowy kompromis wzorca Gnosis, unikający nieograniczonej
 iteracji po zbiorze oczekujących transakcji przy każdym usunięciu. Operacyjnie
 należy unikać ponownego dodawania byłego właściciela, gdy istnieją wrażliwe
 transakcje oczekujące.
@@ -199,29 +199,48 @@ transakcje oczekujące.
 \section{Koszt zarządzania}
 \label{sec:gov-koszt}
 
-Narzut modelu zmierzono testem \code{GovernanceGasTest}
-(\code{forge test --gas-report}) w~konfiguracji minimalnej $m=n=2$; dla progu
-docelowego 3-z-5 narzut jest wyższy o~koszt iteracji po większym zbiorze
-właścicieli w~\code{execute}. Wszystkie wdrożenia kontraktów oraz jednorazowe
-przekazanie własności realizowane są w~\code{setUp()}, dzięki czemu ciało każdego
-testu mierzy dokładnie jedną operację onboardu wystawcy, a~raportowana przez Foundry
-suma na test (wyłączająca \code{setUp}) jest liczbą podaną bezpośrednio, niewymagającą
+Narzut modelu zmierzono testami \code{GovernanceGasTest}
+i~\code{GovernanceGas3of5Test} (\code{forge test --gas-report}) w~dwóch
+konfiguracjach: minimalnej $m=n=2$ oraz docelowej 3-z-5. Wszystkie wdrożenia
+kontraktów oraz jednorazowe przekazanie własności realizowane są
+w~\code{setUp()}, dzięki czemu ciało każdego testu mierzy dokładnie jedną
+operację onboardu wystawcy, a~raportowana przez Foundry suma na test
+(wyłączająca \code{setUp}) jest liczbą podaną bezpośrednio, niewymagającą
 dekompozycji.
 
 Linią bazową sprzed wprowadzenia zarządzania jest pojedyncze wywołanie
 \code{onboardIssuer\allowbreak AndUniversity} na rejestrze będącym własnością zwykłego EOA:
-84\,246 gazu. Ta sama operacja przeprowadzona pełną ścieżką zarządzaną ---
-\code{multisig.submit} + \code{multisig.confirm} + \code{multisig.execute}
+84\,246 gazu. Wartość ta jest sumą na~test, a~więc obejmuje --- inaczej niż
+79\,005~gazu z~tabeli~\ref{tab:packed-vs-merkle}, będące maksimum \emph{wiersza
+funkcji} w~raporcie Foundry --- także narzut ciała testu; sam wiersz funkcji
+wynosi tu 78\,693~gazu, a~różnicę wobec rozdziału~\ref{ch:gaz} tłumaczy inna
+długość metadanych uczelni w~danych testowych. Obie strony porównania poniżej
+używają spójnie sum na~test. Ta sama operacja przeprowadzona pełną ścieżką zarządzaną ---
+\code{multisig.submit} + \code{multisig.confirm} (razy $m-1$, ponieważ
+zgłoszenie liczy się jako potwierdzenie zgłaszającego) + \code{multisig.execute}
 (planuje na timelocku) oraz \code{timelock.execute} (wywołuje rejestr po
-opóźnieniu) --- kosztuje 824\,254 gazu, co daje narzut na zmianę uprawnień rzędu
-$824\,254 - 84\,246 = 740\,008$ gazu.
+opóźnieniu) --- kosztuje 824\,254 gazu przy $m=n=2$ i~893\,878 gazu przy progu
+3-z-5. Narzut na zmianę uprawnień wynosi zatem
+$824\,254 - 84\,246 = 740\,008$ gazu w~konfiguracji minimalnej
+i~$893\,878 - 84\,246 = 809\,632$ gazu w~konfiguracji docelowej --- o~9{,}4\%
+więcej. Wzrost o~69\,624 gazu pochodzi z~dwóch źródeł: droższego \code{execute}
+(174\,599 wobec 160\,119 gazu, czyli 14\,480 gazu), który przelicza
+potwierdzenia, iterując po pięcio-, a~nie dwuelementowym zbiorze właścicieli,
+oraz dodatkowego wywołania \code{confirm} --- 52\,213 gazu w~wierszu funkcji,
+55\,144 gazu łącznie z~narzutem ciała testu na tę jedną dodatkową transakcję. Wszystkie dalsze rachunki posługują się wartością docelową
+809\,632~gazu.
 
-Tabela~\ref{tab:gov-cost} pokazuje, gdzie trafia gaz ścieżki zarządzanej. Dominuje
-\code{submit}, który zapisuje na łańcuchu pełne dane zaplanowanej operacji.
+Tabela~\ref{tab:gov-cost} pokazuje, gdzie trafia gaz ścieżki zarządzanej
+w~konfiguracji minimalnej, w~której rozbicie jest najczytelniejsze. Dominuje
+\code{submit}, który zapisuje na łańcuchu pełne dane zaplanowanej operacji ---
+selektor, adres celu i~cały zakodowany ładunek \code{schedule} --- podczas gdy
+Safe utrzymuje w~pamięci trwałej wyłącznie skrót transakcji, a~podpisy zbiera
+poza łańcuchem. Stąd różnica rzędu wielkości wobec rozwiązania branżowego.
 
 \begin{table}[H]
 \centering
-\caption{Rozbicie kosztu zarządzanego onboardu (wykonanie on-chain).}
+\caption{Rozbicie kosztu zarządzanego onboardu w~konfiguracji $m=n=2$
+(wykonanie on-chain).}
 \label{tab:gov-cost}
 \begin{tabular}{@{}lrl@{}}
 \toprule
@@ -241,11 +260,11 @@ Suma czterech wywołań (799\,219 gazu) jest niższa od kosztu całego testu
 (824\,254 gazu) o~narzut ciała testu --- przygotowanie i~kodowanie ABI
 argumentów wywołań, około 3\% --- który nie jest kosztem on-chain. Porównanie
 z~linią bazową używa spójnie sum na~test po~obu stronach, więc narzut ten
-znosi się w~różnicy jedynie częściowo i~podana wartość 740\,008 gazu jest
-oszacowaniem ostrożnym (z~góry).
+znosi się w~różnicy jedynie częściowo i~obie podane wartości narzutu
+(740\,008 oraz 809\,632~gazu) są oszacowaniami ostrożnymi, od~góry.
 
 Istotne jest przy tym, że zmiany uprawnień (dodanie lub usunięcie wystawcy) są
-\emph{rzadkie}. Narzut 740\,008 gazu ponoszony jest raz na wystawcę i~amortyzuje się
+\emph{rzadkie}. Narzut 809\,632 gazu ponoszony jest raz na wystawcę i~amortyzuje się
 na wszystkich dyplomach, które ten wystawca później wyda. Koszt rejestracji
 pojedynczego dyplomu, zmierzony w~rozdziale~\ref{ch:l2}, pozostaje więc
 niezmieniony.
@@ -255,7 +274,7 @@ niezmieniony.
 
 Mając kompletny obraz kosztów i~gwarancji, można postawić pytanie zasadnicze: co
 właściwie daje blockchain wobec tańszych i~dobrze zrozumianych alternatyw?
-Poniżej zestawiono trzy podejścia do weryfikacji dyplomu:
+Poniżej zestawiono cztery podejścia do weryfikacji dyplomu:
 
 \begin{description}
   \item[Status quo] --- weryfikator kontaktuje się z~uczelnią (telefon, e-mail,
@@ -285,9 +304,16 @@ Niski koszt jednostkowej weryfikacji              & nie & tak & tak & tak \\
 Działa, gdy wystawca przestał istnieć              & nie & częściowo & częściowo & tak \\
 Publiczny, dopisywalny log uprawnień do~wydawania & nie & nie & tak & tak \\
 Odporność na ciche wsteczne odebranie uprawnień   & --- & nie & tak & tak \\
-Jeden widok logu bez warstwy dodatkowej           & --- & --- & nie & tak \\
+\makecell[l]{Jednolitość widoku osiągalna\\jednostronnie przez weryfikatora} & --- & --- & nie & tak$^\ast$ \\
 \bottomrule
 \end{tabular}
+
+\smallskip
+\begin{minipage}{0.92\textwidth}\footnotesize\raggedright
+$^\ast$ Przy weryfikatorze sprawdzającym reguły konsensusu (własny węzeł lub
+lekki klient) i~stanie opublikowanym na~warstwie pierwszej; zastrzeżenia
+omawia sekcja~\ref{sec:gov-wniosek}.
+\end{minipage}
 \end{table}
 
 Ocena „częściowo'' w~trzecim wierszu wymaga komentarza. Podpis cyfrowy
@@ -346,15 +372,50 @@ jest u~niego własnością warstwy konsensusu, nie dodatkową warstwą protokoł
 Nie ma logu, którego stan mógłby się rozdwoić wobec dwóch weryfikatorów, bo
 o~stanie rozstrzyga ten sam mechanizm, który utrzymuje sam łańcuch.
 
+\paragraph{Dwa zastrzeżenia, bez których teza się nie broni.} Sformułowana tak
+przewaga wymaga jednak ograniczenia z~dwóch stron, ponieważ w~naiwnym ujęciu
+byłaby sprzeczna z~modelem zaufania przyjętym w~sekcji~\ref{sec:model-zagrozen}.
+
+Po pierwsze, weryfikator odpytujący dostawcę RPC nie korzysta z~gwarancji
+konsensusu, lecz z~przyrzeczenia tego dostawcy --- a~złośliwy dostawca może
+przedstawić dwóm weryfikatorom różne stany rejestru równie dobrze, jak
+zmówieni operatorzy logu CT. Różnica nie leży zatem w~tym, \emph{czy} istnieje
+warstwa, której trzeba ufać, lecz w~tym, \emph{jak} można ją usunąć.
+W~łańcuchu weryfikator znosi to założenie \emph{jednostronnie}: uruchamia własny
+węzeł albo lekkiego klienta i~sam sprawdza reguły konsensusu, nie uzgadniając
+niczego z~innymi obserwatorami. W~CT --- przeciwnie: pojedynczy obserwator
+z~zasady nie odróżni rozdwojonego widoku od prawdziwego, ponieważ każda gałąź
+niesie poprawne dowody spójności; wykrycie wymaga porównania widoków między
+obserwatorami, a~więc warstwy koordynacji, której nie ustandaryzowano. Przewaga
+łańcucha jest więc przewagą \emph{jednostronnej weryfikowalności} nad
+\emph{koordynacją wielostronną}, a~nie przewagą braku zaufania nad zaufaniem.
+Cena tej przewagi jest realna i~operacyjna: kto nie prowadzi węzła, ten jej nie
+uzyskuje.
+
+Po drugie, gwarancja ta w~pełnej sile dotyczy warstwy pierwszej. W~rollupie
+optymistycznym --- a~takim jest rekomendowany kosztowo Base --- stan przed
+opublikowaniem partii na~L1 pochodzi od pojedynczego, scentralizowanego
+sekwensera i~jest jego przyrzeczeniem, a~nie wynikiem konsensusu
+(sekcja~\ref{sec:model-zagrozen}). Weryfikator czytający stan L2 natychmiast po
+transakcji jest zatem w~sytuacji bliższej modelowi CT niż modelowi L1.
+Własność jednolitego widoku odzyskuje on dopiero po opublikowaniu partii
+na~warstwie pierwszej, a~w~pełni --- po upływie okna sporu. Dla rozważanego tu
+zastosowania nie jest to przeszkodą, ponieważ zmiana uprawnień i~tak przechodzi
+przez 48-godzinne opóźnienie timelocka (sekcja~\ref{sec:gov-model}), które
+zawiera w~sobie czas publikacji na~L1. Wniosek praktyczny jest natomiast taki,
+że wybór sieci nie jest wyłącznie decyzją kosztową: rekomendacja Base
+z~rozdziału~\ref{ch:l2} obowiązuje pod warunkiem, że weryfikator akceptuje
+opóźnienie finalizacji jako część procedury.
+
 Marginalna wartość blockchaina w~tym zastosowaniu sprowadza się zatem do
 własności węższej, niż wynikałoby z~porównania z~samym PKI: \emph{publicznego,
 dopisywalnego, odpornego na manipulację logu tego, kto może wydawać dyplomy,
-o~jednym widoku dla wszystkich weryfikatorów, bez zaufania do zbioru operatorów
-logu}. Logu, którego nie da się
-po cichu wstecznie przepisać. Model zarządzania z~sekcji~\ref{sec:gov-model} jest
-tym, co tę własność urzeczywistnia --- bez timelocka i~progu sam blockchain tej
-gwarancji by nie dawał, bo pojedynczy właściciel mógłby log przepisać w~granicach
-swoich uprawnień.
+którego jednolitość widoku weryfikator może potwierdzić samodzielnie, bez
+zaufania do zbioru operatorów logu i~bez uzgodnień z~innymi obserwatorami}.
+Logu, którego nie da się po cichu wstecznie przepisać. Model zarządzania
+z~sekcji~\ref{sec:gov-model} jest tym, co tę własność urzeczywistnia --- bez
+timelocka i~progu sam blockchain tej gwarancji by nie dawał, bo pojedynczy
+właściciel mógłby log przepisać w~granicach swoich uprawnień.
 
 \paragraph{Studium przypadku: uczelnia skali politechniki.} Skalę kosztu dobrze
 obrazuje rachunek dla dużej uczelni technicznej wydającej rzędu 10~tys.\ dyplomów
@@ -373,9 +434,21 @@ rozważanymi podejściami rozstrzyga się na osi wymagań, nie kosztów.
 
 Pozostaje pytanie o~proporcję. Wyodrębniona wyżej własność kosztuje --- zależnie
 od sieci --- ułamki mikrocenta na dyplom (rozdz.~\ref{ch:l2}) plus jednorazowy
-narzut 740\,008 gazu na zmianę uprawnień. Jest to koszt niski w~wartościach
+narzut 809\,632 gazu na zmianę uprawnień. Jest to koszt niski w~wartościach
 bezwzględnych, lecz niezerowy --- i~ponoszony wobec dwóch alternatyw, z~których
 każda jest dojrzalsza.
+
+Porównanie to ma przy tym asymetrię, którą trzeba wskazać. Strona blockchainowa
+jest w~tej pracy wyceniona co do mikrocenta, strona PKI+CT --- wcale, ponieważ
+jej koszt jest zdominowany przez pozycje spoza modelu transakcyjnego: opłatę za
+certyfikat lub pieczęć kwalifikowaną dla każdej uczelni, utrzymanie usług
+statusu (CRL/OCSP) oraz --- w~wariancie z~CT --- prowadzenie samego logu bądź
+opłatę za korzystanie z~cudzego. Żadnej z~tych pozycji nie zmierzono, a~ich
+oszacowanie wymagałoby analizy rynku usług zaufania, nie pomiaru sieciowego.
+Twierdzenia typu ,,taniej'' odnoszą się więc do dojrzałości i~braku konieczności
+utrzymywania łańcucha, nie do porównania liczb --- i~w~takim, słabszym sensie
+należy je czytać. Ilościowe zestawienie całkowitych kosztów posiadania obu
+architektur pozostaje otwartym zadaniem (rozdz.~\ref{ch:podsumowanie}).
 
 Praca nie rozstrzyga tej proporcji arbitralnie. Wniosek ma postać stopniowanej
 rekomendacji, a~nie opowiedzenia się po jednej stronie.
@@ -389,11 +462,13 @@ rekomendacji, a~nie opowiedzenia się po jednej stronie.
         rozwiązanie właściwe dla zdecydowanej większości realnych wdrożeń,
         tańsze i~lepiej zbadane niż blockchain.
   \item[Blockchain wygrywa wtedy i~tylko wtedy,] gdy do powyższego dochodzi
-        wymaganie \emph{jednolitości widoku bez zaufania do operatorów logu}:
-        gdy weryfikatorzy nie mogą przyjąć, że wyznaczony zbiór operatorów nie
-        działa w~zmowie i~nie przedstawia im rozdwojonego widoku, ani nie mogą
-        polegać na warstwie uzgadniania widoków, która w~ekosystemie CT nie
-        została ustandaryzowana. Scenariuszem modelowym jest weryfikacja
+        wymaganie \emph{jednostronnie weryfikowalnej jednolitości widoku}: gdy
+        weryfikatorzy nie mogą przyjąć, że wyznaczony zbiór operatorów nie
+        działa w~zmowie, ani polegać na warstwie uzgadniania widoków, której
+        w~ekosystemie CT nie ustandaryzowano. Warunkiem drugim jest gotowość
+        poniesienia kosztu samodzielnej weryfikacji konsensusu --- bez niej
+        przewaga ta nie materializuje się po ich stronie.
+        Scenariuszem modelowym jest weryfikacja
         ponadinstytucjonalna i~transgraniczna, w~której żaden pojedynczy podmiot
         --- ani urząd certyfikacji, ani operator logu --- nie jest akceptowany
         przez wszystkie strony.

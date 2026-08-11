@@ -33,34 +33,27 @@ kosztownym i uzależnionym od ciągłości jej działania. Niniejsza praca przed
 system UniVerify, który wykorzystuje publiczny blockchain Ethereum jako
 rejestr odporny na nieuprawnioną modyfikację. Dyplomy grupowane są w~drzewa
 Merkle, których korzenie publikowane są w~kontrakcie (ang. \emph{smart
-contract}), dzięki czemu
-koszt zapisu nie zależy od liczby dokumentów w~partii.
+contract}), dzięki czemu koszt zapisu nie zależy od liczby dokumentów w~partii.
 
-Wokół tego rdzenia praca rozwija trzy zasadnicze rozszerzenia. Po
-pierwsze, wprowadza mechanizm selektywnego ujawniania danych oparty na
-kryptograficznych zobowiązaniach z~solą, pozwalający posiadaczowi dyplomu
-udostępnić jedynie wybrane pola, zgodnie z~zasadą minimalizacji danych. Po
-drugie, przedstawia pomiary kosztu wdrożenia w~czterech sieciach: warstwie
-pierwszej (Sepolia) oraz trzech rollupach warstwy drugiej (Arbitrum, Base,
-zkSync), wraz z~analizą wrażliwości na wahania cen. Po trzecie, proponuje model
-zarządzania uprawnieniami łączący portfel wielopodpisowy z~mechanizmem opóźnienia
-czasowego, który rozprasza pojedynczy punkt zaufania.
+Na tak zbudowanym systemie praca prowadzi badania w~trzech kierunkach: pomiary
+kosztu wdrożenia w~warstwie pierwszej i~trzech rollupach warstwy drugiej wraz
+z~analizą wrażliwości, mechanizm selektywnego ujawniania pól oparty na
+kryptograficznych zobowiązaniach z~solą oraz model zarządzania uprawnieniami
+łączący portfel wielopodpisowy z~mechanizmem opóźnienia czasowego. Przy partii 1000~dyplomów koszt publikacji
+korzenia na jeden dyplom wynosi w~warstwie drugiej od około $9\cdot10^{-7}$~USD
+(Base) do rzędu $10^{-5}$~USD w~pozostałych rollupach.
 
-Wyniki pomiarów pokazują, że przy partii 1000~dyplomów koszt publikacji korzenia
-w~przeliczeniu na jeden dyplom wynosi w~warstwie drugiej od około
-$9\cdot10^{-7}$~USD w~najtańszej z~badanych sieci (Base) do rzędu
-$10^{-5}$~USD w~pozostałych rollupach. Pracę zamyka analiza wartości: porównanie
-proponowanego rozwiązania z~podejściem tradycyjnym, z~infrastrukturą klucza
-publicznego oraz z~modelem przejrzystości certyfikatów. Prowadzi ona do wniosku
-niekorzystnego dla tezy blockchainowej --- publiczny log uprawnień do wydawania
-jest osiągalny bez łańcucha bloków --- i~zawęża uzasadnione zastosowanie
-blockchaina do sytuacji, w~której weryfikatorzy nie mogą zaufać operatorom
-takiego logu co do jednolitości jego widoku.
+Pracę zamyka analiza wartości, porównująca rozwiązanie z~podejściem
+tradycyjnym, z~infrastrukturą klucza publicznego oraz z~modelem przejrzystości
+certyfikatów. Prowadzi ona do wniosku niekorzystnego dla tezy blockchainowej ---
+publiczny log uprawnień do wydawania jest osiągalny bez łańcucha bloków ---
+i~zawęża uzasadnione zastosowanie blockchaina do przypadku, w~którym weryfikator
+nie może zaufać operatorom takiego logu co do jednolitości jego widoku,
+a~zarazem jest gotów samodzielnie weryfikować reguły konsensusu.
 }
 
-\slowakluczowe{blockchain, Ethereum, weryfikacja dyplomów, drzewa Merkle,
-selektywne ujawnianie danych, ochrona prywatności, rollupy warstwy drugiej,
-smart contracts, zarządzanie uprawnieniami, przejrzystość certyfikatów}
+\slowakluczowe{blockchain, weryfikacja dyplomów, drzewa Merkle, selektywne
+ujawnianie danych, rollupy warstwy drugiej, przejrzystość certyfikatów}
 
 \thesisabstract{
 The authentication of university diplomas today relies chiefly on direct contact
@@ -70,29 +63,24 @@ that uses the public Ethereum blockchain as a tamper-resistant registry. Diploma
 are grouped into Merkle trees whose roots are published in a smart contract, so
 that the on-chain cost is independent of the number of documents in a batch.
 
-The thesis develops this core along three axes. First, it
-introduces a selective-disclosure mechanism based on salted cryptographic
-commitments, allowing a diploma holder to reveal only chosen fields, in line with
-the data-minimisation principle. Second, it reports deployment-cost measurements
-across four networks: layer one (Sepolia) and three layer-two rollups (Arbitrum,
-Base, zkSync), together with a sensitivity analysis under price fluctuations.
-Third, it proposes an authorisation-governance model that combines a
-multisignature wallet with a time-lock, dispersing the single point of trust.
+On this system the thesis pursues three lines of investigation: deployment-cost
+measurements across layer one and three layer-two rollups together with a
+sensitivity analysis, a selective-disclosure mechanism based on salted
+cryptographic commitments, and an authorisation-governance model combining a
+multisignature wallet with a time-lock. For a batch of 1000 diplomas, publishing the root costs per diploma
+on layer two from about $9\cdot10^{-7}$~USD on the cheapest network studied
+(Base) to the order of $10^{-5}$~USD on the remaining rollups.
 
-The measurements show that, for a batch of 1000 diplomas, publishing the root
-costs per diploma on layer two from about $9\cdot10^{-7}$~USD on the cheapest
-network studied (Base) to the order of $10^{-5}$~USD on the remaining rollups.
 The thesis closes with a value analysis comparing the proposed solution with the
 status quo, with public-key infrastructure, and with certificate transparency. Its
 conclusion is unfavourable to the blockchain premise --- a public log of issuing
 authorisations is attainable without a chain --- and narrows the justified use of
-blockchain to the case where verifiers cannot trust log operators to present a
-single, consistent view.
+blockchain to the case where a verifier cannot trust log operators to present a
+single, consistent view and is willing to validate consensus rules itself.
 }
 
-\thesiskeywords{blockchain, Ethereum, diploma verification, Merkle trees,
-selective disclosure, privacy, layer-two rollups, smart contracts,
-authorisation governance, certificate transparency}
+\thesiskeywords{blockchain, diploma verification, Merkle trees, selective
+disclosure, layer-two rollups, certificate transparency}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Makra pomocnicze
