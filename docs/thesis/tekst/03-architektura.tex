@@ -4,7 +4,7 @@
 Rozdział przedstawia budowę systemu UniVerify w~postaci, na której opierają się
 kolejne rozdziały pomiarowe i~projektowe. Opisuje model danych, kontrakt rejestru,
 pakiety współdzielone oraz aplikację webową, a~na końcu zbiera je w~trzech
-przepływach end-to-end: wydania, weryfikacji i~rewokacji. Pomiary kosztów pozostają
+przepływach end-to-end: wydania, weryfikacji i~unieważnienia. Pomiary kosztów pozostają
 poza zakresem tego rozdziału --- omawiają je rozdziały~\ref{ch:gaz} i~\ref{ch:l2}.
 
 \section{Model danych}
@@ -65,22 +65,23 @@ zawieszona~(2), unieważniona~(3).
 \section{Pakiety współdzielone}
 \label{sec:pakiety}
 
-System zorganizowano jako monorepozytorium, w~którym logika kryptograficzna żyje
-w~jednym miejscu i~jest współdzielona przez aplikację webową, CLI oraz SDK
+System zorganizowano jako monorepozytorium, w~którym logika kryptograficzna jest
+utrzymywana w~jednym miejscu i~współdzielona przez aplikację webową, CLI oraz SDK
 (rys.~\ref{fig:architektura}).
 
 \begin{figure}[H]
 \centering
-\begin{tikzpicture}[node distance=6mm and 8mm]
+\begin{tikzpicture}[node distance=6mm and 8mm,
+                    blok/.append style={minimum width=34mm}]
   % Warstwa klientów
   \node[blok] (web) {aplikacja webowa\\\code{Next.js}};
   \node[blok, right=of web] (cli) {CLI\\\code{issue / verify / gov}};
   \node[blok, right=of cli] (sdk) {SDK\\\code{UniverifySdk}};
   % Rdzeń
-  \node[blokakcent, below=9mm of cli, minimum width=68mm]
+  \node[blokakcent, below=9mm of cli, minimum width=110mm]
     (core) {\code{verifier-core}\\haszowanie, drzewa Merkle, schemat ładunku, ABI};
   % On-chain
-  \node[blokszary, below=9mm of core, minimum width=68mm]
+  \node[blokszary, below=9mm of core, minimum width=110mm]
     (chain) {kontrakt \code{DiplomaRegistry} (L1 / L2)\\korzenie partii, uprawnienia wystawców, unieważnienia};
   \draw[strz] (web) -- (core);
   \draw[strz] (cli) -- (core);
@@ -94,24 +95,19 @@ utrzymywany jest wyłącznie kontrakt rejestru.}
 \end{figure}
 
 \begin{description}
-  \item[\code{verifier-core}.] Warstwa fundamentalna. Eksportuje
-        \code{hashPayload} (kanonizacja + Keccak256), \code{computeMerkleLeaf}
-        (haszowanie liścia z~separacją domen), \code{buildMerkleFromLeaves}
-        (budowa drzewa i~zwrot korzenia oraz dowodów), \code{computeRootFromProof}
-        (odtworzenie korzenia z~liścia i~dowodu), a~także ABI kontraktu i~schemat
-        walidacji ładunku (Zod). Musi być zbudowana przed pozostałymi pakietami.
+  \item[\code{verifier-core}.] Warstwa fundamentalna: kanonizacja i~haszowanie
+        ładunku, haszowanie liścia z~separacją domen, budowa drzewa i~odtwarzanie
+        korzenia z~dowodu, a~także ABI kontraktu i~schemat walidacji ładunku.
   \item[\code{sdk}.] Klasa \code{UniverifySdk} opakowuje odczyty z~kontraktu
-        i~pełną weryfikację: \code{verify} (weryfikacja koperty wraz z~metadanymi
-        uczelni), \code{status}, \code{getBatch}, \code{getIssuer},
-        \code{getUniversity} oraz odczyt informacji o~własności.
-  \item[\code{verifier-cli}.] Skrypty wiersza poleceń: \code{issue.ts}
-        i~\code{verify.ts}, a~także grupa poleceń \code{gov} obsługująca model
-        zarządzania z~rozdziału~\ref{ch:governance}.
+        i~pełną weryfikację koperty wraz z~metadanymi uczelni.
+  \item[\code{verifier-cli}.] Wiersz poleceń: wystawianie, weryfikacja oraz
+        grupa poleceń \code{gov} obsługująca model zarządzania
+        z~rozdziału~\ref{ch:governance}.
 \end{description}
 
 Rozdzielenie logiki do \code{verifier-core} sprawia, że ta sama, przetestowana
 implementacja haszowania i~drzew Merkle jest używana zarówno przy wystawianiu, jak
-i~przy weryfikacji --- eliminuje to ryzyko rozjazdu między stroną wydającą
+i~przy weryfikacji --- eliminuje to ryzyko rozbieżności między stroną wydającą
 a~sprawdzającą.
 
 \section{Aplikacja webowa}
@@ -138,12 +134,10 @@ Trasa & Rola & Przeznaczenie \\
 \end{table}
 
 Punkty \code{/api/verify} (pełna weryfikacja z~metadanymi uczelni) oraz
-\code{/api/status} (lekki odczyt statusu) chroni wspólny \emph{guard}: opcjonalne
-uwierzytelnianie kluczem API (wymuszane tylko, gdy ustawiono zmienną środowiskową
-z~kluczami; akceptuje nagłówek \code{Bearer} lub \code{X-API-Key}) oraz ograniczanie
-liczby żądań (30~żądań na~60~s na~adres IP, w~przesuwnym oknie w~pamięci).
+\code{/api/status} (lekki odczyt statusu) chroni wspólna warstwa pośrednicząca:
+opcjonalne uwierzytelnianie kluczem API oraz ograniczanie liczby żądań na adres IP.
 
-\section{Przepływy: wydanie, weryfikacja, rewokacja}
+\section{Przepływy: wydanie, weryfikacja, unieważnienie}
 \label{sec:przeplywy}
 
 Trzy główne przepływy spinają opisane elementy w~całość
@@ -168,26 +162,124 @@ Trzy główne przepływy spinają opisane elementy w~całość
     node[etyk, below, pos=0.25] {\code{revokeFromBatch} (dowód Merkle)}
     (kontrakt.south east);
 \end{tikzpicture}
-\caption[Przepływy: wydanie, weryfikacja, rewokacja]{Przepływy w~systemie: wydanie (uczelnia publikuje wyłącznie korzeń
+\caption[Przepływy: wydanie, weryfikacja, unieważnienie]{Przepływy w~systemie: wydanie (uczelnia publikuje wyłącznie korzeń
 partii), weryfikacja (odtworzenie korzenia z~koperty i~porównanie ze stanem
-kontraktu) oraz rewokacja (linia przerywana).}
+kontraktu) oraz unieważnienie (linia przerywana).}
 \label{fig:przeplywy}
 \end{figure}
 
-\paragraph{Wydanie.} Wystawca buduje off-chain drzewo Merkle z~liści dyplomów
-(\code{computeMerkleLeaf} + \code{buildMerkleFromLeaves}), publikuje w~kontrakcie
-sam korzeń (\code{issueBatchRoot}) i~eksportuje każdemu absolwentowi kopertę zawierającą
-jego \code{payload} oraz dowód Merkle. Cała praca kryptograficzna poza jedną
-transakcją odbywa się bez gazu.
+\paragraph{Wydanie.} Wystawca buduje drzewo Merkle poza łańcuchem, publikuje
+w~kontrakcie sam korzeń partii i~eksportuje absolwentom koperty. Cała praca
+kryptograficzna poza jedną transakcją odbywa się bez gazu.
 
-\paragraph{Weryfikacja.} Weryfikator (przez \code{/verifier}, API lub SDK)
-odtwarza z~koperty liść, z~liścia i~dowodu --- korzeń, po czym porównuje go
-z~korzeniem odczytanym z~kontraktu dla pary \code{(issuer, batchId)}. Pozytywny
-wynik oznacza, że dokument należy do partii opublikowanej przez autoryzowanego
-wystawcę i~nie został unieważniony.
+\paragraph{Weryfikacja.} Weryfikator odtwarza z~koperty liść, z~liścia i~dowodu
+--- korzeń, i~porównuje go z~korzeniem odczytanym z~kontraktu dla pary
+\code{(issuer, batchId)}. Wynik pozytywny oznacza, że dokument należy do partii
+opublikowanej przez autoryzowanego wystawcę i~nie został unieważniony.
 
-\paragraph{Rewokacja.} Aby unieważnić pojedynczy dyplom, wystawca wywołuje
-\code{revokeFromBatch}, podając dowód Merkle dokumentu. Kontrakt dodaje liść do
-zbioru unieważnień, przez co kolejne odczyty statusu zwracają \code{Revoked}, mimo
-że korzeń partii pozostaje niezmieniony. Pozwala to cofnąć pojedynczy dokument bez
+\paragraph{Unieważnienie.} \code{revokeFromBatch} dodaje liść do zbioru
+unieważnień, przez co kolejne odczyty zwracają \code{Revoked}, mimo że korzeń
+partii pozostaje niezmieniony. Pozwala to cofnąć pojedynczy dokument bez
 naruszania pozostałych dyplomów tej samej partii.
+
+\section{Model zaufania i zagrożeń}
+\label{sec:model-zagrozen}
+
+Opisane przepływy angażują pięć ról: wystawcę (uczelnia), posiadacza (absolwent),
+weryfikatora, właściciela rejestru oraz infrastrukturę łańcucha (walidatorzy L1,
+sekwenser L2) wraz z~punktem dostępu RPC. Poniższy model zbiera założenia
+zaufania i~zdolności przeciwnika wspólne dla całej pracy; jego dwa najbardziej
+wrażliwe fragmenty --- prywatność koperty i~warstwę uprawnień --- pogłębiają
+odpowiednio sekcja~\ref{sec:priv-bezpieczenstwo}
+i~sekcja~\ref{sec:gov-zagrozenia}.
+
+\paragraph{Cele bezpieczeństwa.} System ma gwarantować: \emph{integralność}
+(dokument spoza opublikowanej partii nie weryfikuje się pozytywnie),
+\emph{autentyczność wystawcy} (liczą się wyłącznie korzenie opublikowane przez
+adresy autoryzowane w~rejestrze), \emph{audytowalność} (historia uprawnień
+i~partii jest publiczna i~dopisywalna) oraz \emph{minimalizację danych}
+(rozdz.~\ref{ch:prywatnosc}).
+
+\paragraph{Założenia zaufania.} Przyjmuje się: odporność \code{keccak256} na
+kolizje i~preimage; żywotność oraz niezmienność publicznego łańcucha (dla L2 ---
+dziedziczone z~L1 przez mechanizmy rollupa, sekcja~\ref{sec:l2-podstawy});
+uczciwość co najmniej $n-m+1$ sygnatariuszy progu zarządzania
+(rozdz.~\ref{ch:governance}). Weryfikator musi ponadto ufać własnemu punktowi
+dostępu do łańcucha: złośliwy dostawca RPC może zwrócić sfałszowany stan
+rejestru, czego eliminacja wymaga własnego węzła lub odpytania kilku
+niezależnych dostawców.
+
+\paragraph{Zdolności przeciwnika.} Przeciwnik może przechwytywać i~modyfikować
+komunikację poza łańcuchem, przedstawiać spreparowane koperty, przenosić ważne
+dowody między kontekstami (co wyklucza separacja domen liścia,
+sekcja~\ref{sec:merkle}) oraz próbować przejąć klucze. Skutki kompromitacji
+kluczy są rozwarstwione: klucz \emph{wystawcy} pozwala publikować fałszywe
+partie do czasu odebrania uprawnień przez właściciela (stąd jednostkowe
+unieważnianie i~możliwość usunięcia wystawcy), a~klucz \emph{właściciela} ---
+przepisać samą warstwę uprawnień, co stanowi najpoważniejsze zagrożenie
+systemu i~motywuje model zarządzania z~rozdziału~\ref{ch:governance}. Sekwenser
+L2 może transakcje opóźniać (cenzura), lecz nie może sfałszować stanu.
+
+\paragraph{Brak wiązania z~posiadaczem.} System uwierzytelnia \emph{dokument},
+nie \emph{okaziciela}. Koperta jest tokenem na okaziciela: kto nią dysponuje,
+przejdzie weryfikację pozytywnie, ponieważ nic w~protokole nie wiąże jej
+z~tożsamością prezentującego. Pomyślna weryfikacja dowodzi zatem, że przedstawiony
+dyplom został zakotwiczony przez autoryzowanego wystawcę --- nie, że przedstawia
+go osoba, której go wydano. Przekazanie lub kradzież koperty daje pełną,
+poprawnie weryfikującą się prezentację cudzego dyplomu, i~to bez łamania
+jakiegokolwiek założenia kryptograficznego. Poświadczenia weryfikowalne
+W3C~\cite{w3c-vc} rozwiązują to wiązaniem poświadczenia z~kluczem posiadacza
+i~dowodem jego posiadania przy prezentacji; wprowadzenie takiego mechanizmu do
+koperty jest naturalnym kierunkiem rozwoju (rozdz.~\ref{ch:podsumowanie}), lecz
+pozostaje poza zakresem pracy. W~scenariuszach, w~których weryfikator i~tak
+potwierdza tożsamość kandydata innym kanałem (dokument tożsamości podczas
+rekrutacji), luka ta jest domykana poza systemem.
+
+\paragraph{Poza modelem.} Ataki odmowy usługi na infrastrukturę RPC,
+kompromitacja przeglądarki lub aplikacji klienckiej (phishing) oraz
+przechowywanie sekretów po stronie posiadacza --- to ostatnie omawia
+sekcja~\ref{sec:priv-bezpieczenstwo} jako ograniczenie operacyjne.
+
+\section{Jakość implementacji kontraktu}
+\label{sec:jakosc-kontraktu}
+
+Ponieważ kontrakt jest jedynym elementem systemu, którego nie da się poprawić po
+wdrożeniu, jego implementację poddano trzem kontrolom automatycznym w~środowisku
+Foundry~\cite{foundry} w~wersji 1.5.1 (Solidity 0.8.20).
+
+\paragraph{Testy.} Repozytorium zawiera 172~testy jednostkowe i~scenariuszowe,
+z~których wszystkie przechodzą. Ścieżkę produkcyjną --- \code{DiplomaRegistry},
+\code{RegistryMultisig} oraz przepływy zarządzania z~rozdziału~\ref{ch:governance}
+--- pokrywają 53~z~nich; pozostałe dotyczą wariantów eksperymentalnych zbudowanych
+na potrzeby pomiarów z~rozdziału~\ref{ch:gaz}.
+
+\paragraph{Pokrycie kodu.} Wyniki \code{forge coverage} dla kontraktów
+produkcyjnych zebrano w~tabeli~\ref{tab:coverage}. Niższe pokrycie gałęzi wynika
+z~gałęzi obronnych (kontrola parametrów zerowych, ponowne wywołania idempotentne),
+których część nie jest osiągalna z~poziomu zewnętrznego interfejsu.
+
+\begin{table}[H]
+\centering
+\caption{Pokrycie kodu kontraktów produkcyjnych (\code{forge coverage}).}
+\label{tab:coverage}
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+Kontrakt & Linie & Instrukcje & Gałęzie & Funkcje \\
+\midrule
+\code{DiplomaRegistry.sol} & 96{,}9\% (95/98) & 89{,}9\% (107/119) & 64{,}3\% (18/28) & 95{,}7\% (22/23) \\
+\code{RegistryMultisig.sol} & 85{,}3\% (64/75) & 79{,}5\% (66/83) & 45{,}5\% (10/22) & 82{,}4\% (14/17) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Analiza statyczna.} Wbudowany analizator \code{forge lint} zgłasza dla
+obu kontraktów produkcyjnych cztery uwagi i~żadnego ostrzeżenia ani błędu.
+Wszystkie cztery należą do kategorii kosztowych, nie bezpieczeństwa: trzykrotnie
+\code{unwrapped-modifier-logic} (ciało modyfikatora niewydzielone do funkcji, co
+zwiększa rozmiar bytecode'u) oraz jednokrotnie \code{asm-keccak256} (haszowanie
+przez \code{abi.encodePacked} zamiast wstawki asemblerowej --- dokładnie ta
+optymalizacja, którą rozdział~\ref{ch:gaz} bada jako technikę~G4). Analiza ta nie
+zastępuje jednak audytu: przeprowadzenie zewnętrznego przeglądu bezpieczeństwa
+oraz uruchomienie narzędzi symbolicznych (Slither, Mythril) pozostaje poza
+zakresem pracy i~jest warunkiem wdrożenia produkcyjnego
+(rozdz.~\ref{ch:podsumowanie}).

@@ -9,39 +9,49 @@ w~obrocie zawodowym --- sprawdzają go pracodawcy, instytucje rekrutujące na da
 studia, urzędy nostryfikujące wykształcenie za granicą. Mimo to sposób tej
 weryfikacji pozostaje archaiczny: w~praktyce sprowadza się do bezpośredniego
 kontaktu z~uczelnią, która ręcznie potwierdza dane. Proces jest powolny, kosztowny
-i~--- co najważniejsze --- zależny od ciągłości działania wydawcy. Uczelnia
+i~--- co najważniejsze --- zależny od ciągłości działania wystawcy. Uczelnia
 zlikwidowana, połączona lub po prostu nieodpowiadająca na zapytania czyni
 weryfikację niemożliwą, a~dyplom praktycznie bezużytecznym.
 
 Jednocześnie fałszerstwo dyplomów jest zjawiskiem realnym i~trudnym do wykrycia bez
-kontaktu ze źródłem. Papierowy dokument z~pieczęcią nie niesie ze sobą żadnego
-mechanizmu niezależnej, kryptograficznej weryfikacji. Powstaje więc potrzeba
-systemu, który pozwoli potwierdzić autentyczność dyplomu \emph{niezależnie od
-wydawcy}, tanio i~z~poszanowaniem prywatności posiadacza.
+kontaktu ze źródłem. Skalę procederu dokumentuje monografia poświęcona rynkowi
+tzw.\ fabryk dyplomów, szacująca liczbę sprzedanych fałszywych dokumentów na ponad
+milion~\cite{ezellbear2012}; skala ta jest na tyle istotna, że w~Wielkiej Brytanii
+utrzymywany jest dedykowany, ogólnokrajowy serwis weryfikacji stopni
+HEDD~\cite{hedd}, a~raport Wspólnego Centrum Badawczego Komisji Europejskiej
+wskazuje przeciwdziałanie fałszerstwom jako jedną z~głównych motywacji prac nad
+cyfrowymi poświadczeniami edukacyjnymi~\cite{grech2017}. Papierowy dokument
+z~pieczęcią nie niesie przy tym żadnego mechanizmu niezależnej, kryptograficznej
+weryfikacji. Powstaje więc potrzeba systemu, który pozwoli potwierdzić
+autentyczność dyplomu \emph{niezależnie od wystawcy}, tanio i~z~poszanowaniem
+prywatności posiadacza.
 
 \section{Cel i zakres pracy}
 \label{sec:cel}
 
 Celem pracy jest zaprojektowanie, implementacja i~pomiar systemu weryfikacji
-dyplomów, który wykorzystuje publiczny łańcuch bloków Ethereum jako rejestr odporny
+dyplomów, który wykorzystuje publiczny blockchain Ethereum jako rejestr odporny
 na nieuprawnioną modyfikację, a~zarazem odpowiada na trzy praktyczne pytania:
 \emph{ile taki system kosztuje}, \emph{czy da się go pogodzić z~ochroną prywatności}
-oraz \emph{czy przewaga łańcucha bloków nad tańszymi alternatywami jest realna}.
+oraz \emph{czy przewaga blockchaina nad tańszymi alternatywami jest realna}.
 
-Zakres obejmuje: rdzeń systemu oparty na drzewach Merkle (korzenie partii
-publikowane w~smart contract), pomiary kosztu w~warstwie pierwszej oraz
-w~trzech rollupach warstwy drugiej, mechanizm selektywnego ujawniania pól dyplomu
-oraz model zarządzania uprawnieniami eliminujący pojedynczy punkt zaufania. Poza
-zakresem świadomie pozostawiono dowody z~wiedzą zerową oraz zaawansowane akumulatory
-kryptograficzne --- jako kierunki dalszych prac (rozdz.~\ref{ch:podsumowanie}).
+Zakres wyznaczają rdzeń systemu oparty na drzewach Merkle oraz trzy rozszerzenia
+wymienione w~sekcji~\ref{sec:wklad}. Poza zakresem świadomie pozostawiono dowody
+z~wiedzą zerową oraz zaawansowane akumulatory kryptograficzne --- jako kierunki
+dalszych prac (rozdz.~\ref{ch:podsumowanie}).
 
 \section{Wkład własny}
 \label{sec:wklad}
 
-Punktem wyjścia jest system podstawowy UniVerify, którego architekturę
-i~pomiary kosztów w~warstwie pierwszej autor opisał we wcześniejszym artykule
-konferencyjnym~\cite{sitee2026}. Praca wnosi względem niego trzy
-zasadnicze rozszerzenia, mapujące się na rozdziały merytoryczne:
+Całość systemu UniVerify --- zarówno rdzeń, jak i~opisane niżej rozszerzenia ---
+powstała w~ramach niniejszej pracy; podział na ,,system podstawowy'' i~trzy
+rozszerzenia jest porządkiem wykładu, nie rozgraniczeniem autorstwa. Przez
+\emph{system podstawowy} rozumie się rejestr korzeni Merkle publikowanych
+w~kontrakcie, którego podstawy teoretyczne zbiera rozdział~\ref{ch:podstawy},
+a~architekturę --- rozdział~\ref{ch:architektura}. Na tym rdzeniu praca buduje
+trzy zasadnicze rozszerzenia, realizowane kolejno
+w~rozdziałach~\ref{ch:gaz}--\ref{ch:governance} i~podsumowane
+w~rozdziale~\ref{ch:podsumowanie}:
 
 \begin{enumerate}
   \item \textbf{Selektywne ujawnianie pól} przez kryptograficzne zobowiązania
@@ -50,23 +60,12 @@ zasadnicze rozszerzenia, mapujące się na rozdziały merytoryczne:
         (rozdz.~\ref{ch:prywatnosc}).
   \item \textbf{Wdrożenie i~pomiary kosztów} w~warstwie pierwszej
         (rozdz.~\ref{ch:gaz}) oraz w~trzech sieciach warstwy drugiej wraz z~analizą
-        wrażliwości na wahania cen (rozdz.~\ref{ch:l2}), pokazujące, że koszt
-        rejestracji pojedynczego dyplomu spada w~najtańszej z~badanych sieci
-        poniżej $10^{-6}$~USD.
+        wrażliwości na wahania cen (rozdz.~\ref{ch:l2}), pokazujące, że przejście
+        na architekturę wsadową i~warstwę drugą obniża koszt publikacji
+        w~przeliczeniu na jeden dyplom o~kilka rzędów wielkości.
   \item \textbf{Model zarządzania} łączący portfel wielopodpisowy z~mechanizmem
-        opóźnienia czasowego oraz \textbf{analiza wartości} porównująca łańcuch
-        bloków ze status quo i~infrastrukturą klucza publicznego
-        (rozdz.~\ref{ch:governance}).
+        opóźnienia czasowego oraz \textbf{analiza wartości} zestawiająca
+        blockchain ze status quo, z~infrastrukturą klucza publicznego i~z~modelem
+        przejrzystości certyfikatów, prowadząca do stopniowanej rekomendacji
+        wyboru technologii (rozdz.~\ref{ch:governance}).
 \end{enumerate}
-
-\section{Struktura pracy}
-\label{sec:struktura}
-
-Rozdział~\ref{ch:podstawy} wprowadza podstawy teoretyczne: drzewa Merkle,
-zobowiązania kryptograficzne, model kosztowy rollupów, infrastrukturę klucza
-publicznego oraz zasadę minimalizacji danych. Rozdział~\ref{ch:architektura} opisuje
-architekturę systemu UniVerify. Rozdziały~\ref{ch:gaz} i~\ref{ch:l2} przedstawiają
-pomiary kosztu --- odpowiednio optymalizację gazu w~warstwie pierwszej oraz
-benchmarki w~warstwie drugiej. Rozdział~\ref{ch:prywatnosc} omawia mechanizm
-prywatności, a~rozdział~\ref{ch:governance} --- model zarządzania i~analizę wartości.
-Rozdział~\ref{ch:podsumowanie} podsumowuje wyniki i~wskazuje kierunki dalszych prac.

@@ -1,7 +1,7 @@
 \chapter{Podsumowanie i dalsze prace}
 \label{ch:podsumowanie}
 
-Praca przedstawiła system UniVerify --- oparty na publicznym łańcuchu bloków
+Praca przedstawiła system UniVerify --- oparty na publicznym blockchainie
 Ethereum rejestr dyplomów, w~którym dokumenty grupowane są w~drzewa Merkle,
 a~w~kontrakcie publikowany jest jedynie korzeń partii. Wokół tego rdzenia rozwinięto
 trzy rozszerzenia i~udzielono odpowiedzi na trzy postawione we wstępie pytania.
@@ -13,46 +13,66 @@ Zrealizowane cele można zebrać wzdłuż trzech osi pracy:
 
 \begin{description}
   \item[Koszt.] Trzyetapowa analiza gazu (rozdz.~\ref{ch:gaz}) pokazała, że
-        architektura Merkle batch obniża koszt \emph{na dyplom} o~98{,}9\% przy partii
-        100~dokumentów --- efekt amortyzacji stałego kosztu transakcji, a~nie
-        mikrooptymalizacji kodu (te dają jedynie 8--20\%). Pomiary w~warstwie
-        drugiej (rozdz.~\ref{ch:l2}) potwierdziły, że koszt rejestracji pojedynczego
-        dyplomu spada do $9\cdot10^{-7}$--$2{,}3\cdot10^{-5}$~USD zależnie od
-        rollupa, z~35-krotną różnicą między najtańszą siecią a~warstwą pierwszą,
-        odporną na wahania cen.
+        architektura partii Merkle obniża koszt \emph{na dyplom} o~98{,}9\% przy partii
+        100~dokumentów --- efekt amortyzacji stałego kosztu transakcji. Wynik
+        negatywny jest równie istotny: mikrooptymalizacje kodu nie obniżają
+        kosztu wykonania w~ogóle (0{,}5\% na \code{issue}), a~jedynie koszt
+        wdrożenia (19{,}5\%); ręczne pakowanie pamięci trwałej nie daje nic,
+        ponieważ kompilator wykonuje je automatycznie. Pomiary w~warstwie
+        drugiej (rozdz.~\ref{ch:l2}) potwierdziły, że przy partii 1000~dyplomów
+        koszt jednostkowy spada do ułamków mikrocenta, przy 35-krotnej różnicy
+        między najtańszą z~badanych sieci a~warstwą pierwszą; wynik jest odporny
+        na wahania cen.
   \item[Prywatność.] Mechanizm selektywnego ujawniania pól
         (rozdz.~\ref{ch:prywatnosc}) pozwala posiadaczowi ujawnić jedynie wybrane
         pola dyplomu, zgodnie z~zasadą minimalizacji danych, w~całości poza łańcuchem
-        i~bez żadnej zmiany w~kontrakcie.
+        i~bez żadnej zmiany w~kontrakcie. Ceną jest wyłącznie praca po stronie
+        klienta: koperta większa o~26--64\% oraz narzut poniżej 0{,}1~ms na
+        weryfikację, a~więc wielkości pomijalne wobec latencji odczytu z~łańcucha.
+        Zniszczenie soli daje ponadto kryptograficzne usunięcie danych, łagodzące
+        napięcie między niezmiennością łańcucha a~prawem do usunięcia (RODO).
   \item[Zarządzanie i~wartość.] Model łączący portfel wielopodpisowy
-        z~opóźnieniem czasowym (rozdz.~\ref{ch:governance}) usunął pojedynczy punkt
-        zaufania, czyniąc zmiany uprawnień niecichymi, wykrywalnymi i~odwracalnymi.
+        z~opóźnieniem czasowym (rozdz.~\ref{ch:governance}) czyni zmiany uprawnień
+        niecichymi, wykrywalnymi i~odwracalnymi. Nie \emph{usuwa} przy tym zaufania,
+        lecz je rozprasza: faktycznym korzeniem zaufania staje się regulamin
+        zbioru sygnatariuszy, ustalany poza łańcuchem.
 \end{description}
 
-Najważniejszym wnioskiem pracy jest uczciwe rozgraniczenie wartości: PKI dorównuje
-blockchainowi w~kosztach i~weryfikacji offline, a~jego realna przewaga ogranicza się
-do jednej własności --- publicznego, niemodyfikowalnego logu uprawnień do wydawania
-dyplomów (rozdz.~\ref{ch:governance}) --- która uzasadnia jego użycie tylko tam,
-gdzie taki log jest wymaganiem samym w~sobie.
+Najważniejszym wnioskiem pracy jest uczciwe rozgraniczenie wartości, wypadające
+dla tezy blockchainowej niekorzystnie. Samo PKI dorównuje blockchainowi
+w~kosztach i~weryfikacji offline. Publiczny, historyczny log uprawnień do
+wydawania --- własność, którą praca początkowo uznała za jedyną realną przewagę
+łańcucha --- jest osiągalny w~modelu \emph{Certificate Transparency}, bez
+blockchaina, taniej i~w~technologii dojrzalszej. Po uwzględnieniu CT uzasadnione
+zastosowanie blockchaina zawęża się do jednego przypadku: gdy weryfikatorzy nie
+mogą przyjąć, że wyznaczony zbiór operatorów logu nie przedstawi im rozdwojonego
+widoku. Jednolitość widoku jest w~publicznym łańcuchu własnością konsensusu, a~nie
+osobnej warstwy protokołu, która w~ekosystemie CT nie została ustandaryzowana
+(sekcja~\ref{sec:gov-wniosek}).
 
 \section{Ograniczenia}
 \label{sec:ograniczenia}
 
 \begin{itemize}
-  \item \textbf{Prywatność małych domen.} Ukrywanie opiera się na tajności
-        256-bitowej soli; konstrukcja ujawnia strukturę koperty (liczbę pól, fakt
-        prywatności) i~nie wspiera dowodów predykatowych. Zdjęłyby to ograniczenie
-        dowody z~wiedzą zerową (poza zakresem).
-  \item \textbf{Pomiary warstwy drugiej.} Odczyty obarczone są heterogenicznością
-        dostawców RPC i~pojedynczym regionem pomiaru (eu-central-1) --- właściwe do
-        porównań względnych, nie do bezwzględnych twierdzeń geograficznych. Modele
-        kosztu DA opierają się na migawkach parametrów sieci z~konkretnej daty.
-  \item \textbf{Pomiary warstwy pierwszej.} Wykonane lokalnie (Foundry), bez
-        rzeczywistej zmienności \emph{base fee} i~kosztu \code{calldata} rosnącego
-        z~długością dowodu.
-  \item \textbf{Koszt zarządzania.} Narzut 740\,008 gazu na zmianę uprawnień jest
-        amortyzowany, lecz niezerowy wobec dojrzalszej i~tańszej alternatywy, jaką
-        jest PKI.
+  \item \textbf{Prywatność.} Ukrywanie opiera się na tajności 256-bitowej soli;
+        konstrukcja ujawnia strukturę koperty, nie wspiera dowodów predykatowych
+        i~nie daje nieskorelowalności prezentacji --- kolejne okazania tej samej
+        koperty są powiązywalne między weryfikatorami.
+  \item \textbf{Brak wiązania z~posiadaczem.} Koperta jest tokenem na okaziciela:
+        weryfikacja dowodzi autentyczności dokumentu, nie tego, że prezentuje go
+        osoba uprawniona.
+  \item \textbf{Pomiary.} Warstwę pierwszą mierzono lokalnie (Foundry), bez
+        zmienności opłaty bazowej. Pomiary sieciowe pochodzą od jednego dostawcy
+        RPC w~jednym regionie i~są właściwe do porównań względnych, nie do
+        twierdzeń bezwzględnych; wycena opiera się na migawce parametrów rynkowych
+        z~jednego dnia.
+  \item \textbf{Weryfikacja kontraktu.} Kontrakty przechodzą pełen zestaw testów
+        i~analizę statyczną, lecz nie poddano ich zewnętrznemu audytowi ani
+        narzędziom symbolicznym; portfel wielopodpisowy jest implementacją własną,
+        napisaną dla celów pomiarowych, nie audytowanym standardem branżowym.
+  \item \textbf{Reakcja awaryjna.} Opóźnienie timelocka spowalnia odebranie
+        uprawnień skompromitowanemu wystawcy, a~kontrakt nie udostępnia
+        unieważnienia na poziomie partii.
 \end{itemize}
 
 \section{Dalsze prace}
@@ -68,7 +88,17 @@ gdzie taki log jest wymaganiem samym w~sobie.
   \item \textbf{Skala i~głębokie drzewa} --- pomiary przy bardzo dużych partiach
         oraz analiza kosztu budowy drzewa po stronie klienta i~wpływu długości
         \code{calldata} dowodu.
-  \item \textbf{Wdrożenie produkcyjne} --- integracja z~rzeczywistymi systemami
-        dziekanatowymi, weryfikacja cross-chain oraz procedury operacyjne rotacji
-        sygnatariuszy i~zarządzania kluczami po stronie studenta.
+  \item \textbf{Wiązanie z~posiadaczem i~nieskorelowalność} --- powiązanie
+        koperty z~kluczem posiadacza wraz z~dowodem posiadania przy prezentacji
+        oraz przejście na schematy podpisów typu BBS+, znoszące powiązywalność
+        kolejnych okazań.
+  \item \textbf{Ścieżka awaryjna zarządzania} --- rola strażnika z~prawem
+        wyłącznie do anulowania i~wstrzymania oraz unieważnianie na poziomie
+        korzenia partii.
+  \item \textbf{Wdrożenie produkcyjne} --- audyt bezpieczeństwa kontraktów wraz
+        z~analizą symboliczną (Slither, Mythril), zastąpienie własnego portfela
+        wielopodpisowego rozwiązaniem audytowanym, integracja z~rzeczywistymi
+        systemami dziekanatowymi, weryfikacja międzyłańcuchowa oraz procedury
+        operacyjne rotacji sygnatariuszy i~zarządzania kluczami po stronie
+        studenta.
 \end{itemize}

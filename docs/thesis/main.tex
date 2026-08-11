@@ -14,9 +14,9 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \instytut{Instytut Elektrotechniki Teoretycznej i Systemów Informacyjno-Pomiarowych}
 \kierunek{Informatyka Stosowana}
-\specjalnosc{Inżynieria Oprogramowania} % TODO: potwierdź specjalność dla mgr
-\title{Optymalizacja kosztów weryfikacji dyplomów w łańcuchu bloków Ethereum}
-\engtitle{Cost Optimization of Diploma Verification on the Ethereum Blockchain}
+\specjalnosc{Inżynieria Oprogramowania}
+\title{Weryfikacja autentyczności dyplomów uczelni z wykorzystaniem technologii blockchain}
+\engtitle{Authenticity Verification of University Diplomas Using Blockchain Technology}
 \album{323777}
 \author{inż. Nazar Shcherbyna}
 \promotor{dr hab. inż. Bartosz Sawicki, prof. uczelni}
@@ -30,12 +30,13 @@
 Weryfikacja autentyczności dyplomów uczelni wyższych opiera się dziś przede
 wszystkim na bezpośrednim kontakcie z instytucją wydającą --- procesie powolnym,
 kosztownym i uzależnionym od ciągłości jej działania. Niniejsza praca przedstawia
-system UniVerify, który wykorzystuje publiczny łańcuch bloków Ethereum jako
+system UniVerify, który wykorzystuje publiczny blockchain Ethereum jako
 rejestr odporny na nieuprawnioną modyfikację. Dyplomy grupowane są w~drzewa
-Merkle, których korzenie publikowane są w~smart contract, dzięki czemu
+Merkle, których korzenie publikowane są w~kontrakcie (ang. \emph{smart
+contract}), dzięki czemu
 koszt zapisu nie zależy od liczby dokumentów w~partii.
 
-Praca wnosi trzy zasadnicze rozszerzenia względem systemu podstawowego. Po
+Wokół tego rdzenia praca rozwija trzy zasadnicze rozszerzenia. Po
 pierwsze, wprowadza mechanizm selektywnego ujawniania danych oparty na
 kryptograficznych zobowiązaniach z~solą, pozwalający posiadaczowi dyplomu
 udostępnić jedynie wybrane pola, zgodnie z~zasadą minimalizacji danych. Po
@@ -43,20 +44,23 @@ drugie, przedstawia pomiary kosztu wdrożenia w~czterech sieciach: warstwie
 pierwszej (Sepolia) oraz trzech rollupach warstwy drugiej (Arbitrum, Base,
 zkSync), wraz z~analizą wrażliwości na wahania cen. Po trzecie, proponuje model
 zarządzania uprawnieniami łączący portfel wielopodpisowy z~mechanizmem opóźnienia
-czasowego, który eliminuje pojedynczy punkt zaufania.
+czasowego, który rozprasza pojedynczy punkt zaufania.
 
-Wyniki pomiarów pokazują, że koszt rejestracji pojedynczego dyplomu w~warstwie
-drugiej wynosi od około $9\cdot10^{-7}$~USD w~najtańszej z~badanych sieci (Base)
-do rzędu $10^{-5}$~USD w~pozostałych rollupach (partia 1000~dyplomów). Pracę zamyka analiza wartości: porównanie
-proponowanego rozwiązania z~podejściem tradycyjnym oraz z~infrastrukturą klucza
-publicznego, prowadzące do wniosku, że marginalna przewaga łańcucha bloków
-sprowadza się do jawnego, niemodyfikowalnego i~możliwego do zweryfikowania
-rejestru uprawnień do wydawania dyplomów.
+Wyniki pomiarów pokazują, że przy partii 1000~dyplomów koszt publikacji korzenia
+w~przeliczeniu na jeden dyplom wynosi w~warstwie drugiej od około
+$9\cdot10^{-7}$~USD w~najtańszej z~badanych sieci (Base) do rzędu
+$10^{-5}$~USD w~pozostałych rollupach. Pracę zamyka analiza wartości: porównanie
+proponowanego rozwiązania z~podejściem tradycyjnym, z~infrastrukturą klucza
+publicznego oraz z~modelem przejrzystości certyfikatów. Prowadzi ona do wniosku
+niekorzystnego dla tezy blockchainowej --- publiczny log uprawnień do wydawania
+jest osiągalny bez łańcucha bloków --- i~zawęża uzasadnione zastosowanie
+blockchaina do sytuacji, w~której weryfikatorzy nie mogą zaufać operatorom
+takiego logu co do jednolitości jego widoku.
 }
 
-\slowakluczowe{łańcuch bloków, Ethereum, weryfikacja dyplomów, drzewa Merkle,
+\slowakluczowe{blockchain, Ethereum, weryfikacja dyplomów, drzewa Merkle,
 selektywne ujawnianie danych, ochrona prywatności, rollupy warstwy drugiej,
-smart contracts, zarządzanie uprawnieniami}
+smart contracts, zarządzanie uprawnieniami, przejrzystość certyfikatów}
 
 \thesisabstract{
 The authentication of university diplomas today relies chiefly on direct contact
@@ -66,31 +70,38 @@ that uses the public Ethereum blockchain as a tamper-resistant registry. Diploma
 are grouped into Merkle trees whose roots are published in a smart contract, so
 that the on-chain cost is independent of the number of documents in a batch.
 
-The thesis makes three principal extensions to the base system. First, it
+The thesis develops this core along three axes. First, it
 introduces a selective-disclosure mechanism based on salted cryptographic
 commitments, allowing a diploma holder to reveal only chosen fields, in line with
 the data-minimisation principle. Second, it reports deployment-cost measurements
 across four networks: layer one (Sepolia) and three layer-two rollups (Arbitrum,
 Base, zkSync), together with a sensitivity analysis under price fluctuations.
 Third, it proposes an authorisation-governance model that combines a
-multisignature wallet with a time-lock, removing the single point of trust.
+multisignature wallet with a time-lock, dispersing the single point of trust.
 
-The measurements show that registering a single diploma on layer two costs from
-about $9\cdot10^{-7}$~USD on the cheapest network studied (Base) to the order of
-$10^{-5}$~USD on the remaining rollups (batch of 1000 diplomas). The thesis closes with a value analysis: a comparison of
-the proposed solution with the status quo and with public-key infrastructure,
-leading to the conclusion that the marginal advantage of the blockchain reduces to
-a public, immutable, and verifiable log of diploma-issuing authorisations.
+The measurements show that, for a batch of 1000 diplomas, publishing the root
+costs per diploma on layer two from about $9\cdot10^{-7}$~USD on the cheapest
+network studied (Base) to the order of $10^{-5}$~USD on the remaining rollups.
+The thesis closes with a value analysis comparing the proposed solution with the
+status quo, with public-key infrastructure, and with certificate transparency. Its
+conclusion is unfavourable to the blockchain premise --- a public log of issuing
+authorisations is attainable without a chain --- and narrows the justified use of
+blockchain to the case where verifiers cannot trust log operators to present a
+single, consistent view.
 }
 
 \thesiskeywords{blockchain, Ethereum, diploma verification, Merkle trees,
 selective disclosure, privacy, layer-two rollups, smart contracts,
-authorisation governance}
+authorisation governance, certificate transparency}
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Makra pomocnicze
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \newcommand{\code}[1]{\texttt{#1}}
+
+% Ostatnia deska ratunku dla akapitów gęstych od \texttt (brak dzielenia wyrazów):
+% pozwala nieznacznie rozluźnić spacje zamiast wypuszczać tekst poza blok.
+\setlength{\emergencystretch}{1em}
 
 % Wykaz skrótów bez numerów stron (przy \glsaddall byłyby to martwe "1")
 \renewcommand{\glossaryentrynumbers}[1]{}
@@ -99,6 +110,13 @@ authorisation governance}
 \setlength{\biburlnumskip}{0mu}
 \setlength{\biburlucskip}{0mu}
 \setlength{\biburllcskip}{0mu}
+
+% Bibliografia: poprawny zapis "DOI" (styl ieee + polskie \MakeCapital daje "DOi")
+% oraz data dostępu do źródeł internetowych w formie wymaganej przez regulamin.
+\ExecuteBibliographyOptions{urldate=long, dateabbrev=false, seconds=false}
+\DeclareFieldFormat{doi}{DOI\addcolon\space
+  \ifhyperref{\href{https://doi.org/#1}{\nolinkurl{#1}}}{\nolinkurl{#1}}}
+\DeclareFieldFormat{urldate}{(dostęp\addcolon\space#1)}
 
 % Wykresy i tabele z danych (rozdz. 4-5 — koszt gazu + benchmarki L2)
 \usepackage{pgfplots}

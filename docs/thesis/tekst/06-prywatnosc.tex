@@ -1,7 +1,7 @@
 \chapter{Ochrona prywatności przez selektywne ujawnianie danych}
 \label{ch:prywatnosc}
 
-System podstawowy zakotwicza w~łańcuchu bloków skrót całej treści dyplomu.
+System podstawowy zakotwicza w~blockchainie skrót całej treści dyplomu.
 Rozdział ten pokazuje, jak --- bez żadnej zmiany w~kontrakcie --- zastąpić ten
 monolityczny skrót strukturą zobowiązań kryptograficznych, dzięki której posiadacz
 dyplomu może ujawnić weryfikatorowi jedynie wybrane pola, zachowując pozostałe
@@ -23,14 +23,14 @@ danych osobowych --- zgodnie z~którą przetwarzać należy jedynie dane niezbę
 celu. Pracodawca weryfikujący sam fakt ukończenia studiów nie powinien być zmuszany
 do poznania numeru dyplomu kandydata. Celem tego rozdziału jest umożliwienie
 weryfikacji \emph{pojedynczych pól} bez ujawniania reszty, przy zachowaniu tej samej
-gwarancji zakotwiczenia w~łańcuchu.
+gwarancji zakotwiczenia w~blockchainie.
 
 \section{Konstrukcja zobowiązań pól}
 \label{sec:priv-zobowiazania}
 
-Ładunek dzielimy na cztery ujawnialne pola: \code{student}, \code{degree},
-\code{issuedAt} oraz \code{diplomaNumber}. Dla każdego z~nich obliczamy osobne
-\emph{zobowiązanie ukrywające} (\emph{hiding commitment}), łącząc kanoniczną postać
+Ładunek dzieli się na cztery ujawnialne pola: \code{student}, \code{degree},
+\code{issuedAt} oraz \code{diplomaNumber}. Dla każdego z~nich obliczane jest osobne
+\emph{zobowiązanie ukrywające} (\emph{hiding commitment}), łączące kanoniczną postać
 wartości pola z~losową solą:
 \[
   c_i = \operatorname{keccak256}\bigl(\operatorname{canonicalize}(\text{pole}_i)
@@ -39,7 +39,7 @@ wartości pola z~losową solą:
         \text{diplomaNumber}\}.
 \]
 Każda sól to niezależna, losowa wartość 256-bitowa generowana przez
-\code{crypto.getRandomValues}. Skrót dokumentu odtwarzamy następnie \emph{ze
+\code{crypto.getRandomValues}. Skrót dokumentu odtwarzany jest następnie \emph{ze
 zobowiązań}, a~nie z~jawnych wartości:
 \[
   \code{docHash} = \operatorname{keccak256}
@@ -57,6 +57,27 @@ Ponieważ \code{docHash} jest deterministyczną funkcją czterech zobowiązań, 
 partii publikowany w~kontrakcie nie zmienia formatu --- kontrakt nie odróżnia
 dyplomu prywatnego od standardowego.
 
+Odwzorowanie ładunku na zobowiązania nie jest pełne: pole \code{universityId},
+obecne w~ładunku standardowym (sekcja~\ref{sec:model-danych}), nie ma własnego
+zobowiązania i~nie wchodzi do \code{docHash} koperty prywatnej. Nie osłabia to
+gwarancji, ponieważ przynależność dyplomu do uczelni jest wiązana \emph{silniej},
+bo on-chain: liść zawiera adres wystawcy, a~kontrakt utrzymuje mapowanie
+wystawca~$\rightarrow$~uczelnia. Weryfikator odczytuje uczelnię z~rejestru,
+zamiast przyjmować ją z~koperty --- co usuwa możliwość zadeklarowania w~kopercie
+uczelni innej niż ta, która wystawcę autoryzowała. Konsekwencją jest to, że tryb
+standardowy i~prywatny zobowiązują do różnych zbiorów pól, a~partia nie może
+mieszać obu trybów (sekcja~\ref{sec:priv-bezpieczenstwo}).
+
+Granulacja czterech pól nie jest przypadkowa: odpowiada typowym relacjom
+weryfikacyjnym --- potwierdzeniu samego stopnia (\code{degree}), potwierdzeniu
+stopnia konkretnej osoby (\code{student} + \code{degree}) oraz pełnej
+nostryfikacji (wszystkie pola) --- a~płaska struktura czterech zobowiązań
+zachowuje stały format \code{docHash} i~stały rozmiar koperty. Drobniejsza
+granulacja jest osiągalna przez zbudowanie drzewa Merkle \emph{nad polami}
+(dowody $O(\log k)$ dla $k$~pól), lecz wymagałaby zmiany formatu koperty;
+przy czterech polach zysk z~drzewa jest zerowy, więc wybrano wariant
+najprostszy.
+
 \section{Koperta prywatna}
 \label{sec:priv-koperta}
 
@@ -73,11 +94,13 @@ Prywatna koperta dyplomu (\code{PrivateDiplomaEnvelope}) zawiera trzy części:
 \end{itemize}
 
 Strukturę koperty i~drogę od pól do korzenia partii ilustruje
-rys.~\ref{fig:koperta}.
+rysunek~\ref{fig:koperta}.
 
 \begin{figure}[H]
 \centering
-\begin{tikzpicture}[node distance=4mm and 7mm]
+\begin{tikzpicture}[node distance=4mm and 6mm,
+                    blok/.append style={minimum width=27mm},
+                    blokakcent/.append style={minimum width=27mm, minimum height=6mm}]
   \node[blok] (p1) {\code{student}\\\footnotesize + sól$_1$};
   \node[blok, right=of p1] (p2) {\code{degree}\\\footnotesize + sól$_2$};
   \node[blok, right=of p2] (p3) {\code{issuedAt}\\\footnotesize + sól$_3$};
@@ -86,18 +109,17 @@ rys.~\ref{fig:koperta}.
   \node[blokakcent, below=7mm of p2] (c2) {$c_2$};
   \node[blokakcent, below=7mm of p3] (c3) {$c_3$};
   \node[blokakcent, below=7mm of p4] (c4) {$c_4$};
-  \node[blokszary, below=8mm of $(c2)!0.5!(c3)$, minimum width=50mm]
+  \node[blokszary, below=8mm of $(c2)!0.5!(c3)$, minimum width=118mm]
     (dochash) {\code{docHash} $= H(c_1 \Vert c_2 \Vert c_3 \Vert c_4)$};
-  \node[blokszary, below=5mm of dochash, minimum width=50mm]
+  \node[blokszary, below=5mm of dochash, minimum width=118mm]
     (leaf) {liść $= H(\code{registry} \Vert \code{chainId} \Vert \code{issuer}
             \Vert \code{batchId} \Vert \code{docHash})$};
-  \node[blokszary, below=5mm of leaf] (root) {korzeń partii (on-chain)};
+  \node[blokszary, below=5mm of leaf, minimum width=60mm]
+    (root) {korzeń partii (on-chain)};
   \foreach \i in {1,2,3,4}
     \draw[strz] (p\i) -- node[etyk, right=0.5mm] {$H$} (c\i);
-  \draw[strz] (c1.south) -- (dochash.north west);
-  \draw[strz] (c2) -- (dochash);
-  \draw[strz] (c3) -- (dochash);
-  \draw[strz] (c4.south) -- (dochash.north east);
+  \foreach \i in {1,2,3,4}
+    \draw[strz] (c\i.south) -- (c\i.south |- dochash.north);
   \draw[strz] (dochash) -- (leaf);
   \draw[strz] (leaf) -- node[etyk, right=0.5mm] {dowód Merkle} (root);
 \end{tikzpicture}
@@ -153,6 +175,98 @@ jest sam w~sobie wynikiem: pokazuje, że model zakotwiczenia korzenia Merkle jes
 tyle ogólny, iż selektywne ujawnianie mieści się w~nim jako czysto klienckie
 rozszerzenie.
 
+\section{Koszt po stronie klienta}
+\label{sec:priv-pomiary}
+
+Skoro koszt on-chain nie zmienia się wcale, jedyną ceną rozszerzenia jest praca
+po stronie klienta: większa koperta oraz dodatkowe operacje haszowania. Obie
+wielkości zmierzono skryptem \code{npm run benchmarks:privacy}, na partii
+$N=1000$ (dowód 10-elementowy), dla ładunku odpowiadającego przykładowemu
+dyplomowi z~repozytorium. Czasy podano jako medianę z~2000~powtórzeń po fazie
+rozgrzewania, na maszynie Intel Core i5-8300H, Node.js~20.19.
+
+\begin{table}[H]
+\centering
+\caption[Rozmiar koperty i~czas operacji po stronie klienta]{Rozmiar koperty
+(JSON, UTF-8) i~czas operacji po stronie klienta; partia $N=1000$.}
+\label{tab:priv-koszt}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Wariant koperty & \makecell{Rozmiar\\{}[B]} & \makecell{Wystawienie\\{}[ms]} & \makecell{Weryfikacja\\{}[ms]} \\
+\midrule
+standardowa (pełny ładunek)          & 1031 & 0{,}043 & 0{,}309 \\
+prywatna, ujawnione \code{degree}    & 1301 & 0{,}159 & 0{,}313 \\
+prywatna, \code{student}+\code{degree} & 1461 & 0{,}159 & 0{,}332 \\
+prywatna, wszystkie cztery pola      & 1690 & 0{,}159 & 0{,}380 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Wyniki układają się w~prosty obraz. Koperta prywatna jest o~26--64\% większa od
+standardowej, ponieważ zawsze niesie komplet czterech 32-bajtowych zobowiązań,
+a~dla każdego pola ujawnionego dodatkowo 32-bajtową sól; przyrost jest stały
+i~niezależny od rozmiaru partii, bo dowód Merkle pozostaje ten sam. Bezwzględnie
+mowa o~kilkuset bajtach, co nie ma znaczenia dla żadnego realnego kanału
+przesyłu.
+
+Po stronie wystawcy zbudowanie zobowiązań kosztuje 0{,}159~ms na dyplom wobec
+0{,}043~ms dla skrótu standardowego --- narzut wynika z~czterech dodatkowych
+wywołań \code{keccak256} i~generacji czterech soli. W~skali całej partii
+$N=1000$ zbudowanie kompletnego drzewa prywatnego (sole, zobowiązania, liście,
+drzewo) zajmuje 222~ms, czyli operacja wsadowa dla rocznika dużego wydziału
+mieści się w~ułamku sekundy.
+
+Po stronie weryfikatora różnica jest jeszcze mniejsza: 0{,}313--0{,}380~ms wobec
+0{,}309~ms dla koperty standardowej, a~więc od 1 do~23\% narzutu zależnie od
+liczby ujawnionych pól. W~obu przypadkach dominującym składnikiem jest
+przejście dowodu Merkle, nie sprawdzanie zobowiązań. Wobec zmierzonej
+w~sekcji~\ref{sec:l2-latencja} latencji odczytu z~łańcucha, liczonej
+w~dziesiątkach i~setkach milisekund, koszt kryptografii selektywnego ujawniania
+jest pomijalny.
+
+\section{Porównanie z OpenCerts}
+\label{sec:priv-porownanie}
+
+Najbliższą wdrożoną konstrukcją jest OpenCerts~\cite{opencerts}, który również
+reprezentuje dokument jako solone skróty pól i~również dopuszcza redakcję
+wybranych pól przed okazaniem. Skoro mechanizm nie jest nowy, należy wskazać, co
+w~przedstawionym rozwiązaniu jest inne (tab.~\ref{tab:priv-vs-opencerts}).
+
+\begin{table}[H]
+\centering
+\caption{Selektywne ujawnianie: OpenCerts wobec UniVerify.}
+\label{tab:priv-vs-opencerts}
+\begin{tabular}{@{}>{\raggedright\arraybackslash}p{3.2cm}
+                  >{\raggedright\arraybackslash}p{5.3cm}
+                  >{\raggedright\arraybackslash}p{5.3cm}@{}}
+\toprule
+Aspekt & OpenCerts & UniVerify (rozdz.~\ref{ch:prywatnosc}) \\
+\midrule
+Struktura zobowiązań & drzewo Merkle nad wszystkimi polami & płaska czwórka zobowiązań \\
+\addlinespace
+Zakres redakcji & dowolne pole dokumentu & cztery pola o~ustalonej granulacji \\
+\addlinespace
+Rejestr uprawnień & centralna lista poza łańcuchem, prowadzona przez agencję & rejestr on-chain z~progiem podpisów i~opóźnieniem (rozdz.~\ref{ch:governance}) \\
+\addlinespace
+Zmiana kontraktu & własny kontrakt na dokument lub partię & brak --- rozszerzenie czysto klienckie \\
+\addlinespace
+Format \code{docHash} & zmienny wraz z~liczbą pól & stały, 32-bajtowy, niezależny od trybu \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Różnica sprowadza się do dwóch rzeczy. Po stronie kryptograficznej UniVerify
+rezygnuje z~drzewa nad polami na rzecz płaskiej czwórki --- rozwiązania uboższego
+funkcjonalnie (brak drobniejszej granulacji), lecz zachowującego stały format
+\code{docHash}, a~przez to niewymagającego żadnej modyfikacji kontraktu ani
+rozróżniania kopert po stronie łańcucha. Po stronie zaufania różnica jest
+istotniejsza: w~OpenCerts wiedza o~tym, kto jest uprawnionym wystawcą, pozostaje
+w~centralnej liście poza łańcuchem, a~więc dokładnie w~tym miejscu, w~którym
+rozdział~\ref{ch:governance} lokuje resztkową przewagę blockchaina. Wkładem
+nie jest zatem sam mechanizm solonych zobowiązań, lecz wykazanie, że mieści się on
+bez reszty w~modelu rejestru korzeni z~uprawnieniami prowadzonymi na łańcuchu
+publicznym.
+
 \section{Analiza bezpieczeństwa}
 \label{sec:priv-bezpieczenstwo}
 
@@ -165,18 +279,23 @@ Uniemożliwia to przedstawienie tego samego dyplomu z~podmienioną, lecz „popr
 weryfikującą się'' zawartością.
 
 \paragraph{Ukrywanie (hiding).} Dla pola ukrytego napastnik widzi jedynie
-$c_i = \operatorname{keccak256}(\text{wartość} \Vert \text{sól})$. Atak wyczerpujący
-wymagałby zgadnięcia \emph{zarówno} wartości, \emph{jak i} 256-bitowej soli. Ponieważ
-sól pochodzi z~kryptograficznie bezpiecznego generatora i~pozostaje tajna, przestrzeń
-poszukiwań jest rzędu $2^{256}$ --- praktycznie nieprzeszukiwalna, nawet gdy sama
-wartość pola należy do małej domeny (np. \code{degree.level} przyjmuje kilka
-wartości). Odsala to typowy zarzut wobec zobowiązań nad małymi domenami: bez
-tajnej soli o~wysokiej entropii atak słownikowy byłby trywialny, lecz tutaj sól tę
-lukę zamyka.
+$c_i = \operatorname{keccak256}(\text{wartość} \Vert \text{sól})$. Własność ta ---
+w~odróżnieniu od wiązania --- nie wynika ze standardowych założeń o~funkcji skrótu
+i~wymaga modelowania \code{keccak256} jako wyroczni losowej
+(sekcja~\ref{sec:zobowiazania}); jest to heurystyka przyjmowana powszechnie dla
+funkcji rodziny Keccak, lecz pozostaje założeniem, nie twierdzeniem. Przy nim atak
+wyczerpujący wymaga zgadnięcia \emph{zarówno} wartości, \emph{jak i} 256-bitowej
+soli. Ponieważ sól pochodzi z~kryptograficznie bezpiecznego generatora i~pozostaje
+tajna, przestrzeń poszukiwań jest rzędu $2^{256}$ --- praktycznie
+nieprzeszukiwalna, nawet gdy sama wartość pola należy do małej domeny (np.\
+\code{degree.level} przyjmuje kilka wartości). Oddala to typowy zarzut wobec
+zobowiązań nad małymi domenami: bez tajnej soli o~wysokiej entropii atak słownikowy
+byłby trywialny, lecz tutaj sól tę lukę zamyka.
 
 \paragraph{Odporność na powtórzenie (replay).} Związanie liścia z~czwórką
-\code{(registry, chainId, issuer, batchId)} uniemożliwia przeniesienie ważnego
-dyplomu do innego kontraktu, sieci, wydawcy lub partii.
+\code{(registry,\allowbreak{} chainId,\allowbreak{} issuer,\allowbreak{} batchId)}
+uniemożliwia przeniesienie ważnego
+dyplomu do innego kontraktu, sieci, wystawcy lub partii.
 
 \paragraph{Ograniczenie.} Konstrukcja ukrywa \emph{wartości} pól, lecz nie ukrywa
 \emph{struktury} koperty --- liczby pól ani faktu, że dyplom jest prywatny. Nie
@@ -184,17 +303,65 @@ zapewnia też dowodów o~ujawnionej wartości typu „stopień jest co najmniej
 licencjatem'' bez podania konkretnej wartości. Takie własności wymagałyby dowodów
 z~wiedzą zerową (ZK), które --- zgodnie z~przyjętym zakresem pracy --- pozostają poza
 jej ramami; obecna konstrukcja realizuje selektywne ujawnianie pełnych pól, co
-odpowiada założonemu wymaganiu minimalizacji danych. Funkcjonalnie odpowiada to
-selektywnemu ujawnianiu znanemu z~poświadczeń weryfikowalnych
-W3C~\cite{w3c-vc}, przy czym tam realizuje się je specjalizowanymi schematami
-podpisów, a~tu --- wyłącznie funkcją skrótu i~solą, kosztem ujawnienia
-struktury koperty.
+odpowiada założonemu wymaganiu minimalizacji danych.
+
+Odpowiedniość wobec poświadczeń weryfikowalnych W3C~\cite{w3c-vc} wymaga przy tym
+zastrzeżenia. Tam selektywne ujawnianie realizują specjalizowane schematy
+podpisów, tu --- wyłącznie funkcja skrótu i~sól, co jest rozwiązaniem prostszym,
+lecz uboższym o~jedną istotną własność: \emph{nieskorelowalność prezentacji}
+(\emph{unlinkability}). Zobowiązania $c_i$ są statyczne, więc dwie prezentacje
+tego samego dyplomu u~dwóch różnych weryfikatorów niosą identyczną czwórkę
+wartości i~są trywialnie powiązywalne; koperta działa jak stały identyfikator.
+Schematy podpisów typu BBS+ pozwalają przy każdej prezentacji wyprowadzić świeży,
+nieskorelowany dowód. Wobec deklarowanego celu minimalizacji danych jest to
+ograniczenie realne: konstrukcja minimalizuje \emph{zakres} ujawnianych pól, nie
+zaś możliwość śledzenia posiadacza między weryfikatorami.
+
+\paragraph{Cykl życia soli.} Sole pełnią dwie sprzeczne role: są warunkiem
+odtworzenia koperty i~zarazem materiałem, którego zniszczenie realizuje usunięcie
+danych. Rozstrzyga to jawna \emph{polityka retencji}: wystawca przechowuje sole
+przez ustalony okres $T_r$, po czym trwale je niszczy. Przyjęto $T_r$~równe
+okresowi przechowywania dokumentacji przebiegu studiów, co czyni tę politykę
+elementem istniejących procedur archiwalnych uczelni, a~nie nowym obowiązkiem.
+
+W~okresie retencji koperta jest odtwarzalna: jej utrata nie unieważnia dyplomu
+(liść pozostaje w~partii on-chain), lecz wymaga ponownego eksportu przez
+wystawcę --- operacji analogicznej do wydania duplikatu dokumentu papierowego.
+Archiwizacja nie osłabia przy tym ukrywania wobec osób trzecich, ponieważ
+wystawca i~tak zna wartości wszystkich pól, które sam wystawił. Po upływie $T_r$
+odtworzenie przestaje być możliwe, a~zapisy on-chain przechodzą w~stan opisany
+niżej. Procedury zarządzania kluczami po stronie posiadacza pozostają poza
+zakresem pracy (rozdz.~\ref{ch:podsumowanie}).
+
+\paragraph{Zgodność z~RODO: usuwalność przez zniszczenie soli.} Na łańcuchu
+nie są publikowane żadne dane osobowe --- ani jawne, ani w~postaci skrótu:
+kontrakt przechowuje wyłącznie korzeń partii, a~w~razie unieważnienia ---
+liść, oba będące skrótami \emph{zobowiązań}, nie wartości pól. Klasyczne
+napięcie między niezmiennością łańcucha a~prawem do usunięcia danych
+(art.~17 RODO)~\cite{cnil2018} konstrukcja solonych zobowiązań łagodzi
+mechanizmem \emph{kryptograficznego usunięcia} (\emph{crypto-shredding}):
+po zniszczeniu soli $r_i$ zobowiązanie $c_i$ nie daje się otworzyć ani
+potwierdzić nawet atakiem słownikowym po małej domenie wartości.
+
+Warunkiem koniecznym jest jednak, by sól nie istniała \emph{u~nikogo}. Dopóki
+trwa okres retencji $T_r$, kopia u~wystawcy pozwala mu odtworzyć i~potwierdzić
+wartość pola, więc wobec niego zobowiązanie nie jest anonimowe i~żądanie
+usunięcia realizuje się usunięciem archiwum, nie zapisu on-chain. Dopiero
+zniszczenie soli po obu stronach --- u~posiadacza i~w~archiwum wystawcy ---
+domyka konstrukcję. Zapisy on-chain spełniają wówczas kryteria anonimizacji
+w~rozumieniu opinii WP29~\cite{wp29-anonymisation}: wyodrębnienie, powiązanie
+i~wnioskowanie przestają być możliwe dla kogokolwiek, a~usunięciu podlega
+wyłącznie materiał przechowywany poza łańcuchem. Należy przy tym
+zaznaczyć, że kwalifikacja skrótów z~solą jako danych zanonimizowanych pozostaje
+przedmiotem sporu prawnego, a~nie kwestią rozstrzygniętą; przedstawiona
+konstrukcja spełnia kryteria techniczne anonimizacji, lecz jej ocena prawna
+wykracza poza zakres tej pracy.
 
 \section{Zgodność wstecz}
 \label{sec:priv-zgodnosc}
 
 Koperta standardowa działa bez zmian --- weryfikator, który nie zna rozszerzenia
-prywatnego, przetwarza ją tak jak dotąd. Na poziomie partii przyjmujemy regułę
+prywatnego, przetwarza ją tak jak dotąd. Na poziomie partii przyjęto regułę
 rozłączności: dana partia jest w~całości standardowa albo w~całości prywatna, co
 usuwa dwuznaczność formatu \code{docHash} przy odtwarzaniu liścia i~pozwala obu
 trybom współistnieć w~jednym kontrakcie.

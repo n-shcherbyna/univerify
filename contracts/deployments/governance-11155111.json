@@ -1,0 +1,7 @@
+{
+  "chainId": 11155111,
+  "multisig": "0x8FB6E0e35fFa0005Cb313b537bB048395b4d8AAB",
+  "timelock": "0xDC5671C8B85c4e3129BD2451c6B7550B4DcAF576",
+  "minDelay": 120,
+  "threshold": 2
+}

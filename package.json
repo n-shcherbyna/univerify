@@ -19,7 +19,8 @@
         "benchmarks:export": "npm -w @univerify/benchmarks run export",
         "benchmarks:aggregate": "npm -w @univerify/benchmarks run aggregate",
         "benchmarks:all": "npm -w @univerify/benchmarks run all",
-        "benchmarks:smoke": "npm -w @univerify/benchmarks run smoke"
+        "benchmarks:smoke": "npm -w @univerify/benchmarks run smoke",
+        "benchmarks:privacy": "npm -w @univerify/benchmarks run bench:privacy"
     },
     "devDependencies": {
         "dotenv-cli": "^11.0.0",

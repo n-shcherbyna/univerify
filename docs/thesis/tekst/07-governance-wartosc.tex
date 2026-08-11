@@ -7,31 +7,33 @@ modelem zarządzania opartym na portfelu wielopodpisowym i~mechanizmie opóźnie
 czasowego. Następnie, mając już kompletny obraz kosztów (rozdz.~\ref{ch:l2})
 i~własności bezpieczeństwa systemu, przeprowadza analizę wartości: porównuje
 UniVerify z~podejściem tradycyjnym oraz z~infrastrukturą klucza publicznego i~stawia
-pytanie, czy marginalna przewaga łańcucha bloków uzasadnia jego zastosowanie.
+pytanie, czy przewaga blockchaina nad dojrzalszymi alternatywami uzasadnia jego
+zastosowanie.
 
 \section{Problem centralizacji uprawnień}
 \label{sec:gov-problem}
 
-W~systemie podstawowym zbiorem autoryzowanych wydawców zarządza jedno konto
+W~systemie podstawowym zbiorem autoryzowanych wystawców zarządza jedno konto
 zewnętrzne (\emph{externally owned account}, EOA) pełniące rolę właściciela
-kontraktu \code{DiplomaRegistry}. Właściciel może dodawać i~usuwać wydawców oraz
+kontraktu \code{DiplomaRegistry}. Właściciel może dodawać i~usuwać wystawców oraz
 uczelnie. Taka konstrukcja jest prosta, lecz wprowadza pojedynczy punkt awarii
 o~znaczeniu krytycznym dla całego modelu zaufania.
 
 Przejęcie tego jednego klucza pozwala napastnikowi w~jednej transakcji i~ze
-skutkiem natychmiastowym przepisać zbiór uprawnionych wydawców: autoryzować
+skutkiem natychmiastowym przepisać zbiór uprawnionych wystawców: autoryzować
 własny adres i~wydawać fałszywe, lecz formalnie poprawne dyplomy, albo odebrać
-uprawnienia legalnej uczelni. Co istotne, zmiana taka jest \emph{cicha} --- nie
-odróżnia się od uprawnionej operacji administracyjnej i~staje się skuteczna, zanim
-ktokolwiek zdąży zareagować. Osłabia to zasadniczą tezę pracy: rejestr, który
+uprawnienia legalnej uczelni. Co istotne, zmiana taka jest \emph{cicha} --- dalej
+w~tym rozdziale termin ten oznacza zmianę nieodróżnialną od uprawnionej operacji
+administracyjnej i~niewykrywalną, zanim nabierze mocy. Osłabia to zasadniczą tezę
+pracy: rejestr, który
 jeden podmiot może niepostrzeżenie zmodyfikować, nie jest w~praktyce
 istotnie odporniejszy na manipulację niż baza danych pod kontrolą tego samego
 podmiotu.
 
-Zauważmy, że problem nie dotyczy pojedynczego dyplomu --- te są zakotwiczone
+Problem nie dotyczy przy tym pojedynczego dyplomu --- te są zakotwiczone
 w~niezmiennych korzeniach Merkle --- lecz \emph{warstwy uprawnień} decydującej
 o~tym, czyje korzenie są uznawane za wiarygodne. To właśnie ta warstwa wymaga
-utwardzenia.
+wzmocnienia.
 
 \section{Model zarządzania: multisig + timelock}
 \label{sec:gov-model}
@@ -53,14 +55,56 @@ portfel wielopodpisowy opisany niżej. Adres administratora timelocka ustawiono 
 \code{address(0)}, co trwale usuwa administracyjną furtkę.
 
 \paragraph{Warstwa progu.} Jedynym podmiotem uprawnionym do planowania
-i~anulowania operacji jest \code{RegistryMultisig} --- ręcznie napisany portfel
-$m$-z-$n$ w~konwencji klasycznego \code{MultiSigWallet} firmy
-ConsenSys~\cite{consensys-multisig}. Transakcja wymaga zebrania $m$~potwierdzeń
+i~anulowania operacji jest \code{RegistryMultisig} --- portfel $m$-z-$n$ napisany
+na potrzeby tej pracy, w~konwencji klasycznego \code{MultiSigWallet} firmy
+ConsenSys~\cite{consensys-multisig}. Wybór implementacji własnej zamiast
+audytowanego standardu branżowego (Safe) jest podyktowany celem pomiarowym:
+Safe zbiera podpisy \emph{poza łańcuchem} i~wykonuje operację jedną transakcją,
+przez co narzut progu staje się w~pomiarze niewidoczny. Konstrukcja użyta tutaj
+zapisuje na łańcuchu każdy krok --- zgłoszenie, potwierdzenia, wykonanie ---
+i~dzięki temu pozwala zmierzyć pełny, jawny koszt zarządzania
+(sekcja~\ref{sec:gov-koszt}). Cena tej przejrzystości jest jednak realna: koszt
+zgłoszenia operacji jest o~rząd wielkości wyższy niż w~Safe, a~implementacja
+własna nie przeszła audytu i~nosi ograniczenie rezydualne opisane niżej. Do
+wdrożenia produkcyjnego właściwym wyborem jest Safe
+(rozdz.~\ref{ch:podsumowanie}); liczby z~sekcji~\ref{sec:gov-koszt} należy wówczas
+czytać jako \emph{górne ograniczenie} narzutu. Transakcja wymaga zebrania $m$~potwierdzeń
 spośród $n$~bieżących właścicieli, zanim zostanie wykonana. Portfel jest
 \emph{samorządny}: operacje \code{addOwner}, \code{removeOwner}
 i~\code{changeThreshold} może wywołać wyłącznie sam kontrakt (poprzez wywołanie
 \code{onlySelf}), a~więc tylko za zgodą progu. Umożliwia to rotację skompromitowanego
 sygnatariusza bez wymiany całej infrastruktury.
+
+\paragraph{Przyjęte parametry.} Model jest sparametryzowany trójką
+$(\code{minDelay}, m, n)$ i~bez podania jej wartości nie da się ocenić żadnej
+z~gwarancji omawianych niżej. Jako konfigurację docelową przyjęto
+$\code{minDelay} = 48$~godzin przy progu $m=3$ z~$n=5$. Dobór opóźnienia jest
+kompromisem: musi być na tyle długie, by niezależny obserwator zdążył zauważyć
+zdarzenie \code{CallScheduled} i~zaalarmować sygnatariuszy w~cyklu pracy
+instytucji (dwie doby obejmują weekend), a~zarazem na tyle krótkie, by rutynowa
+zmiana listy wystawców nie paraliżowała administracji. Próg $3$ z~$5$ toleruje
+niedostępność dwóch sygnatariuszy bez utraty żywotności i~wymaga przejęcia trzech
+niezależnych kluczy do złamania bezpieczeństwa.
+
+Pomiary kosztu w~sekcji~\ref{sec:gov-koszt} wykonano w~konfiguracji minimalnej
+$m=n=2$; narzut rośnie z~$n$, ponieważ \code{execute} przelicza liczbę
+potwierdzeń, iterując po bieżącym zbiorze właścicieli. We wdrożeniu testowym na
+sieci Sepolia użyto $\code{minDelay} = 120$~sekund --- wartości wyłącznie
+technicznej, pozwalającej przejść pełną ścieżkę zarządzania w~jednej sesji
+testowej i~nieodpowiadającej żadnemu założeniu bezpieczeństwa.
+
+\paragraph{Kto trzyma klucze.} Model nie \emph{usuwa} zaufania, lecz je
+\emph{rozprasza} --- i~uczciwość wymaga wskazania, dokąd. Ktoś musi dysponować
+$n$~kluczami, a~sposób wyboru i~wymiany tego zbioru pozostaje poza łańcuchem, więc
+to on wyznacza faktyczny korzeń zaufania systemu. Naturalnym kandydatem jest
+konsorcjum uczelni, w~którym każda instytucja wnosi jednego sygnatariusza:
+zbiór jest wtedy jawny, a~żadna pojedyncza uczelnia ani organ nadzoru nie
+kontroluje progu. Rozwiązaniem alternatywnym jest powierzenie zbioru organowi
+centralnemu, co jednak odtwarza pojedynczy punkt zaufania w~nowym miejscu
+i~znosi większość korzyści z~całej konstrukcji. Praca nie rozstrzyga tego
+wyboru --- jest on instytucjonalny, nie techniczny --- lecz wskazuje, że bez
+niego twierdzenie o~,,usunięciu pojedynczego punktu zaufania'' pozostaje
+niepełne: przenosi je z~jednego klucza na regulamin zbioru sygnatariuszy.
 
 Złożenie obu warstw daje następującą własność: żadna zmiana uprawnień nie jest
 ani jednoosobowa, ani natychmiastowa. Wymaga $m$~podpisów \emph{oraz} przetrwania
@@ -69,22 +113,24 @@ okna opóźnienia, w~którym pozostaje publicznie widoczna i~odwracalna
 
 \begin{figure}[H]
 \centering
-\begin{tikzpicture}[node distance=10mm and 20mm]
+\begin{tikzpicture}[node distance=12mm and 22mm,
+                    blok/.append style={minimum width=35mm},
+                    blokszary/.append style={minimum width=35mm},
+                    blokakcent/.append style={minimum width=35mm}]
   \node[blokakcent] (ms) {\code{RegistryMultisig}\\próg $m$-z-$n$};
   \node[blok, above=of ms] (sig) {sygnatariusze ($n$ portfeli)};
   \node[blokakcent, right=of ms] (tl) {\code{TimelockController}\\opóźnienie \code{minDelay}};
   \node[blokszary, right=of tl] (reg) {\code{DiplomaRegistry}\\(owner = timelock)};
   \draw[strz] (sig) -- node[etyk, right=1mm] {\code{submit}, \code{confirm}$\times m$} (ms);
-  \draw[strz] (ms) -- node[etyk, above=1mm] {\code{schedule}} (tl);
-  \draw[strz] (tl) -- node[etyk, above=1mm] {\code{execute}\\po opóźnieniu} (reg);
-  \draw[strz, dashed] (ms.south) to[out=-30, in=-150]
-    node[etyk, below=1.5mm] {\code{cancel} w~oknie opóźnienia} (tl.south);
-  \node[etyk, below=17mm of tl]
-    {zdarzenie \code{CallScheduled} --- zmiana publicznie widoczna, zanim nabierze mocy};
+  \draw[strz] (ms) -- node[etyk, above=2mm] {\code{schedule}} (tl);
+  \draw[strz] (tl) -- node[etyk, above=2mm] {\code{execute}\\{\footnotesize po opóźnieniu}} (reg);
+  \draw[strz, dashed] (ms.south) to[out=-35, in=-145]
+    node[etyk, below=2mm] {\code{cancel} w~oknie opóźnienia} (tl.south);
 \end{tikzpicture}
 \caption[Model zarządzania: multisig + timelock]{Model zarządzania: każda operacja administracyjna wymaga progu
 $m$~podpisów, a~następnie przetrwania publicznego okna opóźnienia, w~którym może
-zostać anulowana.}
+zostać anulowana. Zaplanowanie operacji emituje zdarzenie \code{CallScheduled},
+dzięki czemu zmiana jest publicznie widoczna, zanim nabierze mocy.}
 \label{fig:governance}
 \end{figure}
 
@@ -102,14 +148,14 @@ natychmiastowy i~nieodwracalny.
 \label{tab:gov-threat}
 \begin{tabular}{@{}lcc@{}}
 \toprule
-Własność & Pojedynczy EOA & Multisig $m$-z-$n$ + timelock \\
+Własność & Pojedynczy EOA & Multisig 3-z-5 + timelock 48~h \\
 \midrule
-Wyciek jednego klucza przepisuje uprawnienia & tak & nie --- wymaga $m$~podpisów \\
+Wyciek jednego klucza przepisuje uprawnienia & tak & nie --- wymaga 3~podpisów \\
 Zmiana uprawnień cicha i~natychmiastowa & tak & nie --- planowana i~opóźniona \\
-Zmiana wykrywalna, zanim zadziała & nie & tak --- zdarzenie + okno opóźnienia \\
-Złośliwa zmiana odwracalna & nie & tak --- \code{cancel} przez próg \\
+Zmiana wykrywalna, zanim zadziała & nie & tak --- w~oknie 48~h od \code{CallScheduled} \\
+Złośliwa zmiana odwracalna & nie & tak --- \code{cancel} w~tym samym oknie \\
 Odtworzenie po kompromitacji sygnatariusza & --- & tak --- \code{removeOwner}/\code{addOwner} \\
-Żywotność przy niedostępnym sygnatariuszu & --- & toleruje do $n-m$ niedostępnych \\
+Żywotność przy niedostępnym sygnatariuszu & --- & toleruje 2~niedostępnych z~5 \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -121,6 +167,26 @@ W~tym samym oknie próg sygnatariuszy może operację anulować. Rejestr uprawni
 się więc \emph{publicznym, dopisywalnym i~odpornym na ciche wsteczne przepisanie}
 logiem --- dokładnie tą własnością, do której wraca analiza wartości
 w~sekcji~\ref{sec:gov-porownanie}.
+
+\paragraph{Cena opóźnienia: reakcja awaryjna.} Opóźnienie chroni przed cichą
+zmianą uprawnień, lecz w~jednym scenariuszu działa przeciw obrońcy. Gdy dojdzie
+do przejęcia klucza \emph{wystawcy}, odebranie mu uprawnień wymaga zebrania
+$m$~podpisów \emph{oraz} przeczekania \code{minDelay} --- przy przyjętych 48~h
+napastnik dysponuje dwiema dobami na publikowanie kolejnych fałszywych korzeni.
+Sytuację pogarsza brak unieważniania na poziomie partii: kontrakt udostępnia
+wyłącznie \code{revokeFromBatch}, działające na pojedynczym dokumencie, więc
+wycofanie sfałszowanej partii 10~tys.\ dyplomów wymagałoby 10~tys.\ transakcji.
+
+Jest to realna luka projektowa, nie tylko brak opisu. Wskazać można dwie ścieżki
+jej domknięcia, obie pozostawione poza zakresem implementacyjnym pracy. Pierwsza
+to \code{revokeBatchRoot} --- operacja unieważniająca cały korzeń jednym zapisem,
+tania i~prosta, lecz gruboziarnista: cofa również dyplomy wydane w~tej partii
+uczciwie. Druga to wydzielenie roli \emph{strażnika} (\emph{guardian})
+z~uprawnieniem wyłącznie do anulowania zaplanowanych operacji i~wstrzymania
+wystawcy, bez prawa zmiany rejestru --- ścieżka szybka, bo pomijająca opóźnienie,
+a~zarazem niegroźna, bo z~definicji nie może niczego dodać. Druga jest właściwsza:
+zachowuje asymetrię, w~której działania \emph{rozszerzające} uprawnienia są powolne
+i~jawne, a~\emph{ograniczające} --- natychmiastowe.
 
 \paragraph{Ograniczenie rezydualne.} Operacja \code{removeOwner} nie czyści
 potwierdzeń usuniętego właściciela na transakcjach nadal oczekujących. Jeśli ten sam
@@ -134,9 +200,11 @@ transakcje oczekujące.
 \label{sec:gov-koszt}
 
 Narzut modelu zmierzono testem \code{GovernanceGasTest}
-(\code{forge test --gas-report}). Wszystkie wdrożenia kontraktów oraz jednorazowe
+(\code{forge test --gas-report}) w~konfiguracji minimalnej $m=n=2$; dla progu
+docelowego 3-z-5 narzut jest wyższy o~koszt iteracji po większym zbiorze
+właścicieli w~\code{execute}. Wszystkie wdrożenia kontraktów oraz jednorazowe
 przekazanie własności realizowane są w~\code{setUp()}, dzięki czemu ciało każdego
-testu mierzy dokładnie jedną operację onboardu wydawcy, a~raportowana przez Foundry
+testu mierzy dokładnie jedną operację onboardu wystawcy, a~raportowana przez Foundry
 suma na test (wyłączająca \code{setUp}) jest liczbą podaną bezpośrednio, niewymagającą
 dekompozycji.
 
@@ -169,54 +237,73 @@ Suma & 799\,219 & samo wykonanie on-chain \\
 \end{tabular}
 \end{table}
 
-Kluczowa obserwacja: zmiany uprawnień (dodanie lub usunięcie wydawcy) są
-\emph{rzadkie}. Narzut 740\,008 gazu ponoszony jest raz na wydawcę i~amortyzuje się
-na wszystkich dyplomach, które ten wydawca później wyda. Nie wpływa więc na koszt
-rejestracji pojedynczego dyplomu zmierzony w~rozdziale~\ref{ch:l2} --- od
-$9\cdot10^{-7}$~USD w~najtańszej badanej sieci warstwy drugiej --- który
-pozostaje niezmieniony.
+Suma czterech wywołań (799\,219 gazu) jest niższa od kosztu całego testu
+(824\,254 gazu) o~narzut ciała testu --- przygotowanie i~kodowanie ABI
+argumentów wywołań, około 3\% --- który nie jest kosztem on-chain. Porównanie
+z~linią bazową używa spójnie sum na~test po~obu stronach, więc narzut ten
+znosi się w~różnicy jedynie częściowo i~podana wartość 740\,008 gazu jest
+oszacowaniem ostrożnym (z~góry).
+
+Istotne jest przy tym, że zmiany uprawnień (dodanie lub usunięcie wystawcy) są
+\emph{rzadkie}. Narzut 740\,008 gazu ponoszony jest raz na wystawcę i~amortyzuje się
+na wszystkich dyplomach, które ten wystawca później wyda. Koszt rejestracji
+pojedynczego dyplomu, zmierzony w~rozdziale~\ref{ch:l2}, pozostaje więc
+niezmieniony.
 
 \section{Porównanie podejść: status quo, PKI, blockchain}
 \label{sec:gov-porownanie}
 
 Mając kompletny obraz kosztów i~gwarancji, można postawić pytanie zasadnicze: co
-właściwie zyskujemy, używając łańcucha bloków zamiast tańszych, dobrze
-zrozumianych alternatyw? Rozważmy trzy podejścia do weryfikacji dyplomu:
+właściwie daje blockchain wobec tańszych i~dobrze zrozumianych alternatyw?
+Poniżej zestawiono trzy podejścia do weryfikacji dyplomu:
 
 \begin{description}
   \item[Status quo] --- weryfikator kontaktuje się z~uczelnią (telefon, e-mail,
         formularz) i~prosi o~potwierdzenie. Dominujący dziś sposób.
   \item[PKI] --- uczelnia podpisuje cyfrowo dokument dyplomu kluczem
         certyfikowanym w~infrastrukturze klucza publicznego; weryfikator sprawdza
-        podpis offline wobec certyfikatu wydawcy.
+        podpis offline wobec certyfikatu wystawcy.
+  \item[PKI + CT] --- to samo, uzupełnione o~publiczny, wyłącznie dopisywalny
+        log wystawionych certyfikatów wystawców w~modelu \emph{Certificate
+        Transparency}~\cite{rfc6962} (sekcja~\ref{sec:pki}).
   \item[Blockchain (UniVerify)] --- korzenie Merkle partii oraz zbiór uprawnionych
-        wydawców publikowane są w~kontrakcie na publicznym łańcuchu.
+        wystawców publikowane są w~kontrakcie na publicznym blockchainie.
 \end{description}
 
-Tabela~\ref{tab:gov-value} zestawia je względem pięciu własności.
+Tabela~\ref{tab:gov-value} zestawia je względem sześciu własności.
 
 \begin{table}[H]
 \centering
-\caption{Macierz wartości: trzy podejścia wobec pięciu własności.}
+\caption{Macierz wartości: cztery podejścia wobec sześciu własności.}
 \label{tab:gov-value}
-\begin{tabular}{@{}lccc@{}}
+\begin{tabular}{@{}lcccc@{}}
 \toprule
-Własność & Status quo & PKI & UniVerify \\
+Własność & \makecell{Status\\quo} & PKI & \makecell{PKI\\+ CT} & UniVerify \\
 \midrule
-Weryfikacja bez kontaktu z~wydawcą        & nie  & tak & tak \\
-Niski koszt jednostkowej weryfikacji      & nie  & tak & tak \\
-Działa, gdy wydawca przestał istnieć      & nie  & częściowo & tak \\
-Publiczny, dopisywalny log uprawnień do~wydawania & nie & nie & tak \\
-Odporność na ciche wsteczne odebranie uprawnień   & --- & nie & tak \\
+Weryfikacja bez kontaktu z~wystawcą                & nie & tak & tak & tak \\
+Niski koszt jednostkowej weryfikacji              & nie & tak & tak & tak \\
+Działa, gdy wystawca przestał istnieć              & nie & częściowo & częściowo & tak \\
+Publiczny, dopisywalny log uprawnień do~wydawania & nie & nie & tak & tak \\
+Odporność na ciche wsteczne odebranie uprawnień   & --- & nie & tak & tak \\
+Jeden widok logu bez warstwy dodatkowej           & --- & --- & nie & tak \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-Wniosek z~tabeli jest dla łańcucha bloków niewygodny, lecz uczciwy. PKI
+Ocena „częściowo'' w~trzecim wierszu wymaga komentarza. Podpis cyfrowy
+pozostaje weryfikowalny offline tak długo, jak długo daje się zwalidować
+łańcuch certyfikatów: po zniknięciu wystawcy certyfikaty wygasają bez
+możliwości odnowienia, a~usługi statusu (CRL/OCSP) przestają być utrzymywane.
+Weryfikacja długoterminowa wymaga wówczas dodatkowej infrastruktury
+znakowania czasem i~archiwizacji materiału walidacyjnego (podpisy w~formatach
+długoterminowych), która w~praktyce rzadko obejmuje dyplomy --- stąd ocena
+częściowa, nie negatywna.
+
+Zasadniczy wniosek z~tabeli jest dla blockchaina niewygodny, lecz uczciwy. PKI
 \emph{dorównuje} rozwiązaniu blockchainowemu w~dwóch pierwszych, najczęściej
 przywoływanych zaletach: pozwala na niezależną weryfikację offline bez kontaktu
-z~wydawcą i~po znikomym koszcie jednostkowym. Podpis cyfrowy pod dyplomem daje to
-samo bez konieczności utrzymywania łańcucha bloków. Argument „blockchain eliminuje
+z~wystawcą i~po znikomym koszcie jednostkowym. Podpis cyfrowy pod dyplomem daje to
+samo bez konieczności utrzymywania blockchaina. Argument „blockchain eliminuje
 telefon do dziekanatu'' nie jest więc argumentem za \emph{blockchainem} --- jest
 argumentem za \emph{kryptografią asymetryczną}, którą PKI dostarcza taniej.
 
@@ -225,29 +312,97 @@ argumentem za \emph{kryptografią asymetryczną}, którą PKI dostarcza taniej.
 
 Różnica pojawia się dopiero w~dwóch ostatnich wierszach tabeli~\ref{tab:gov-value},
 dotyczących nie pojedynczego dokumentu, lecz \emph{warstwy uprawnień do wydawania}.
-W~modelu PKI o~tym, które certyfikaty wydawców są ważne, decyduje urząd certyfikacji.
+W~modelu PKI o~tym, które certyfikaty wystawców są ważne, decyduje urząd certyfikacji.
 Może on unieważnić lub wystawić certyfikat prywatnie, a~listy unieważnień (CRL/OCSP)
 odzwierciedlają \emph{bieżący} stan --- nie dają publicznego, niemodyfikowalnego
 zapisu tego, kto i~kiedy był uprawniony, ani nie chronią przed cichą wsteczną
 zmianą tego zbioru. Weryfikator ufa, że urząd nie przepisał historii.
 
-Marginalna wartość łańcucha bloków w~tym zastosowaniu sprowadza się zatem do
-\emph{jednej} własności, wąskiej, lecz realnej: \textbf{publicznego, dopisywalnego,
-odpornego na manipulację logu tego, kto może wydawać dyplomy}, którego nie da się
+\paragraph{Certificate Transparency zamyka tę lukę --- prawie.} Powyższy argument
+byłby rozstrzygający, gdyby publiczny log uprawnień dało się uzyskać wyłącznie
+na blockchainie. Tak nie jest. Certificate Transparency~\cite{rfc6962} realizuje
+dokładnie tę własność --- publiczny, wyłącznie dopisywalny log wystawionych
+certyfikatów z~dowodami spójności --- na drzewach Merkle, bez łańcucha bloków,
+produkcyjnie od ponad dekady i~po koszcie nieporównanie niższym niż utrzymanie
+kontraktu. Czwarta i~piąta własność w~tabeli~\ref{tab:gov-value} przestają zatem
+odróżniać blockchain od dojrzałej alternatywy. Uczciwe postawienie sprawy wymaga
+przyznania, że \emph{większość} przewagi, którą praca zamierzała wykazać, jest
+osiągalna w~modelu PKI+CT.
+
+Pozostaje różnica wąska i~jedna, ujęta w~ostatnim wierszu tabeli. Log CT jest
+prowadzony przez wyznaczony zbiór operatorów, a~o~tym, którym z~nich klient ufa,
+rozstrzyga polityka dostawcy przeglądarki. Log może wobec różnych obserwatorów
+przedstawić \emph{rozdwojony widok} (\emph{split view}): dwa niesprzeczne
+wewnętrznie, lecz różne stany, z~których każdy ma poprawne dowody spójności.
+Wykrycie takiego rozdwojenia wymaga, by obserwatorzy porównywali swoje widoki
+między sobą. Mechanizm do tego przeznaczony był specyfikowany w~IETF jako
+osobny dokument~\cite{trans-gossip}, lecz nigdy nie osiągnął statusu standardu
+--- prace nad nim wygasły. W~praktyce spójność widoku opiera się na wymogu
+zebrania poświadczeń od kilku niezależnych operatorów oraz na ich wzajemnym
+audycie, a~więc na założeniu, że operatorzy nie działają w~zmowie.
+
+Publiczny łańcuch bloków rozwiązuje ten sam problem inaczej: jednolitość widoku
+jest u~niego własnością warstwy konsensusu, nie dodatkową warstwą protokołu.
+Nie ma logu, którego stan mógłby się rozdwoić wobec dwóch weryfikatorów, bo
+o~stanie rozstrzyga ten sam mechanizm, który utrzymuje sam łańcuch.
+
+Marginalna wartość blockchaina w~tym zastosowaniu sprowadza się zatem do
+własności węższej, niż wynikałoby z~porównania z~samym PKI: \emph{publicznego,
+dopisywalnego, odpornego na manipulację logu tego, kto może wydawać dyplomy,
+o~jednym widoku dla wszystkich weryfikatorów, bez zaufania do zbioru operatorów
+logu}. Logu, którego nie da się
 po cichu wstecznie przepisać. Model zarządzania z~sekcji~\ref{sec:gov-model} jest
-tym, co tę własność urzeczywistnia --- bez timelocka i~progu sam łańcuch bloków tej
+tym, co tę własność urzeczywistnia --- bez timelocka i~progu sam blockchain tej
 gwarancji by nie dawał, bo pojedynczy właściciel mógłby log przepisać w~granicach
 swoich uprawnień.
 
-Pozostaje pytanie o~proporcję. Ta jedna własność kosztuje od $9\cdot10^{-7}$ do
-około $2\cdot10^{-5}$~USD na dyplom w~warstwie drugiej, zależnie od sieci
-(rozdz.~\ref{ch:l2}), plus jednorazowy, amortyzowany narzut
-740\,008 gazu na zmianę uprawnień (sekcja~\ref{sec:gov-koszt}) --- koszt niski
-w~wartościach bezwzględnych, lecz niezerowy wobec dojrzałej i~tańszej alternatywy,
-jaką jest PKI. Praca nie rozstrzyga tego arbitralnie: teza brzmi, że blockchain
-w~weryfikacji dyplomów wygrywa \emph{wtedy i~tylko wtedy}, gdy publiczny,
-niemodyfikowalny log uprawnień jest wymaganiem samym w~sobie --- na przykład
-w~środowisku o~niskim zaufaniu do centralnego urzędu certyfikacji lub przy potrzebie
-ponadinstytucjonalnej, długoterminowej audytowalności. Tam, gdzie taki wymóg nie
-występuje, PKI pozostaje rozwiązaniem właściwym. Rozgraniczenie tych dwóch przypadków
-jest głównym wkładem analitycznym niniejszej pracy.
+\paragraph{Studium przypadku: uczelnia skali politechniki.} Skalę kosztu dobrze
+obrazuje rachunek dla dużej uczelni technicznej wydającej rzędu 10~tys.\ dyplomów
+rocznie. Publikacja partii na~Base kosztuje około $9\cdot10^{-4}$~USD niezależnie
+od jej rozmiaru (tab.~\ref{tab:issue-tx}). Nawet przy kilkunastu partiach rocznie
+--- na przykład osobnej partii na wydział i~semestr --- łączny koszt publikacji nie
+przekracza dwóch centów. Po doliczeniu jednostkowych unieważnień
+($1{,}1\cdot10^{-3}$~USD, tab.~\ref{tab:revoke}) oraz sporadycznych,
+amortyzowanych zmian uprawnień (sekcja~\ref{sec:gov-koszt}) całkowity roczny koszt
+on-chain pozostaje poniżej dziesięciu centów.
+
+Koszt transakcyjny nie jest zatem czynnikiem decyzyjnym w~żadnym realistycznym
+scenariuszu wdrożenia. Realne koszty leżą w~integracji z~systemami dziekanatowymi
+i~w~utrzymaniu operacyjnym (rozdz.~\ref{ch:podsumowanie}), a~wybór między
+rozważanymi podejściami rozstrzyga się na osi wymagań, nie kosztów.
+
+Pozostaje pytanie o~proporcję. Wyodrębniona wyżej własność kosztuje --- zależnie
+od sieci --- ułamki mikrocenta na dyplom (rozdz.~\ref{ch:l2}) plus jednorazowy
+narzut 740\,008 gazu na zmianę uprawnień. Jest to koszt niski w~wartościach
+bezwzględnych, lecz niezerowy --- i~ponoszony wobec dwóch alternatyw, z~których
+każda jest dojrzalsza.
+
+Praca nie rozstrzyga tej proporcji arbitralnie. Wniosek ma postać stopniowanej
+rekomendacji, a~nie opowiedzenia się po jednej stronie.
+
+\begin{description}
+  \item[Samo PKI wystarcza,] gdy wymaganiem jest wyłącznie niezależna od wystawcy,
+        tania weryfikacja dokumentu. Argument ,,blockchain eliminuje telefon do
+        dziekanatu'' jest w~całości zaspokojony na tym poziomie.
+  \item[PKI z~Certificate Transparency wystarcza,] gdy dodatkowym wymaganiem jest
+        publiczna, historyczna audytowalność uprawnień do wydawania --- i~jest to
+        rozwiązanie właściwe dla zdecydowanej większości realnych wdrożeń,
+        tańsze i~lepiej zbadane niż blockchain.
+  \item[Blockchain wygrywa wtedy i~tylko wtedy,] gdy do powyższego dochodzi
+        wymaganie \emph{jednolitości widoku bez zaufania do operatorów logu}:
+        gdy weryfikatorzy nie mogą przyjąć, że wyznaczony zbiór operatorów nie
+        działa w~zmowie i~nie przedstawia im rozdwojonego widoku, ani nie mogą
+        polegać na warstwie uzgadniania widoków, która w~ekosystemie CT nie
+        została ustandaryzowana. Scenariuszem modelowym jest weryfikacja
+        ponadinstytucjonalna i~transgraniczna, w~której żaden pojedynczy podmiot
+        --- ani urząd certyfikacji, ani operator logu --- nie jest akceptowany
+        przez wszystkie strony.
+\end{description}
+
+Trzy powyższe progi, a~zwłaszcza wyodrębnienie trzeciego, stanowią główny wkład
+analityczny niniejszej pracy. Jest on dla tezy blockchainowej mniej korzystny,
+niż zakładano na wstępie: uwzględnienie Certificate Transparency przenosi
+większość deklarowanej przewagi na rozwiązanie bez łańcucha bloków i~zawęża
+uzasadnione zastosowanie blockchaina do przypadku brzegowego. Przypadek ten
+pozostaje jednak realny, a~jego cena transakcyjna --- znikoma w~porównaniu
+z~kosztem sporu o~to, komu wolno wystawiać dyplomy.

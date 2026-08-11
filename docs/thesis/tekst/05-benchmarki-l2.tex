@@ -21,42 +21,75 @@ Arbitrum Nitro, Base jako przedstawiciel stosu OP oraz zkSync~Era jako rollup
 oparty na dowodach \emph{validity proof}. Dobór ten pozwala
 porównać nie pojedyncze wdrożenia, lecz reprezentatywne klasy rollupów.
 
-Każdą sieć mierzono na jej publicznej sieci testowej. \emph{Zużycie gazu} oraz
-\emph{opłata za dane L1} są wielkościami rzeczywistymi, odczytanymi z~potwierdzeń transakcji
-(ang. \emph{receipt}), natomiast koszty w~USD modelowane są na podstawie historycznych
-wartości \code{baseFeePerGas} warstwy pierwszej (opłata bazowa mechanizmu
-EIP-1559~\cite{eip1559}) z~ostatnich 90~dni (percentyle p10/p50/p90). Wszystkie wyniki w~USD przeliczono kursem
-$\text{ETH}/\text{USD}=3500$ (snapshot z~dnia 13~maja~2026~r.); wpływ tego założenia
-badany jest w~sekcji~\ref{sec:l2-wrazliwosc}. Pomiary wykonano 19~maja~2026~r.
+Każdą sieć mierzono na jej publicznej sieci testowej; wiersz warstwy pierwszej
+oznaczono w~tabelach jako „Ethereum L1 (Sepolia)'', aby odróżnić \emph{miejsce
+pomiaru} od \emph{warunków wyceny}. \emph{Zużycie gazu} oraz \emph{opłata za dane
+L1} są wielkościami rzeczywistymi, odczytanymi z~potwierdzeń transakcji
+(\emph{receipt}).
 
-Dla operacji \code{issueBatchRoot} użyto rozmiarów paczek 1, 10, 100,
-1\,000 oraz 10\,000 dyplomów. Dla \code{revokeFromBatch} zebrano 30~próbek
-przeciwko paczce bazowej o~rozmiarze 40, z~losowym wyborem unieważnianych liści.
-Dla \code{statusWithProof} zebrano 100~próbek czasu odpowiedzi RPC. Każdy pomiar
-opóźnienia powtórzono $N{=}30$ razy, a~raportowane wartości są średnią z~trzech
-niezależnych przebiegów pomiarowych.
+Koszty w~USD są natomiast projekcją na warunki sieci głównych. Zasada jest
+następująca: zużycie gazu pochodzi z~sieci testowych, a~ceny --- z~sieci głównych,
+ponieważ gaz na testnetach nie ma wartości ekonomicznej.
+
+Opłatę bazową mechanizmu EIP-1559~\cite{eip1559} odczytano z~głównej sieci
+Ethereum przez \code{eth\_feeHistory}. Ponieważ okno 90~dni obejmuje około
+648~tys.\ bloków, a~pojedyncze wywołanie zwraca ich ograniczoną liczbę, zebrano
+\emph{próbkę systematyczną}: 90~wywołań z~parametrem \code{blockCount} równym~1,
+po jednym na dobę, w~odstępie 7200~bloków (dobowa liczba bloków przy czasie
+bloku 12~s). Z~każdej próbki pobrano \code{baseFeePerGas} oraz
+\code{baseFeePerBlobGas}, a~zbiór 90~wartości sprowadzono do percentyli p10, p50
+i~p90. Ceny gazu sekwenserów pobrano z~głównych sieci badanych rollupów.
+Wszystkie wyniki przeliczono kursem $\text{ETH}/\text{USD}=3500$ (migawka z~dnia
+13~maja~2026~r.), którego wpływ bada sekcja~\ref{sec:l2-wrazliwosc}. Pomiary
+wykonano 19~maja~2026~r.
+
+Dla operacji \code{issueBatchRoot} użyto rozmiarów partii $N \in \{1, 10, 100,
+1000, 10\,000\}$. Dla \code{revokeFromBatch} zebrano 30~próbek przeciwko partii
+bazowej o~rozmiarze 40, z~losowym wyborem unieważnianych liści; rozmiar ten
+odpowiada dowodowi 6-elementowemu ($\lceil \log_2 40 \rceil = 6$), czyli
+głębokości typowej dla partii wydziałowej, a~zarazem wystarczająco małej, by
+30~losowych unieważnień nie wyczerpało partii. Czas potwierdzenia zapisu mierzono
+również w~30~powtórzeniach na~operację, a~dla odczytu \code{statusWithProof}
+zebrano 100~próbek czasu odpowiedzi RPC. Wszystkie wielkości agregowano po trzech
+niezależnych przebiegach pomiarowych, co daje odpowiednio 90 i~300~próbek na
+sieć.
+
+\paragraph{Zmienność między przebiegami.} Trzy przebiegi wykonano właśnie po to,
+by uchwycić zmienność warunków sieciowych, więc jej wynik należy podać. Mediany
+zużycia gazu dla \code{revokeFromBatch} są w~trzech sieciach praktycznie
+identyczne (rozrzut poniżej 0{,}02\% dla warstwy pierwszej, Base i~zkSync),
+natomiast dla Arbitrum wynoszą kolejno 59\,806, 60\,218 i~74\,347 --- rozrzut
+24\%. Przyczyną jest konstrukcja jednostki: \code{gasUsed} raportowany przez
+Arbitrum zawiera składnik odpowiadający zapisowi danych na~L1 i~dryfuje wraz
+z~opłatą bazową warstwy pierwszej. Arbitrum dzieli więc z~zkSync~Era własność
+omówioną w~sekcji~\ref{sec:l2-dyskusja}: jego gaz nie jest czystą jednostką
+wykonania i~nie jest porównywalny z~gazem EVM. Wnioski kosztowe pozostają w~mocy,
+ponieważ opierają się na wartościach w~USD, w~których składnik danych L1 jest
+wyceniany osobno. Mediany latencji potwierdzenia wahają się między przebiegami
+od~1\% (warstwa pierwsza) do~56\% (Arbitrum), co jest kolejnym argumentem za
+traktowaniem pomiarów czasu jako orientacyjnych.
 
 \section{Koszt operacji \code{issueBatchRoot}}
 \label{sec:l2-issue}
 
-Operacja \code{issueBatchRoot} publikuje korzeń Merkle całej paczki dyplomów.
+Operacja \code{issueBatchRoot} publikuje korzeń Merkle całej partii dyplomów.
 Ponieważ na łańcuchu zapisywany jest zawsze pojedynczy 32-bajtowy korzeń, zużycie
-gazu i~koszt transakcji są praktycznie niezależne od liczby dyplomów w~paczce
+gazu i~koszt transakcji są praktycznie niezależne od liczby dyplomów w~partii
 (tab.~\ref{tab:issue-tx}); różnicę kosztu między sieciami tworzy sposób
 rozliczania danych, nie ich rozmiar.
 
 \begin{table}[H]
   \centering
   \caption[Operacja \code{issueBatchRoot}: zużycie gazu i~koszt transakcji]{Operacja \code{issueBatchRoot}: zużycie gazu i~koszt transakcji
-  (scenariusz p50, $\text{ETH}/\text{USD}{=}3500$); zakresy obejmują rozmiary
-  paczek $n \in \{1, \ldots, 10\,000\}$. Gaz zkSync~Era wyrażony jest
+  (scenariusz p50, $\text{ETH}/\text{USD}=3500$); zakresy obejmują rozmiary
+  partii $N \in \{1, \ldots, 10\,000\}$. Gaz zkSync~Era wyrażony jest
   w~jednostce natywnej, nieporównywalnej z~EVM.}
   \label{tab:issue-tx}
-  \begin{tabular}{lrr}
+  \begin{tabular}{lcc}
   \toprule
   Sieć & Gaz & Koszt transakcji [USD] \\
   \midrule
-  Sepolia (L1) & 51\,012--51\,024   & 0{,}0320 \\
+  Ethereum L1 (Sepolia) & 51\,012--51\,024   & 0{,}0320 \\
   Arbitrum     & 51\,000--51\,024   & 0{,}0179 \\
   Base         & 51\,012            & 0{,}0009 \\
   zkSync Era   & 131\,462--151\,171 & 0{,}0230--0{,}0265 \\
@@ -65,18 +98,18 @@ rozliczania danych, nie ich rozmiar.
 \end{table}
 
 Praktyczną miarą jest koszt w~przeliczeniu na jeden dyplom, malejący wraz ze
-wzrostem paczki dzięki amortyzacji stałego kosztu publikacji korzenia
-(tabela~\ref{tab:per-diploma}, rys.~\ref{fig:cost-per-diploma}).
+wzrostem partii dzięki amortyzacji stałego kosztu publikacji korzenia
+(tab.~\ref{tab:per-diploma}).
 
 \begin{table}[H]
   \centering
-  \caption{Koszt na dyplom (amortyzacja paczki) w~USD, scenariusz p50.}
+  \caption{Koszt na dyplom (amortyzacja partii) w~USD, scenariusz p50.}
   \label{tab:per-diploma}
   \begin{tabular}{lrrrrr}
   \toprule
-  Sieć & $n{=}1$ & $n{=}10$ & $n{=}100$ & $n{=}1000$ & $n{=}10\,000$ \\
+  Sieć & $N=1$ & $N=10$ & $N=100$ & $N=1000$ & $N=10\,000$ \\
   \midrule
-  Sepolia (L1) & $3{,}20\cdot10^{-2}$ & $3{,}20\cdot10^{-3}$ & $3{,}20\cdot10^{-4}$ & $3{,}20\cdot10^{-5}$ & $3{,}20\cdot10^{-6}$ \\
+  Ethereum L1 (Sepolia) & $3{,}20\cdot10^{-2}$ & $3{,}20\cdot10^{-3}$ & $3{,}20\cdot10^{-4}$ & $3{,}20\cdot10^{-5}$ & $3{,}20\cdot10^{-6}$ \\
   Arbitrum     & $1{,}79\cdot10^{-2}$ & $1{,}79\cdot10^{-3}$ & $1{,}79\cdot10^{-4}$ & $1{,}79\cdot10^{-5}$ & $1{,}79\cdot10^{-6}$ \\
   Base         & $8{,}97\cdot10^{-4}$ & $8{,}97\cdot10^{-5}$ & $8{,}97\cdot10^{-6}$ & $8{,}97\cdot10^{-7}$ & $8{,}97\cdot10^{-8}$ \\
   zkSync Era   & $2{,}65\cdot10^{-2}$ & $2{,}30\cdot10^{-3}$ & $2{,}30\cdot10^{-4}$ & $2{,}31\cdot10^{-5}$ & $2{,}31\cdot10^{-6}$ \\
@@ -84,46 +117,25 @@ wzrostem paczki dzięki amortyzacji stałego kosztu publikacji korzenia
   \end{tabular}
 \end{table}
 
-\begin{figure}[H]
-  \centering
-  \begin{tikzpicture}
-    \begin{loglogaxis}[
-      xlabel={Rozmiar paczki (liczba dyplomów)},
-      ylabel={Koszt na dyplom (USD)},
-      legend pos=north east, grid=major,
-      width=0.85\textwidth, height=8cm,
-    ]
-      \addplot table[x=batchSize, y=sepolia] {\DataDir/fig1-cost-per-diploma.dat};
-      \addplot table[x=batchSize, y=arbitrumSepolia] {\DataDir/fig1-cost-per-diploma.dat};
-      \addplot table[x=batchSize, y=baseSepolia] {\DataDir/fig1-cost-per-diploma.dat};
-      \addplot table[x=batchSize, y=zksyncSepolia] {\DataDir/fig1-cost-per-diploma.dat};
-      \legend{Sepolia (L1), Arbitrum, Base, zkSync Era}
-    \end{loglogaxis}
-  \end{tikzpicture}
-  \caption{Koszt na dyplom w~funkcji rozmiaru paczki (skala log-log, scenariusz
-  p50).}
-  \label{fig:cost-per-diploma}
-\end{figure}
-
 \section{Koszt operacji \code{revokeFromBatch}}
 \label{sec:l2-revoke}
 
 Unieważnienie pojedynczego dyplomu (\code{revokeFromBatch}) jest operacją rzadką i
-dotyczy jednej transakcji. Tabela~\ref{tab:revoke} podaje jej medianowy koszt. Base pozostaje zdecydowanie
-najtańszą opcją, jednak porządek pozostałych sieci nie jest identyczny jak przy
-publikacji: Sepolia i~zkSync zamieniają się miejscami, przez co zkSync staje się
-tu operacją najdroższą.
+dotyczy jednej transakcji. Tabela~\ref{tab:revoke} podaje jej medianowy koszt.
+Base pozostaje zdecydowanie najtańszą opcją, jednak porządek pozostałych sieci nie
+jest identyczny jak przy publikacji: kolejność warstwy pierwszej i~zkSync ulega
+odwróceniu, przez co zkSync staje się tu operacją najdroższą.
 
 \begin{table}[H]
   \centering
   \caption[Koszt operacji \code{revokeFromBatch}]{Koszt operacji \code{revokeFromBatch} (pojedyncza transakcja,
   mediana). Gaz zkSync~Era w~jednostce natywnej, nieporównywalnej z~EVM.}
   \label{tab:revoke}
-  \begin{tabular}{lrrr}
+  \begin{tabular}{lrcr}
   \toprule
   Sieć & Gaz (mediana) & Dane L1 [wei] & Koszt [USD] \\
   \midrule
-  Sepolia (L1) &  59\,798 & 0                    & 0{,}0375 \\
+  Ethereum L1 (Sepolia) &  59\,798 & 0                    & 0{,}0375 \\
   Arbitrum     &  60\,221 & $8{,}34\cdot10^{9}$  & 0{,}0211 \\
   Base         &  59\,796 & $5{,}38\cdot10^{7}$  & 0{,}0011 \\
   zkSync Era   & 223\,176 & 0                    & 0{,}0391 \\
@@ -134,32 +146,25 @@ tu operacją najdroższą.
 \section{Latencja}
 \label{sec:l2-latencja}
 
-Poza kosztem istotny jest czas odpowiedzi. Tabela~\ref{tab:read-latency} podaje
-latencję odczytu \code{statusWithProof} (weryfikacja po stronie sprawdzającego),
-a~tabela~\ref{tab:inclusion-latency} --- czas od wysłania transakcji zapisu do
-odebrania potwierdzenia (receipt) przez klienta.
+Poza kosztem istotny jest czas odpowiedzi. Latencja \emph{odczytu}
+\code{statusWithProof} mieści się we wszystkich czterech sieciach w~przedziale od
+kilkudziesięciu do~ok.\ 200~ms (mediana; $N=300$ próbek na sieć, rozstęp
+międzykwartylowy od~6 do~76~ms). Różnic między sieciami nie należy jednak
+interpretować jako ich własności: odczyt jest wywołaniem bezstanowym,
+realizowanym w~całości po stronie węzła, więc pomiar odzwierciedla lokalizację
+i~konfigurację konkretnego punktu dostępu RPC, nie mechanikę rollupa. Wniosek
+ogranicza się zatem do stwierdzenia, że weryfikacja jest w~każdej z~badanych
+sieci operacją rzędu setek milisekund.
+
+Wielkością istotniejszą jest czas od wysłania transakcji zapisu do odebrania
+potwierdzenia (tab.~\ref{tab:inclusion-latency}) --- ten zależy już od czasu
+bloku i~szybkości sekwensera.
 
 \begin{table}[H]
   \centering
-  \caption{Latencja odczytu \code{statusWithProof} [ms].}
-  \label{tab:read-latency}
-  \begin{tabular}{lrrr}
-  \toprule
-  Sieć & $p_{50}$ & $p_{95}$ & maks. \\
-  \midrule
-  Sepolia (L1) &  39{,}1 &  61{,}9 & 279{,}2 \\
-  Arbitrum     &  38{,}7 &  50{,}9 & 127{,}9 \\
-  Base         & 204{,}5 & 207{,}5 & 308{,}2 \\
-  zkSync Era   & 172{,}1 & 206{,}2 & 486{,}6 \\
-  \bottomrule
-  \end{tabular}
-\end{table}
-
-\begin{table}[H]
-  \centering
-  \caption[Czas odbioru potwierdzenia transakcji zapisu po stronie klienta]{Czas odbioru potwierdzenia transakcji zapisu (receipt) po stronie klienta [ms].
-  Kolumny \code{issue} pochodzą z~$N{=}30$ powtórzeń \code{issueBatchRoot(1000)}
-  w~każdym przebiegu i~są agregowane po wszystkich trzech przebiegach.}
+  \caption[Czas odbioru potwierdzenia transakcji zapisu po stronie klienta]{Czas odbioru potwierdzenia transakcji zapisu po stronie klienta [ms].
+  Kolumny \code{issue} pochodzą z~30~powtórzeń \code{issueBatchRoot(1000)}
+  w~każdym przebiegu i~są agregowane po wszystkich trzech przebiegach ($N=90$).}
   \label{tab:inclusion-latency}
   \begin{tabular}{lrrrrrr}
   \toprule
@@ -167,7 +172,7 @@ odebrania potwierdzenia (receipt) przez klienta.
        & \code{issue} $p_{50}$ & \code{issue} $p_{95}$
        & \code{issue} $\sigma$ & $N$ \\
   \midrule
-  Sepolia (L1) & 12\,499 & 33\,086 & 12\,503 & 48\,897 & 11\,923 & 90 \\
+  Ethereum L1 (Sepolia) & 12\,499 & 33\,086 & 12\,503 & 48\,897 & 11\,923 & 90 \\
   Arbitrum     &     491 &     727 &     407 &     644 &     126 & 90 \\
   Base         &  1\,538 &  2\,145 &  1\,494 &  2\,391 &     678 & 90 \\
   zkSync Era   &  2\,254 &  6\,181 &  2\,114 &  6\,068 &  1\,954 & 90 \\
@@ -175,12 +180,12 @@ odebrania potwierdzenia (receipt) przez klienta.
   \end{tabular}
 \end{table}
 
-Mierzoną wielkością jest czas między wywołaniem \code{sendTransaction} a~otrzymaniem
-potwierdzenia przez klienta RPC. Przy interwale odpytywania około 4~s (domyślnym
-w~bibliotece viem~\cite{viem}) wynik jest górnym ograniczeniem faktycznego czasu inkluzji
-w~bloku, nie zaś jego dokładnym pomiarem; rozkład wartości na sieci Sepolia jest
-wyraźnie skupiony wokół wielokrotności czasu bloku ($\approx 12$~s), co potwierdza
-tę interpretację.
+Mierzoną wielkością jest czas między wywołaniem \code{sendTransaction}
+a~otrzymaniem potwierdzenia przez klienta RPC. Klient viem~\cite{viem} odpytuje
+o~potwierdzenie co około 4~s, więc wynik jest górnym ograniczeniem faktycznego
+czasu włączenia transakcji do bloku, nie zaś jego dokładnym pomiarem. Potwierdza
+to rozkład wartości w~warstwie pierwszej, wyraźnie skupiony wokół wielokrotności
+czasu bloku ($\approx 12$~s).
 
 \section{Analiza wrażliwości}
 \label{sec:l2-wrazliwosc}
@@ -189,7 +194,7 @@ Ponieważ koszty w~USD zależą od trzech zmiennych rynkowych --- opłaty bazowe
 kursu ETH/USD oraz ceny gazu sekwensera L2 --- poniżej badana jest odporność
 wyników na ich wahania.
 
-Pierwszym czynnikiem jest opłata bazowa L1: rys.~\ref{fig:basefee} pokazuje koszt
+Pierwszym czynnikiem jest opłata bazowa L1: rysunek~\ref{fig:basefee} pokazuje koszt
 \code{issueBatchRoot(1000)} w~trzech jej scenariuszach (p10/p50/p90).
 
 \begin{figure}[H]
@@ -197,19 +202,35 @@ Pierwszym czynnikiem jest opłata bazowa L1: rys.~\ref{fig:basefee} pokazuje kos
   \begin{tikzpicture}
     \begin{axis}[
       ybar,
+      ymode=log,
+      log origin=infty,
       symbolic x coords={sepolia, arbitrumSepolia, baseSepolia, zksyncSepolia},
       xtick=data,
-      xticklabels={Sepolia (L1), Arbitrum, Base, zkSync Era},
-      ylabel={Koszt \code{issueBatchRoot(1000)} (USD)},
-      yticklabel style={/pgf/number format/fixed, /pgf/number format/fixed zerofill,
-                        /pgf/number format/precision=2, /pgf/number format/use comma},
-      scaled y ticks=false,
+      xticklabels={Ethereum L1, Arbitrum, Base, zkSync Era},
+      ylabel={Koszt \code{issueBatchRoot(1000)} [USD, skala log.]},
+      ymin=1e-4, ymax=6,
+      ytick={1e-4,1e-3,1e-2,1e-1},
+      axis lines=left,
+      axis line style={draw=gray!60},
+      tick style={draw=gray!60},
+      ymajorgrids, grid style={draw=gray!25},
       bar width=10pt, legend pos=north east,
+      legend style={draw=gray!40, font=\footnotesize},
+      enlarge x limits=0.18,
       width=0.85\textwidth, height=8cm,
     ]
-      \addplot table[x=chain, y=quiet_usd] {\DataDir/fig4-basefee-scenarios.dat};
-      \addplot table[x=chain, y=normal_usd] {\DataDir/fig4-basefee-scenarios.dat};
-      \addplot table[x=chain, y=congested_usd] {\DataDir/fig4-basefee-scenarios.dat};
+      \addplot+[point meta=rawy, nodes near coords={%
+          \pgfmathprintnumber[fixed, precision=4, use comma]{\pgfplotspointmeta}},
+        every node near coord/.append style={font=\tiny, rotate=90, anchor=west}]
+        table[x=chain, y=quiet_usd] {\DataDir/fig4-basefee-scenarios.dat};
+      \addplot+[point meta=rawy, nodes near coords={%
+          \pgfmathprintnumber[fixed, precision=4, use comma]{\pgfplotspointmeta}},
+        every node near coord/.append style={font=\tiny, rotate=90, anchor=west}]
+        table[x=chain, y=normal_usd] {\DataDir/fig4-basefee-scenarios.dat};
+      \addplot+[point meta=rawy, nodes near coords={%
+          \pgfmathprintnumber[fixed, precision=4, use comma]{\pgfplotspointmeta}},
+        every node near coord/.append style={font=\tiny, rotate=90, anchor=west}]
+        table[x=chain, y=congested_usd] {\DataDir/fig4-basefee-scenarios.dat};
       \legend{p10 (spokój), p50 (typowo), p90 (kongestia)}
     \end{axis}
   \end{tikzpicture}
@@ -218,28 +239,12 @@ Pierwszym czynnikiem jest opłata bazowa L1: rys.~\ref{fig:basefee} pokazuje kos
   \label{fig:basefee}
 \end{figure}
 
-Drugim czynnikiem jest kurs ETH/USD. Koszt w~USD jest jego liniową funkcją:
-$C(r) = C_{3500}\cdot r/3500$, gdzie
-$C_{3500}$ to wartość bazowa raportowana przy snapshocie z~dnia 13~maja~2026~r.
-($r=3500$). Tabela~\ref{tab:eth-sens} pokazuje koszt \code{issueBatchRoot(1000)}
-w~scenariuszu p50 dla trzech zakotwiczonych poziomów rynkowych.
-
-\begin{table}[H]
-  \centering
-  \caption{Wrażliwość kosztu \code{issueBatchRoot(1000)} [USD] na kurs ETH/USD
-  (opłata bazowa p50).}
-  \label{tab:eth-sens}
-  \begin{tabular}{lrrr}
-  \toprule
-  Sieć & 2000 USD & 3500 USD & 5000 USD \\
-  \midrule
-  Sepolia (L1) & 0{,}0183 & 0{,}0320 & 0{,}0457 \\
-  Arbitrum     & 0{,}0102 & 0{,}0179 & 0{,}0255 \\
-  Base         & 0{,}0005 & 0{,}0009 & 0{,}0013 \\
-  zkSync Era   & 0{,}0132 & 0{,}0231 & 0{,}0330 \\
-  \bottomrule
-  \end{tabular}
-\end{table}
+Drugim czynnikiem jest kurs ETH/USD. Ponieważ wszystkie koszty są wyrażone
+w~ETH i~przeliczane jednym mnożnikiem, zależność jest ściśle liniowa:
+$C(r) = C_{3500}\cdot r/3500$, gdzie $C_{3500}$ to wartość raportowana przy
+migawce z~13~maja~2026~r. Skalowanie zachowuje więc uporządkowanie sieci przy
+dowolnym kursie, a~czytelnik może przeliczyć każdą wartość z~tego rozdziału na
+bieżący kurs samodzielnie.
 
 Trzecim czynnikiem jest cena gazu ustalana przez operatora sekwensera L2,
 niezależna od opłaty bazowej L1. Model kosztu rozkłada się addytywnie:
@@ -249,14 +254,14 @@ niezależna od opłaty bazowej L1. Model kosztu rozkłada się addytywnie:
 gdzie $C_{\text{exec}} = \code{gasUsed}\cdot p_{\text{L2}}$ skaluje się liniowo
 z~ceną sekwensera $p_{\text{L2}}$, natomiast $C_{\text{L1 data}}$ pochodzi z~opłaty
 blob na L1 i~pozostaje stała. Tabela~\ref{tab:l2price-sens} pokazuje koszt
-\code{issueBatchRoot(1000)} przy trzech mnożnikach względem snapshotu cen (Arbitrum
-0{,}1~gwei, Base 0{,}005~gwei, zkSync 0{,}05~gwei). Sepolię pominięto --- jako sieć
-L1 nie ma ceny sekwensera.
+\code{issueBatchRoot(1000)} przy trzech mnożnikach względem migawki cen (Arbitrum
+0{,}1~gwei, Base 0{,}005~gwei, zkSync 0{,}05~gwei). Warstwę pierwszą pominięto ---
+nie ma ona ceny sekwensera.
 
 \begin{table}[H]
   \centering
   \caption{Wrażliwość kosztu \code{issueBatchRoot(1000)} [USD] na cenę gazu
-  sekwensera L2 (mnożniki względem snapshotu cen).}
+  sekwensera L2 (mnożniki względem migawki cen).}
   \label{tab:l2price-sens}
   \begin{tabular}{lrrr}
   \toprule
@@ -277,82 +282,92 @@ a~parametry konfiguracyjne każdego przebiegu (ziarno losowości, dostawca, regi
 kurs ETH/USD) zapisano w~pliku \code{meta.json} towarzyszącym eksportowi danych.
 
 \subsection{Ograniczenia pomiaru}
-Poniżej zebrano sześć ograniczeń metodologicznych, które należy uwzględnić przy
+Poniżej zebrano cztery ograniczenia metodologiczne, które należy uwzględnić przy
 interpretacji wyników.
 
 \paragraph{Założenie kompresji Brotli dla Arbitrum.} Model kosztu zapisu danych na
 L1 dla Arbitrum przyjmuje współczynnik kompresji Brotli równy 1{,}0, ponieważ dane
 Merkle (hasze pseudolosowe) nie kompresują się znacząco. Realny calldata
-o~strukturze rzadkiej kompresuje się 2--4-krotnie, co oznacza, że nasze
-oszacowanie kosztu L1 dla Arbitrum jest \textbf{górnym ograniczeniem}; rzeczywiste
+o~strukturze rzadkiej kompresuje się 2--4-krotnie, co oznacza, że przyjęte tu
+oszacowanie kosztu L1 dla Arbitrum jest \emph{górnym ograniczeniem}; rzeczywiste
 koszty produkcyjne mogą być proporcjonalnie niższe.
 
-\paragraph{Niewspółmierność jednostki gazu w~zkSync Era.} Wartość \code{gasUsed}
-raportowana przez zkSync~\cite{zksync-era} (131\,462--151\,171 dla
-\code{issueBatchRoot}, tab.~\ref{tab:issue-tx}) łączy w~jednej jednostce koszt
+\paragraph{Niewspółmierność jednostki gazu w~zkSync Era.} Wartość
+\code{gasUsed} raportowana przez zkSync~\cite{zksync-era} (131\,462--151\,171
+dla \code{issueBatchRoot}, tab.~\ref{tab:issue-tx}) łączy w~jednej jednostce koszt
 wykonania, dane publiczne oraz narzut bootloadera kontekstu Account Abstraction
 --- nie jest to ta sama jednostka co \code{gasUsed} w~EVM. Porównywanie
-surowych liczb gazu między rodzinami rollupów jest \textbf{metodologicznie
+surowych liczb gazu między rodzinami rollupów jest \emph{metodologicznie
 niepoprawne}; sensowne porównanie kosztów możliwe jest wyłącznie w~USD lub ETH.
 
-\paragraph{Opóźnienie inkluzji ograniczone interwałem odpytywania.} Jak
-zaznaczono w~sekcji~\ref{sec:l2-latencja}, pomiar czasu od wysłania do potwierdzenia
-jest \textbf{górnym ograniczeniem czasu inkluzji w~bloku}, nie zaś jego dokładną
-wartością, z~uwagi na~cykl odpytywania klienta viem (\textasciitilde 4~s).
-Dodatkowo porównanie międzysieciowe jest zniekształcone interakcją czasu bloku
-z~tym interwałem.
+\paragraph{Latencja ograniczona konfiguracją klienta i~dostawcy RPC.} Jak
+zaznaczono w~sekcji~\ref{sec:l2-latencja}, pomiar czasu od wysłania do
+potwierdzenia jest \emph{górnym ograniczeniem czasu włączenia do bloku}, nie zaś
+jego dokładną wartością, z~uwagi na~cykl odpytywania klienta viem
+(\textasciitilde 4~s). Porównanie międzysieciowe zniekształca dodatkowo interakcja
+czasu bloku z~tym interwałem, a~w~przypadku latencji odczytu --- lokalizacja
+i~konfiguracja pojedynczego punktu dostępu RPC.
 
-\paragraph{Snapshot skalarów Base SystemConfig.} Model kosztu Base
-(Ecotone~\cite{op-stack}) używa snapshotu parametrów \code{baseFeeScalar} oraz
-\code{blobBaseFeeScalar} pobranego z~konkretnego bloku L1. Po zmianie tych skalarów przez operatora Base wynikowe
-koszty zmieniłyby się proporcjonalnie; data snapshotu jest udokumentowana
-w~\code{meta.json} każdego eksportu.
+\paragraph{Migawka parametrów rynkowych.} Trzy wielkości wchodzące do wyceny są
+odczytami z~jednego dnia i~razem stanowią jedno ograniczenie: wyniki w~USD są
+migawką warunków rynkowych z~13~maja~2026~r. Są to kurs
+$\text{ETH}/\text{USD}=3500$, skalary \code{baseFeeScalar} oraz
+\code{blobBaseFeeScalar} modelu Ecotone~\cite{op-stack} dla Base, a~także ceny
+gazu sekwenserów. Każda z~nich skaluje koszt proporcjonalnie i~żadna nie zmienia
+uporządkowania sieci, co wykazano w~sekcji~\ref{sec:l2-wrazliwosc}; wszystkie są
+udokumentowane w~\code{meta.json} każdego eksportu.
 
-\paragraph{Snapshot kursu ETH/USD.} Przyjęty kurs $\text{ETH}/\text{USD}=3500$ jest
-migawką z~dnia 13~maja~2026~r.; jego wpływ na wyniki oraz formułę przeliczeniową
-dla innych kursów podano w~sekcji~\ref{sec:l2-wrazliwosc}.
-
-\paragraph{Konserwatywne ceny sekwensera L2.} Ceny gazu sekwensera ustawiono na
-zaokrąglone wartości powyżej żywego snapshotu (Arbitrum 0{,}1 wobec 0{,}02~gwei;
-Base 0{,}005 wobec 0{,}006; zkSync 0{,}05 wobec 0{,}0453), aby pochłonąć typowe
-wahania kongestii.
+Ceny sekwenserów zaokrąglono przy tym względem odczytu \code{eth\_gasPrice}
+z~sieci głównych: Arbitrum do 0{,}1 wobec 0{,}02~gwei i~zkSync do 0{,}05 wobec
+0{,}0453~gwei --- w~obu przypadkach w~górę, aby pochłonąć wahania kongestii ---
+oraz Base do 0{,}005 wobec 0{,}006~gwei, a~więc \emph{w~dół}, co zaniża jej koszt
+o~17\%. Odstępstwo to nie narusza żadnego wniosku: przewaga Base nad kolejną
+siecią przekracza rząd wielkości, a~dwukrotny wzrost ceny sekwensera nie zmienia
+kolejności (tab.~\ref{tab:l2price-sens}).
 
 \subsection{Reprodukowalność}
+Kod źródłowy systemu, zestawy testów oraz cały potok pomiarowy są dostępne
+w~repozytorium \url{https://github.com/n-shcherbyna/univerify}. Wyniki
+raportowane w~tej pracy odpowiadają wersji oznaczonej tagiem
+\code{v1.0-thesis}.
+
 Wszystkie wyniki w~tym rozdziale można odtworzyć z~czystego klona repozytorium
-UniVerify poleceniem \code{npm run benchmarks:all -{}- -{}-runs=3}, po wypełnieniu
+poleceniem \code{npm run benchmarks:all -{}- -{}-runs=3}, po wypełnieniu
 pliku \code{.env} kluczem prywatnym portfela testowego oraz adresami RPC czterech
 sieci testowych. Pipeline wykonuje sekwencję \code{deploy} $\to$ \code{measure}
 $\to$ \code{price} $\to$ \code{aggregate} $\to$ \code{export}, regenerując wszystkie
 dane źródłowe tabel i~wykresów (katalog \code{dane/l2}). Każdy artefakt powiązany jest z~plikiem \code{meta.json}
 zawierającym identyfikator przebiegu, datę pomiaru, kurs ETH/USD wraz z~datą
-snapshotu, ziarno losowości, dostawcę i~region RPC oraz listę sieci.
+migawki, ziarno losowości, dostawcę i~region RPC oraz listę sieci.
 
 \subsection{Wnioski}
 \label{sec:l2-wnioski}
 Zebrane pomiary pozwalają odpowiedzieć na pytanie postawione na wstępie rozdziału:
 przeniesienie rejestru do warstwy drugiej istotnie obniża koszt, lecz skala
-korzyści zależy od rodziny rollupa. Przy realistycznym rozmiarze paczki $n{=}1000$
+korzyści zależy od rodziny rollupa. Przy realistycznym rozmiarze partii $N=1000$
 (rzędu rocznego wolumenu dyplomów dużego wydziału) koszt zarejestrowania jednego
-dyplomu wynosi w~scenariuszu p50 około $3{,}2\cdot10^{-5}$~USD na~Sepolii (L1),
+dyplomu wynosi w~scenariuszu p50 około $3{,}2\cdot10^{-5}$~USD w~warstwie pierwszej,
 $1{,}8\cdot10^{-5}$~USD na~Arbitrum, $2{,}3\cdot10^{-5}$~USD na~zkSync oraz zaledwie
 $9{,}0\cdot10^{-7}$~USD na~Base --- czyli około 35-krotnie taniej niż w~warstwie
-pierwszej (por. tab.~\ref{tab:per-diploma}, rys.~\ref{fig:cost-per-diploma}).
+pierwszej (por. tab.~\ref{tab:per-diploma}).
 
-Ponieważ koszt na dyplom maleje proporcjonalnie do $1/n$ (publikujemy jeden
-32-bajtowy korzeń niezależnie od rozmiaru paczki), stosunki kosztów między sieciami
-są niezmiennicze względem $n$; powyższa hierarchia utrzymuje się dla dowolnego
-rozmiaru paczki. Przewaga Base nie wynika z~lepszej kompresji \emph{naszych}
-danych --- w~sieciach EVM publikujemy ten sam 32-bajtowy korzeń o~koszcie około
-51~tys.\ gazu (zkSync~Era rozlicza gaz w~niewspółmiernej jednostce) --- lecz
-z~tego, że pojedyncza transakcja L2 jest tania: rollup
-amortyzuje koszt zapisu danych na~L1 pomiędzy wszystkich swoich użytkowników poprzez
-transakcje blob (EIP-4844). Dla naszej transakcji składnik danych L1 stanowi znikomą
-część kosztu, w~którym dominuje wykonanie po stronie sekwensera.
+Koszt na dyplom maleje proporcjonalnie do $1/N$, ponieważ publikowany jest jeden
+32-bajtowy korzeń niezależnie od rozmiaru partii. Stosunki kosztów między sieciami
+są więc niezmiennicze względem $N$, a~powyższa hierarchia utrzymuje się dla
+dowolnego rozmiaru partii.
+
+Przewaga Base nie wynika z~lepszej kompresji publikowanych danych: w~sieciach EVM
+zapisywany jest ten sam 32-bajtowy korzeń o~koszcie około 51~tys.\ gazu (zkSync~Era
+rozlicza gaz w~niewspółmiernej jednostce). Wynika ona z~tego, że pojedyncza
+transakcja L2 jest tania --- rollup amortyzuje koszt zapisu danych na~L1 pomiędzy
+wszystkich swoich użytkowników poprzez transakcje blob (EIP-4844). Dla rozważanej
+transakcji składnik danych L1 stanowi znikomą część kosztu, w~którym dominuje
+wykonanie po stronie sekwensera.
 
 Wynik jest odporny na typową zmienność rynkową
 (sekcja~\ref{sec:l2-wrazliwosc}): skalowanie kursem ETH/USD jest liniowe
 i~zachowuje uporządkowanie sieci, a~zmiana ceny sekwensera L2 nie narusza
 kolejności rollupów. Wahania opłaty bazowej L1 uderzają natomiast bezpośrednio
-w~Sepolię, powiększając dystans rollupów do warstwy pierwszej. We wszystkich
+w~warstwę pierwszą, powiększając dystans rollupów do niej. We wszystkich
 scenariuszach Base pozostaje najtańsza --- z~perspektywy kosztowej jest zatem
 najkorzystniejszym celem wdrożenia rejestru spośród badanych sieci.
