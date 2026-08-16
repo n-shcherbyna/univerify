@@ -19,7 +19,7 @@ Zintegrowany System Informacji o~Szkolnictwie Wyższym i~Nauce POL-on~\cite{polo
 prowadzony przez ministerstwo właściwe do spraw szkolnictwa wyższego i~obejmujący
 m.in.\ wykazy studentów i~absolwentów. Rejestr taki rozwiązuje problem
 weryfikacji, dopóki działa i~dopóki weryfikator ma do niego dostęp oraz ufa
-operatorowi --- czyli dokładnie przy tych trzech założeniach, które niniejsza praca
+operatorowi, czyli dokładnie przy tych trzech założeniach, które niniejsza praca
 próbuje osłabić. Osobną trajektorią jest europejska rama tożsamości cyfrowej
 eIDAS~2.0~\cite{eidas2}, wprowadzająca portfel tożsamości (EUDI Wallet) jako
 nośnik poświadczeń, w~tym edukacyjnych. Dokumenty podpisane cyfrowo
@@ -40,10 +40,10 @@ udokumentowane wdrożenie poza fazą prototypu oraz publicznie dostępna
 specyfikacja mechanizmu kotwiczenia, co wyklucza pozycje opisane wyłącznie
 w~publikacjach konferencyjnych. Rolę przeglądu systematycznego pełnią
 tu prace~\cite{alammary2019,rustemi2023}.
-\emph{Blockcerts}~\cite{blockcerts} --- najstarszy otwarty standard ---
+\emph{Blockcerts}~\cite{blockcerts} (najstarszy otwarty standard)
 grupuje certyfikaty w~drzewo Merkle i~kotwiczy korzeń w~publicznym łańcuchu,
 lecz profil wystawcy oraz lista unieważnień pozostają plikami hostowanymi pod
-adresem URL wystawcy: znika wystawca, znika możliwość pełnej weryfikacji ---
+adresem URL wystawcy: znika wystawca, znika możliwość pełnej weryfikacji:
 dokładnie ta zależność, którą kotwiczenie miało usunąć.
 \emph{OpenCerts}~\cite{opencerts}, wdrożony narodowo w~Singapurze, reprezentuje
 dokument jako drzewo solonych skrótów pól (co umożliwia redakcję wybranych pól)
@@ -51,7 +51,7 @@ i~wspiera unieważnianie on-chain, ale rejestr zaufanych wystawców jest central
 utrzymywaną przez agencję rządową listą poza łańcuchem.
 \emph{EduCTX}~\cite{eductx2018} buduje konsorcyjną platformę punktów
 zaliczeniowych (ECTS), w~której zaufanie wynika z~członkostwa uczelni
-w~konsorcjum --- model bliski EBSI, omówionej niżej.
+w~konsorcjum, model bliski EBSI, omówionej niżej.
 
 Osobną, dynamicznie rozwijaną rodziną są \emph{poświadczenia weryfikowalne}
 (\emph{verifiable credentials}, VC) standaryzowane przez W3C~\cite{w3c-vc},
@@ -64,7 +64,7 @@ zastosowanie do dyplomów udokumentowano w~pilotażu belgijsko-włoskim~\cite{ta
 
 Tabela~\ref{tab:related-work} zestawia wymienione systemy wobec czterech
 własności istotnych dla tej pracy. Kolumna wersji jest konieczna, ponieważ
-oceny dotyczą konkretnych, publicznie udokumentowanych wydań --- nowsze
+oceny dotyczą konkretnych, publicznie udokumentowanych wydań; nowsze
 warianty niektórych z~tych systemów wypadłyby inaczej.
 
 \begin{table}[H]
@@ -85,18 +85,18 @@ UniVerify  & 2026        & publiczny (L1/L2)    & tak                 & tak & ta
 \end{table}
 
 \noindent Zastrzeżenia do dwóch pozycji. Blockcerts w~wersji v3 przeszedł na
-model poświadczeń weryfikowalnych W3C i~może --- zależnie od użytego schematu
-podpisu --- wspierać selektywne ujawnianie; ocena ,,nie'' dotyczy wersji v2,
+model poświadczeń weryfikowalnych W3C i~może (zależnie od użytego schematu
+podpisu) wspierać selektywne ujawnianie; ocena ,,nie'' dotyczy wersji v2,
 opisanej w~cytowanej specyfikacji. W~EduCTX unieważnienie pojedynczego wpisu nie
 jest przewidziane w~modelu punktów zaliczeniowych, stąd ,,brak'' zamiast oceny
 negatywnej.
 
 Żaden z~wymienionych systemów nie łączy zatem publicznego, bezzezwoleniowego
 łańcucha z~prowadzonym na~nim rejestrem uprawnień, selektywnym ujawnianiem
-i~jednostkowym unieważnianiem on-chain --- a~literatura przeglądowa nie
+i~jednostkowym unieważnianiem on-chain, a~literatura przeglądowa nie
 dostarcza pomiarów kosztu takiej konstrukcji w~rollupach warstwy drugiej.
 Nowością nie jest więc żaden z~pojedynczych mechanizmów: solone zobowiązania pól
-stosuje już OpenCerts, a~selektywne ujawnianie --- poświadczenia weryfikowalne.
+stosuje już OpenCerts, a~selektywne ujawnianie stosują poświadczenia weryfikowalne.
 Nowością jest ich \emph{złożenie} z~rejestrem uprawnień prowadzonym na łańcuchu
 publicznym, wraz z~pomiarem kosztu tak zbudowanego systemu. Różnice wobec
 najbliższej konstrukcji, czyli OpenCerts, omawia szczegółowo
@@ -109,28 +109,36 @@ zastrzeżenia czasowego. Już po wykonaniu pomiarów opisanych w~tej pracy
 łańcuchu publicznym, selektywne ujawnianie oraz unieważnianie pojedynczych
 poświadczeń, także z~oceną kosztu gazu~\cite{frutuoso2026}. Rozwiązanie to
 opiera się na standardach tokenowych ERC-3643 i~OnchainID, a~poświadczenie wiąże
-z~tożsamością posiadacza --- czyli domyka lukę, którą niniejsza praca pozostawia
-otwartą (sekcja~\ref{sec:model-zagrozen}). Wobec tej pracy pozostają odrębne:
-architektura wsadowa oparta na drzewach Merkle wraz z~wynikającą z~niej
-niezależnością kosztu od rozmiaru partii, pomiary kosztu w~czterech sieciach
-(rozdz.~\ref{ch:l2}) oraz analiza wartości zestawiająca blockchain
-z~infrastrukturą klucza publicznego i~przejrzystością certyfikatów
-(rozdz.~\ref{ch:governance}). Niniejsza praca rozwija kierunek blockchainowy,
-koncentrując się właśnie na tych trzech osiach: koszcie, prywatności oraz modelu
-zarządzania uprawnieniami.
+z~tożsamością posiadacza, czego niniejsza praca nie robi
+(sekcja~\ref{sec:model-zagrozen}). Nie jest to jednak wyłącznie przewaga, lecz
+inny punkt na osi kompromisu: powiązanie z~tożsamością wymaga trwałej obecności
+identyfikatora posiadacza na łańcuchu publicznym, a~więc rezygnacji z~własności,
+którą ta praca traktuje jako wymóg: braku jakichkolwiek danych dotyczących
+osoby w~stanie kontraktu (sekcja~\ref{sec:priv-bezpieczenstwo}).
+
+Odrębny pozostaje także sam punkt wyjścia. Oparcie poświadczenia na standardzie
+tokenowym wiąże jeden zapis on-chain z~jednym dokumentem, przez co koszt rośnie
+liniowo z~liczbą wydanych dyplomów; architektura wsadowa oparta na drzewach
+Merkle amortyzuje ten koszt do wartości niezależnej od rozmiaru partii
+(rozdz.~\ref{ch:gaz}). Poza tym wobec pracy równoległej pozostają odrębne
+pomiary kosztu w~czterech sieciach (rozdz.~\ref{ch:l2}) oraz analiza wartości
+zestawiająca blockchain z~infrastrukturą klucza publicznego i~przejrzystością
+certyfikatów (rozdz.~\ref{ch:governance}). Niniejsza praca rozwija kierunek
+blockchainowy, koncentrując się właśnie na tych trzech osiach: koszcie,
+prywatności oraz modelu zarządzania uprawnieniami.
 
 \section{Drzewa Merkle}
 \label{sec:merkle}
 
-Drzewo Merkle~\cite{merkle1987} --- konstrukcja wykorzystywana m.in.\
-w~znakowaniu czasem dokumentów cyfrowych~\cite{haber1991,bayer1993} --- to binarne drzewo
+Drzewo Merkle~\cite{merkle1987} (konstrukcja wykorzystywana m.in.\
+w~znakowaniu czasem dokumentów cyfrowych~\cite{haber1991,bayer1993}) to binarne drzewo
 skrótów, w~którym każdy liść jest
-skrótem pojedynczego elementu danych, a~każdy węzeł wewnętrzny --- skrótem
+skrótem pojedynczego elementu danych, a~każdy węzeł wewnętrzny jest skrótem
 konkatenacji swoich dzieci:
 \[
   \text{węzeł} = H\bigl(\text{lewe} \,\Vert\, \text{prawe}\bigr),
 \]
-gdzie $H$ jest kryptograficzną funkcją skrótu (w~tej pracy \code{keccak256} ---
+gdzie $H$ jest kryptograficzną funkcją skrótu (w~tej pracy \code{keccak256},
 oryginalny wariant funkcji Keccak, standaryzowanej później, z~inną stałą
 dopełnienia, jako SHA-3~\cite{fips202}). Korzeń drzewa jest zwięzłym, 32-bajtowym
 zobowiązaniem do całego zbioru liści: zmiana dowolnego elementu zmienia korzeń.
@@ -139,7 +147,7 @@ zobowiązaniem do całego zbioru liści: zmiana dowolnego elementu zmienia korze
 rodzeństwa na ścieżce od liścia do korzenia. Mając liść i~taki dowód, weryfikator
 odtwarza korzeń, hashując kolejno pary aż do szczytu, i~porównuje go z~korzeniem
 zaufanym. Dla drzewa o~$n$ liściach dowód ma długość $O(\log n)$, co czyni
-weryfikację tanią niezależnie od rozmiaru partii --- własność wykorzystywaną
+weryfikację tanią niezależnie od rozmiaru partii, własność wykorzystywaną
 w~rozdziale~\ref{ch:gaz} do amortyzacji kosztu on-chain.
 
 Aby uniemożliwić przeniesienie ważnego dowodu do innego kontekstu (atak
@@ -158,14 +166,14 @@ następująco.
         OpenZeppelin~\cite{oz-contracts}: $H(\min(a,b) \Vert \max(a,b))$.
         Dzięki temu dowód nie musi
         nieść bitów kierunku, co skraca go i~upraszcza weryfikację, kosztem
-        utraty informacji o~pozycji liścia w~drzewie --- nieistotnej dla samego
+        utraty informacji o~pozycji liścia w~drzewie, nieistotnej dla samego
         potwierdzenia przynależności.
   \item[Rozróżnienie liścia od węzła.] Sortowanie par bywa źródłem podatności,
         gdy liść i~węzeł wewnętrzny mają nierozróżnialne dziedziny: napastnik
         mógłby przedstawić węzeł wewnętrzny jako ,,liść'' i~uzyskać poprawny
         dowód. Tutaj jest to wykluczone konstrukcyjnie, ponieważ liść powstaje
         z~preimage'u 112-bajtowego (adres, identyfikator sieci, wystawca, numer
-        partii, skrót dokumentu), a~węzeł wewnętrzny --- z~64-bajtowego. Dziedziny
+        partii, skrót dokumentu), a~węzeł wewnętrzny powstaje z~64-bajtowego. Dziedziny
         obu funkcji są rozłączne, więc odporność na drugi przeciwobraz nie
         wymaga dodatkowych prefiksów.
   \item[Drzewa niezbalansowane.] Gdy poziom drzewa ma nieparzystą liczbę węzłów,
@@ -183,7 +191,7 @@ następująco.
 
 \noindent Rozstrzygnięcia te są istotne dla pomiarów: partia $N=1000$, na której
 opierają się główne wyniki rozdziału~\ref{ch:l2}, nie jest potęgą dwójki, więc
-duplikacja zachodzi w~niej realnie --- po raz pierwszy przy przejściu z~125 do
+duplikacja zachodzi w~niej realnie: po raz pierwszy przy przejściu z~125 do
 63~węzłów.
 
 \section{Schematy zobowiązań kryptograficznych}
@@ -191,8 +199,8 @@ duplikacja zachodzi w~niej realnie --- po raz pierwszy przy przejściu z~125 do
 
 Schemat zobowiązania (\emph{commitment}) pozwala „zapieczętować'' wartość tak, by
 później móc ją ujawnić i~udowodnić, że była ustalona wcześniej. Wymaga się od niego
-dwóch własności~\cite{bonehshoup}: \emph{wiązania} --- zobowiązania nie da się
-otworzyć na dwie różne wartości --- oraz \emph{ukrywania}, czyli nieujawniania
+dwóch własności~\cite{bonehshoup}: \emph{wiązania} (zobowiązania nie da się
+otworzyć na dwie różne wartości) oraz \emph{ukrywania}, czyli nieujawniania
 zobowiązanej wartości przez samo zobowiązanie. W~tej pracy zastosowano konstrukcję
 opartą na funkcji skrótu z~solą:
 \[
@@ -200,8 +208,8 @@ opartą na funkcji skrótu z~solą:
 \]
 gdzie $r$ to losowa, tajna sól o~wysokiej entropii. Odporność $H$ na kolizje daje
 wiązanie. Ukrywanie \emph{nie} wynika natomiast ze standardowych własności funkcji
-skrótu --- odporność na~preimage nie gwarantuje, że skrót nie ujawnia żadnych bitów
-wejścia --- i~wymaga dodatkowego założenia: $H$ modeluje się jako \emph{wyrocznię
+skrótu (odporność na~preimage nie gwarantuje, że skrót nie ujawnia żadnych bitów
+wejścia) i~wymaga dodatkowego założenia: $H$ modeluje się jako \emph{wyrocznię
 losową} (\emph{random oracle}), co jest standardową heurystyką przyjmowaną dla
 funkcji rodziny Keccak. Przy tym założeniu tajna sól daje ukrywanie także dla
 wartości z~małych domen; bez soli atak słownikowy nad małą domeną byłby trywialny.
@@ -235,7 +243,7 @@ zweryfikować stan. Wyróżnia się dwie rodziny:
 \end{description}
 
 Kluczowym parametrem kosztu jest \emph{dostępność danych} (\emph{data
-availability}, DA) --- rollup musi opublikować na L1 tyle danych, by każdy mógł
+availability}, DA): rollup musi opublikować na L1 tyle danych, by każdy mógł
 odtworzyć jego stan. Do 2024~r.\ dane te trafiały do drogiego \code{calldata}.
 Ulepszenie EIP-4844~\cite{eip4844} wprowadziło \emph{transakcje blobowe}
 (\emph{blobs}): tani, tymczasowy obszar danych z~osobnym rynkiem opłat, znacząco
@@ -243,8 +251,8 @@ obniżający koszt DA rollupów. W~efekcie koszt jednej transakcji L2 rozkłada 
 dwie składowe: opłatę za dane publikowane na L1 oraz koszt wykonania na L2,
 rozliczany w~jednostkach gazu zgodnie z~formalnym modelem maszyny wirtualnej
 Ethereum (EVM) opisanym w~Yellow Paper~\cite{wood-yellowpaper}.
-Rozdział~\ref{ch:l2} pokazuje empirycznie, że dla rozważanego tu obciążenia ---
-publikacji 32-bajtowego korzenia --- dominuje ta druga składowa, a~porównawcze
+Rozdział~\ref{ch:l2} pokazuje empirycznie, że dla rozważanego tu obciążenia
+(publikacji 32-bajtowego korzenia) dominuje ta druga składowa, a~porównawcze
 zestawienia kosztów rollupów odniesiono do danych publicznych~\cite{l2beat}.
 
 \section{Infrastruktura klucza publicznego i podpisy cyfrowe}
@@ -259,7 +267,7 @@ X.509~\cite{rfc5280} definiuje ich format oraz unieważnianie listami CRL,
 uzupełnione protokołem statusu online OCSP~\cite{rfc6960}.
 
 Dla niniejszej pracy PKI jest \emph{punktem odniesienia}. Dyplom podpisany cyfrowo
-przez uczelnię daje niezależną, offline'ową weryfikację po znikomym koszcie --- czyli
+przez uczelnię daje niezależną, offline'ową weryfikację po znikomym koszcie, czyli
 dokładnie te zalety, które najczęściej przypisuje się rozwiązaniom blockchainowym.
 Rozdział~\ref{ch:governance} wykorzystuje to porównanie, by wyodrębnić tę własność,
 której samo PKI \emph{nie} zapewnia: publiczny, odporny na ciche wsteczne
@@ -269,14 +277,14 @@ przepisanie log uprawnień do wydawania.
 z~potrzebą blockchaina, ponieważ istnieje wdrożone produkcyjnie rozwiązanie
 pośrednie. \emph{Certificate Transparency} (CT)~\cite{rfc6962} uzupełnia PKI
 o~publiczne, wyłącznie dopisywalne logi wystawionych certyfikatów, zbudowane
---- podobnie jak system opisywany w~tej pracy --- na drzewach Merkle. Log
+(podobnie jak system opisywany w~tej pracy) na drzewach Merkle. Log
 wystawia dwa rodzaje dowodów: \emph{dowód przynależności} certyfikatu do logu oraz
 \emph{dowód spójności} między dwoma stanami logu, który matematycznie wyklucza
 usunięcie lub podmianę wcześniejszego wpisu. Niezależni audytorzy i~monitory
 mogą dzięki temu wykryć certyfikat wystawiony przez urząd certyfikacji poza
 procedurą. CT działa w~ekosystemie webowym od ponad dekady i~jest wymagane przez
 główne przeglądarki. Wersja~2.0 protokołu~\cite{rfc9162} zastąpiła formalnie
-specyfikację z~2013~r., lecz --- podobnie jak ona --- ma status
+specyfikację z~2013~r., lecz (podobnie jak ona) ma status
 eksperymentalny, a~polityki przeglądarek pozostają oparte na wersji
 pierwszej; dalsze rozważania odnoszą się więc do obu wydań łącznie, wskazując
 tam, gdzie różnica ma znaczenie.
@@ -294,7 +302,7 @@ Ogólne rozporządzenie o~ochronie danych (RODO)~\cite{gdpr} ustanawia zasadę
 stosowne oraz ograniczone do tego, co niezbędne dla celu przetwarzania
 (art.~5~ust.~1~lit.~c). W~kontekście weryfikacji dyplomu oznacza to, że podmiot
 sprawdzający sam fakt ukończenia studiów nie powinien być zmuszany do poznania
-wszystkich danych z~dokumentu --- numeru dyplomu, dokładnej daty czy pełnych danych
+wszystkich danych z~dokumentu: numeru dyplomu, dokładnej daty czy pełnych danych
 osobowych.
 
 Model podstawowy, hashujący cały ładunek dyplomu, wymusza ujawnienie wszystkich pól

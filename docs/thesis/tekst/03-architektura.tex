@@ -5,7 +5,7 @@ Rozdział przedstawia budowę systemu UniVerify w~postaci, na której opierają 
 kolejne rozdziały pomiarowe i~projektowe. Opisuje model danych, kontrakt rejestru,
 pakiety współdzielone oraz aplikację webową, a~na końcu zbiera je w~trzech
 przepływach end-to-end: wydania, weryfikacji i~unieważnienia. Pomiary kosztów pozostają
-poza zakresem tego rozdziału --- omawiają je rozdziały~\ref{ch:gaz} i~\ref{ch:l2}.
+poza zakresem tego rozdziału: omawiają je rozdziały~\ref{ch:gaz} i~\ref{ch:l2}.
 
 \section{Model danych}
 \label{sec:model-danych}
@@ -13,7 +13,7 @@ poza zakresem tego rozdziału --- omawiają je rozdziały~\ref{ch:gaz} i~\ref{ch
 Podstawową jednostką zapisu on-chain nie jest pojedynczy dyplom, lecz \emph{partia}
 (\emph{batch}). Wystawca grupuje dyplomy w~drzewo Merkle i~publikuje w~kontrakcie
 jedynie jego korzeń. Dzięki temu koszt zapisu nie zależy od liczby dokumentów
-w~partii --- jego uzasadnienie ilościowe podaje rozdział~\ref{ch:gaz}. Trójka
+w~partii: jego uzasadnienie ilościowe podaje rozdział~\ref{ch:gaz}. Trójka
 identyfikująca partię to:
 
 \begin{itemize}
@@ -24,8 +24,8 @@ identyfikująca partię to:
 \end{itemize}
 
 Pojedynczy dyplom reprezentowany jest przez \emph{kopertę}
-(\emph{envelope}) złożoną z~dwóch części: \code{payload} --- danych dyplomu
-(identyfikator uczelni, dane studenta, stopień, data wydania, numer dyplomu) ---
+(\emph{envelope}) złożoną z~dwóch części: \code{payload}, danych dyplomu
+(identyfikator uczelni, dane studenta, stopień, data wydania, numer dyplomu),
 oraz \code{proof} typu \code{MERKLE\_BATCH}, zawierającego ścieżkę Merkle wiążącą
 liść dokumentu z~korzeniem partii. Weryfikacja polega na odtworzeniu korzenia
 z~liścia i~ścieżki oraz porównaniu go z~korzeniem odczytanym z~kontraktu.
@@ -57,10 +57,16 @@ Kontrakt \code{DiplomaRegistry} udostępnia funkcje na trzech poziomach uprawnie
         (korzeń partii), \code{isIssuer} oraz \code{issuerUniversityId}.
 \end{description}
 
-Kontrakt utrzymuje metadane uczelni, mapowanie wystawca~$\rightarrow$~uczelnia,
+Kontrakt utrzymuje w~storage status uczelni, mapowanie wystawca~$\rightarrow$~uczelnia,
 korzenie Merkle indeksowane parą \code{(issuer, batchId)} oraz zbiór unieważnień.
 Status uczelni opisuje osobne wyliczenie: nieznana~(0), aktywna~(1),
-zawieszona~(2), unieważniona~(3).
+zawieszona~(2), unieważniona~(3). Pełne metadane (nazwa, kraj, strona,
+identyfikator akredytacji) nie trwają w~storage: publikowane są wyłącznie
+jako pole zdarzenia \code{UniversitySet} przy każdej zmianie, a~odczyt wymaga
+przeglądu historii zdarzeń, nie wywołania \emph{view}. Rozwiązanie świadomie
+tańsze gazowo (koszt zapisu \code{SSTORE} rośnie z~rozmiarem danych, koszt
+logu nie), kosztem zależności od dostępności historii zdarzeń u~dostawcy
+RPC.
 
 \section{Pakiety współdzielone}
 \label{sec:pakiety}
@@ -104,7 +110,7 @@ z~rozdziału~\ref{ch:governance}).
 
 Rozdzielenie logiki do \code{verifier-core} sprawia, że ta sama, przetestowana
 implementacja haszowania i~drzew Merkle jest używana zarówno przy wystawianiu, jak
-i~przy weryfikacji --- eliminuje to ryzyko rozbieżności między stroną wydającą
+i~przy weryfikacji. Eliminuje to ryzyko rozbieżności między stroną wydającą
 a~sprawdzającą.
 
 \section{Aplikacja webowa}
@@ -153,8 +159,8 @@ kontraktu) oraz unieważnienie (linia przerywana).}
 w~kontrakcie sam korzeń partii i~eksportuje absolwentom koperty. Cała praca
 kryptograficzna poza jedną transakcją odbywa się bez gazu.
 
-\paragraph{Weryfikacja.} Weryfikator odtwarza z~koperty liść, z~liścia i~dowodu
---- korzeń, i~porównuje go z~korzeniem odczytanym z~kontraktu dla pary
+\paragraph{Weryfikacja.} Weryfikator odtwarza z~koperty liść, a~z~liścia i~dowodu
+korzeń, i~porównuje go z~korzeniem odczytanym z~kontraktu dla pary
 \code{(issuer, batchId)}. Wynik pozytywny oznacza, że dokument należy do partii
 opublikowanej przez autoryzowanego wystawcę i~nie został unieważniony.
 
@@ -170,7 +176,7 @@ Opisane przepływy angażują pięć ról: wystawcę (uczelnia), posiadacza (abs
 weryfikatora, właściciela rejestru oraz infrastrukturę łańcucha (walidatorzy L1,
 sekwenser L2) wraz z~punktem dostępu RPC. Poniższy model zbiera założenia
 zaufania i~zdolności przeciwnika wspólne dla całej pracy; jego dwa najbardziej
-wrażliwe fragmenty --- prywatność koperty i~warstwę uprawnień --- pogłębiają
+wrażliwe fragmenty (prywatność koperty i~warstwę uprawnień) pogłębiają
 odpowiednio sekcja~\ref{sec:priv-bezpieczenstwo}
 i~sekcja~\ref{sec:gov-zagrozenia}.
 
@@ -182,16 +188,16 @@ i~partii jest publiczna i~dopisywalna) oraz \emph{minimalizację danych}
 (rozdz.~\ref{ch:prywatnosc}).
 
 \paragraph{Założenia zaufania.} Przyjmuje się: odporność \code{keccak256} na
-kolizje i~preimage; żywotność oraz niezmienność publicznego łańcucha (dla L2 ---
+kolizje i~preimage; żywotność oraz niezmienność publicznego łańcucha (dla L2,
 dziedziczone z~L1 przez mechanizmy rollupa, sekcja~\ref{sec:l2-podstawy});
 uczciwość co najmniej $n-m+1$ sygnatariuszy progu zarządzania
 (rozdz.~\ref{ch:governance}). Weryfikator musi ponadto ufać własnemu punktowi
 dostępu do łańcucha: złośliwy dostawca RPC może zwrócić sfałszowany stan
-rejestru. Jest to jednak założenie innego rodzaju niż pozostałe --- weryfikator
+rejestru. Jest to jednak założenie innego rodzaju niż pozostałe: weryfikator
 może je usunąć \emph{jednostronnie}, uruchamiając własny węzeł lub lekkiego
 klienta weryfikującego reguły konsensusu, bez uzgodnień z~kimkolwiek. Ta
-różnica --- między zaufaniem, które można znieść samodzielnie, a~zaufaniem
-wymagającym koordynacji wielu obserwatorów --- jest w~sekcji~\ref{sec:gov-wniosek}
+różnica (między zaufaniem, które można znieść samodzielnie, a~zaufaniem
+wymagającym koordynacji wielu obserwatorów) jest w~sekcji~\ref{sec:gov-wniosek}
 podstawą rozgraniczenia wobec logów przejrzystości certyfikatów.
 
 \paragraph{Zdolności przeciwnika.} Przeciwnik może przechwytywać i~modyfikować
@@ -200,11 +206,11 @@ dowody między kontekstami (co wyklucza separacja domen liścia,
 sekcja~\ref{sec:merkle}) oraz próbować przejąć klucze. Skutki kompromitacji
 kluczy są rozwarstwione: klucz \emph{wystawcy} pozwala publikować fałszywe
 partie do czasu odebrania uprawnień przez właściciela (stąd jednostkowe
-unieważnianie i~możliwość usunięcia wystawcy), a~klucz \emph{właściciela} ---
-przepisać samą warstwę uprawnień, co stanowi najpoważniejsze zagrożenie
+unieważnianie i~możliwość usunięcia wystawcy), a~klucz \emph{właściciela}
+pozwala przepisać samą warstwę uprawnień, co stanowi najpoważniejsze zagrożenie
 systemu i~motywuje model zarządzania z~rozdziału~\ref{ch:governance}. Sekwenser
 L2 może transakcje opóźniać (cenzura), lecz nie może sfałszować stanu:
-partia niezgodna z~regułami przejścia zostanie odrzucona --- w~rollupie
+partia niezgodna z~regułami przejścia zostanie odrzucona: w~rollupie
 optymistycznym przez dowód oszustwa, w~rollupie zk przez brak poprawnego dowodu.
 Gwarancja ta dotyczy jednak stanu \emph{opublikowanego na~L1}; potwierdzenie
 wydane przez sekwenser przed publikacją partii jest wyłącznie jego przyrzeczeniem
@@ -216,7 +222,7 @@ przewagę łańcucha.
 nie \emph{okaziciela}. Koperta jest tokenem na okaziciela: kto nią dysponuje,
 przejdzie weryfikację pozytywnie, ponieważ nic w~protokole nie wiąże jej
 z~tożsamością prezentującego. Pomyślna weryfikacja dowodzi zatem, że przedstawiony
-dyplom został zakotwiczony przez autoryzowanego wystawcę --- nie, że przedstawia
+dyplom został zakotwiczony przez autoryzowanego wystawcę; nie, że przedstawia
 go osoba, której go wydano. Przekazanie lub kradzież koperty daje pełną,
 poprawnie weryfikującą się prezentację cudzego dyplomu, i~to bez łamania
 jakiegokolwiek założenia kryptograficznego. Poświadczenia weryfikowalne
@@ -229,7 +235,7 @@ rekrutacji), luka ta jest domykana poza systemem.
 
 \paragraph{Poza modelem.} Ataki odmowy usługi na infrastrukturę RPC,
 kompromitacja przeglądarki lub aplikacji klienckiej (phishing) oraz
-przechowywanie sekretów po stronie posiadacza --- to ostatnie omawia
+przechowywanie sekretów po stronie posiadacza; to ostatnie omawia
 sekcja~\ref{sec:priv-bezpieczenstwo} jako ograniczenie operacyjne.
 
 \section{Jakość implementacji kontraktu}
@@ -240,9 +246,9 @@ wdrożeniu, jego implementację poddano trzem kontrolom automatycznym w~środowi
 Foundry~\cite{foundry} w~wersji 1.5.1 (Solidity 0.8.20).
 
 \paragraph{Testy i~pokrycie kodu.} Repozytorium zawiera 177~testów jednostkowych
-i~scenariuszowych, z~których wszystkie przechodzą; ścieżkę produkcyjną ---
-\code{DiplomaRegistry}, \code{RegistryMultisig} oraz przepływy zarządzania
-z~rozdziału~\ref{ch:governance} --- pokrywa 55~z~nich, a~pozostałe dotyczą
+i~scenariuszowych, z~których wszystkie przechodzą; ścieżkę produkcyjną
+(\code{DiplomaRegistry}, \code{RegistryMultisig} oraz przepływy zarządzania
+z~rozdziału~\ref{ch:governance}) pokrywa 55~z~nich, a~pozostałe dotyczą
 wariantów eksperymentalnych zbudowanych na potrzeby pomiarów
 z~rozdziału~\ref{ch:gaz}. Wyniki \code{forge coverage} dla kontraktów
 produkcyjnych zebrano w~tabeli~\ref{tab:coverage}. Niższe pokrycie gałęzi wynika
@@ -268,7 +274,7 @@ obu kontraktów produkcyjnych cztery uwagi i~żadnego ostrzeżenia ani błędu.
 Wszystkie cztery należą do kategorii kosztowych, nie bezpieczeństwa: trzykrotnie
 \code{unwrapped-modifier-logic} (ciało modyfikatora niewydzielone do funkcji, co
 zwiększa rozmiar bytecode'u) oraz jednokrotnie \code{asm-keccak256} (haszowanie
-przez \code{abi.encodePacked} zamiast wstawki asemblerowej --- dokładnie ta
+przez \code{abi.encodePacked} zamiast wstawki asemblerowej, dokładnie ta
 optymalizacja, którą rozdział~\ref{ch:gaz} bada jako technikę~G4). Analiza ta nie
 zastępuje jednak audytu: przeprowadzenie zewnętrznego przeglądu bezpieczeństwa
 oraz uruchomienie narzędzi symbolicznych (Slither, Mythril) pozostaje poza

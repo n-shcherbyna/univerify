@@ -1,7 +1,7 @@
 \chapter{Podsumowanie i dalsze prace}
 \label{ch:podsumowanie}
 
-Praca przedstawiła system UniVerify --- oparty na publicznym blockchainie
+Praca przedstawiła system UniVerify, oparty na publicznym blockchainie
 Ethereum rejestr dyplomów, w~którym dokumenty grupowane są w~drzewa Merkle,
 a~w~kontrakcie publikowany jest jedynie korzeń partii. Na zbudowanej implementacji
 przeprowadzono badania, które odpowiadają na trzy pytania postawione we wstępie.
@@ -14,7 +14,7 @@ Zrealizowane cele można zebrać wzdłuż trzech osi pracy:
 \begin{description}
   \item[Koszt.] Trzyetapowa analiza gazu (rozdz.~\ref{ch:gaz}) pokazała, że
         architektura partii Merkle obniża koszt \emph{na dyplom} o~98{,}9\% przy partii
-        100~dokumentów --- efekt amortyzacji stałego kosztu transakcji. Wynik
+        100~dokumentów, efekt amortyzacji stałego kosztu transakcji. Wynik
         negatywny jest równie istotny: mikrooptymalizacje kodu nie obniżają
         kosztu wykonania w~ogóle (0{,}5\% na \code{issue}), a~jedynie koszt
         wdrożenia (19{,}5\%); ręczne pakowanie pamięci trwałej nie daje nic,
@@ -41,14 +41,14 @@ Zrealizowane cele można zebrać wzdłuż trzech osi pracy:
 Najważniejszym wnioskiem pracy jest uczciwe rozgraniczenie wartości, wypadające
 dla tezy blockchainowej niekorzystnie. Samo PKI dorównuje blockchainowi
 w~weryfikacji offline i~w~koszcie jednostkowym, a~publiczny, historyczny log
-uprawnień do wydawania --- własność, którą praca początkowo uznała za jedyną
-realną przewagę łańcucha --- jest osiągalny w~modelu \emph{Certificate
+uprawnień do wydawania (własność, którą praca początkowo uznała za jedyną
+realną przewagę łańcucha) jest osiągalny w~modelu \emph{Certificate
 Transparency}, bez blockchaina i~w~technologii dojrzalszej. Po uwzględnieniu CT
 uzasadnione zastosowanie blockchaina zawęża się do jednego przypadku: gdy
 weryfikator nie może przyjąć, że operatorzy logu nie przedstawią mu
 rozdwojonego widoku, i~zarazem jest gotów sam weryfikować reguły konsensusu.
-Argument i~jego dwa ograniczenia --- zaufanie do dostawcy RPC oraz osłabienie
-gwarancji przed finalizacją stanu rollupa na warstwie pierwszej --- przeprowadza
+Argument i~jego dwa ograniczenia (zaufanie do dostawcy RPC oraz osłabienie
+gwarancji przed finalizacją stanu rollupa na warstwie pierwszej) przeprowadza
 sekcja~\ref{sec:gov-wniosek}.
 
 \section{Ograniczenia}
@@ -57,18 +57,18 @@ sekcja~\ref{sec:gov-wniosek}.
 \begin{itemize}
   \item \textbf{Prywatność.} Ukrywanie opiera się na tajności 256-bitowej soli;
         konstrukcja ujawnia strukturę koperty, nie wspiera dowodów predykatowych
-        i~nie daje nieskorelowalności prezentacji --- kolejne okazania tej samej
+        i~nie daje nieskorelowalności prezentacji: kolejne okazania tej samej
         koperty są powiązywalne między weryfikatorami.
   \item \textbf{Brak wiązania z~posiadaczem.} Koperta jest tokenem na okaziciela:
         weryfikacja dowodzi autentyczności dokumentu, nie tego, że prezentuje go
         osoba uprawniona.
   \item \textbf{Pomiary.} Wyniki sieciowe są właściwe do porównań względnych, nie
-        do twierdzeń bezwzględnych; pięć ograniczeń metodologicznych --- w~tym
+        do twierdzeń bezwzględnych; pięć ograniczeń metodologicznych (w~tym
         pojedynczy punkt dostępu RPC, migawkę parametrów rynkowych i~aliasing
-        dobowy próbki opłaty bazowej --- wylicza
+        dobowy próbki opłaty bazowej) wylicza
         sekcja~\ref{sec:l2-ograniczenia}.
   \item \textbf{Analiza wartości.} Koszty strony blockchainowej zmierzono,
-        koszty alternatywy PKI+CT --- nie; porównanie obu podejść jest przez to
+        koszty alternatywy PKI+CT nie zmierzono; porównanie obu podejść jest przez to
         jakościowe po stronie kosztów.
   \item \textbf{Weryfikacja kontraktu.} Kontrakty przechodzą pełen zestaw testów
         i~analizę statyczną, lecz nie poddano ich zewnętrznemu audytowi ani

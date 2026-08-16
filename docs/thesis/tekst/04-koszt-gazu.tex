@@ -1,17 +1,17 @@
-\chapter{Optymalizacja zużycia gazu kontraktu (pomiary lokalne)}
+\chapter{Optymalizacja zużycia gazu kontraktu}
 \label{ch:gaz}
 
 Rozdział bada, jak decyzje projektowe wpływają na zużycie gazu kontraktu rejestru
 dyplomów. Eksperymenty podzielono na trzy etapy, każdy odpowiadający innemu
 poziomowi abstrakcji decyzji: (1)~mikrooptymalizacje modelu \emph{jednostkowego}
-(dalej: per-dyplom), w~którym każdy dokument trafia na łańcuch osobno --- siedem
+(dalej: per-dyplom), w~którym każdy dokument trafia na łańcuch osobno: siedem
 kolejnych wersji kontraktu z~pojedynczymi zmianami kodu; (2)~zmianę architektury
 na \emph{partię Merkle} (\emph{Merkle batch}), w~której jedna transakcja pokrywa
 całą partię; (3)~mikrooptymalizacje ścieżki gorącej (\emph{hot path}) weryfikacji
 dowodu Merkle. Wnioski z~trzech etapów zbiera sekcja~\ref{sec:gaz-wnioski}.
 
-Wszystkie pomiary są lokalne --- wykonane na maszynie wirtualnej Foundry, bez
-kontaktu z~siecią --- co eliminuje szum wynikający ze zmienności opłat. Odpowiada
+Wszystkie pomiary są lokalne (wykonane na maszynie wirtualnej Foundry, bez
+kontaktu z~siecią), co eliminuje szum wynikający ze zmienności opłat. Odpowiada
 to warunkom warstwy pierwszej w~zakresie \emph{zużycia} gazu; wycenę pieniężną
 i~pomiary sieciowe podaje rozdział~\ref{ch:l2}.
 
@@ -21,7 +21,7 @@ i~pomiary sieciowe podaje rozdział~\ref{ch:l2}.
 Pomiary wykonano w~środowisku Foundry~\cite{foundry} w~wersji 1.5.1
 (Solidity 0.8.20), na kodzie repozytorium w~wersji oznaczonej tagiem
 \code{v1.0-thesis}. Foundry
-dostarcza dwie granulacje danych:
+dostarcza dane na dwóch poziomach szczegółowości:
 
 \begin{itemize}
   \item \textbf{Poziom scenariusza} (\emph{suite-level}) --- gaz zużyty przez
@@ -33,7 +33,7 @@ dostarcza dwie granulacje danych:
         w~przebiegu jako minimum, średnia i~maksimum (dalej: min., śr., maks.).
 \end{itemize}
 
-\paragraph{Obie granulacje nie sumują się.} Rozróżnienie to jest ostrzejsze, niż
+\paragraph{Obu poziomów nie wolno sumować.} Rozróżnienie to jest ostrzejsze, niż
 sugerowałaby sama nazwa, ponieważ przełącznik \code{--gas-report} wymusza
 w~Foundry tryb izolacji (\code{-{}-isolate}): każde zewnętrzne wywołanie
 zmieniające stan jest wykonywane jako \emph{osobna transakcja}. Doliczany jest
@@ -44,26 +44,26 @@ w~której koszt bazowy pojawia się raz, a~drugi dostęp do tego samego slotu je
 już tani.
 
 Konsekwencja praktyczna: wartości z~obu tabel tego rozdziału \emph{nie są
-addytywne}. Scenariusz \code{testGas\_revoke} --- 43\,164~gazu dla wersji
-\code{StringErrors} --- zawiera wywołania \code{issue} i~\code{revoke}
+addytywne}. Scenariusz \code{testGas\_revoke} (43\,164~gazu dla wersji
+\code{StringErrors}) zawiera wywołania \code{issue} i~\code{revoke}
 w~jednej transakcji, podczas gdy odpowiadające im wiersze poziomu funkcji
 (48\,458 i~31\,274) opisują dwie niezależne transakcje, każdą z~własnym kosztem
 bazowym i~własnym zimnym dostępem do pamięci trwałej. Porównania w~ramach jednej
-granulacji pozostają w~pełni poprawne; mieszanie granulacji --- nie.
+jednego poziomu pozostają w~pełni poprawne; mieszanie poziomów już nie.
 
 Z~tego samego powodu poziom scenariusza i~poziom funkcji wymagają
 \emph{różnych} poleceń: liczby z~tabeli~\ref{tab:etap1-suite} pochodzą
-z~przebiegu bez \code{--gas-report}, a~liczby z~tabeli~\ref{tab:etap1-fun} ---
-z~przebiegu z~tym przełącznikiem.
+z~przebiegu bez \code{--gas-report}, a~liczby z~tabeli~\ref{tab:etap1-fun}
+pochodzą z~przebiegu z~tym przełącznikiem.
 
 \paragraph{Dlaczego nie średnia.} Kolumna średniej jest w~tym zestawieniu
 \emph{nieporównywalna między wersjami kontraktu}, ponieważ Foundry uśrednia po
 wszystkich wywołaniach w~przebiegu, a~poszczególne zestawy testów wywołują te
-same funkcje różną liczbę razy --- od 2 do 9~razy dla \code{issue} i~od 5 do
+same funkcje różną liczbę razy: od 2 do 9~razy dla \code{issue} i~od 5 do
 35~razy dla \code{addIssuer}. Wywołania tanie (zapis do rozgrzanego slotu,
 ścieżki wycofania) obniżają średnią tym mocniej, im jest ich więcej. Porównania
 w~tym rozdziale opierają się zatem na \textbf{maksimum}, które odpowiada ścieżce
-najgorszego przypadku --- pierwszemu zapisowi do zimnego slotu --- i~jest
+najgorszego przypadku (pierwszemu zapisowi do zimnego slotu) i~jest
 niezależne od liczby wywołań. Sekcja~\ref{sec:gaz-packed} pokazuje, że
 zignorowanie tej różnicy prowadzi do wniosku wprost przeciwnego do prawdziwego.
 
@@ -79,7 +79,7 @@ forge test --match-path "test/DiplomaRegistryMerkle.t.sol"        --gas-report
 forge test --match-path "test/MerkleLeafGas.t.sol"                --gas-report
 \end{verbatim}
 
-\section{Etap 1 --- mikrooptymalizacje modelu per-dyplom}
+\section{Etap 1: mikrooptymalizacje modelu per-dyplom}
 \label{sec:gaz-etap1}
 
 Model per-dyplom to najprostsze możliwe podejście: każdy dyplom to jeden wpis
@@ -95,9 +95,9 @@ odróżniającą każdą z~nich od poprzedniej.
         z~\code{require(..., "STRING")}, rekordem
         \code{\{address issuer, uint64 issuedAt, bool revoked\}} i~zmiennym
         \code{owner} w~pamięci trwałej.
-  \item[\code{TimestampRevoke}.] \code{uint64 revokedAt} zamiast \code{bool} ---
+  \item[\code{TimestampRevoke}.] \code{uint64 revokedAt} zamiast \code{bool},
         hipoteza: znacznik czasu unieważnienia przyda się audytorom.
-  \item[\code{CustomErrors}.] Błędy własne zamiast komunikatów tekstowych ---
+  \item[\code{CustomErrors}.] Błędy własne zamiast komunikatów tekstowych:
         czterobajtowy selektor zamiast danych w~bytecode.
   \item[\code{ImmutableOwner}.] \code{owner} jako \code{immutable}, co eliminuje
         \code{SLOAD} w~modyfikatorze dostępu.
@@ -106,17 +106,17 @@ odróżniającą każdą z~nich od poprzedniej.
   \item[\code{MinimalRecord}.] Rekord ograniczony do
         \code{\{address issuer, bool revoked\}}; daty pozostają w~logach zdarzeń.
   \item[\code{PackedStorage}.] \code{mapping(bytes32 => uint256)} z~ręcznym
-        pakowaniem adresu i~bitu unieważnienia --- hipoteza: jeden odczyt zamiast
+        pakowaniem adresu i~bitu unieważnienia, hipoteza: jeden odczyt zamiast
         dwóch.
 \end{description}
 
 \subsection{Wyniki}
 
 Tabela~\ref{tab:etap1-suite} podaje koszt scenariuszy testowych, a~tabela
-\ref{tab:etap1-fun} --- koszt wdrożenia oraz maksymalny koszt pojedynczego
+\ref{tab:etap1-fun} podaje koszt wdrożenia oraz maksymalny koszt pojedynczego
 wywołania każdej funkcji. Test \code{testGas\_revoke} zawiera wywołanie
 \code{issue} jako przygotowanie stanu, więc wartości w~tej kolumnie są wyższe niż
-sam koszt unieważnienia --- lecz nie są jego sumą z~kolumną \code{issue},
+sam koszt unieważnienia, lecz nie są jego sumą z~kolumną \code{issue},
 z~przyczyn wyjaśnionych w~sekcji~\ref{sec:gaz-metodyka}.
 
 \begin{table}[H]
@@ -178,10 +178,10 @@ w~drugim slocie, i~to z~zera na wartość niezerową.
 
 Bilans tej zmiany warto rozpisać, ponieważ na nim opiera się główna teza
 etapu~1. Po stronie kosztów przybywa: zapis do dziewiczego slotu, wyceniany na
-20\,000~gazu, oraz pierwszy dostęp do tego slotu --- 2\,100~gazu według
+20\,000~gazu, oraz pierwszy dostęp do tego slotu: 2\,100~gazu według
 EIP-2929~\cite{eip2929}. Ubywa natomiast zapis pola \code{bool} w~slocie
 pierwszym, który był modyfikacją slotu już niezerowego i~ciepłego, a~więc
-kosztował 100~gazu, oraz --- wobec obecności obu pól w~tym samym slocie ---
+kosztował 100~gazu, oraz (wobec obecności obu pól w~tym samym slocie)
 odpowiadający mu odczyt. Przewidywany przyrost netto mieści się zatem
 w~przedziale około 19--22~tys.\ gazu, zależnie od tego, ile z~kosztu zimnego
 dostępu przypada na sam zapis. Zmierzony przyrost to 19\,095~gazu (+61{,}1\%);
@@ -192,7 +192,7 @@ ubocznym pozostałych zmian.
 Wersje \code{CustomErrors}, \code{ImmutableOwner} i~\code{Idempotent} nie
 zmieniają układu pamięci, więc ich wpływ na koszt wykonania jest zerowy
 w~granicach kilkunastu gazu; obniżają natomiast rozmiar bytecode'u, co widać
-wyłącznie w~kolumnie wdrożenia --- najsilniej \code{CustomErrors}:
+wyłącznie w~kolumnie wdrożenia, najsilniej \code{CustomErrors}:
 464\,211~$\to$~409\,497 gazu, czyli 54\,714~gazu i~11{,}8\%. Dopiero
 \code{MinimalRecord}, usuwając znaczniki czasu z~pamięci trwałej, wraca do
 jednego slotu i~przywraca tani \code{revoke}.
@@ -204,8 +204,8 @@ Wersja \code{PackedStorage} powstała z~hipotezy, że ręczne upakowanie adresu
 i~flagi w~jedną wartość \code{uint256} zastąpi dwa odczyty \code{SLOAD} jednym.
 Hipoteza jest fałszywa, i~to z~powodu widocznego już w~poprzedniej sekcji: rekord
 \code{MinimalRecord} zajmuje 21~bajtów, więc kompilator Solidity \emph{już}
-umieścił oba pola w~jednym slocie. Ręczne pakowanie nie usuwa żadnego odczytu ---
-dokłada natomiast maskowanie, przesunięcia bitowe oraz kod, który je realizuje.
+umieścił oba pola w~jednym slocie. Ręczne pakowanie nie usuwa żadnego odczytu.
+Dokłada natomiast maskowanie, przesunięcia bitowe oraz kod, który je realizuje.
 
 Potwierdzają to pomiary. Maksymalny koszt \code{issue} wynosi 48\,194 gazu dla
 \code{MinimalRecord} i~48\,200 dla \code{PackedStorage}: różnica 6~gazu, czyli
@@ -216,7 +216,7 @@ maksima \code{addIssuer} (44\,855). Za tę zerową zmianę kosztu wykonania
 
 Wniosek ten jest widoczny wyłącznie w~maksimach. W~kolumnie średniej
 \code{PackedStorage} wypada gorzej o~1\,477~gazu na \code{issue}
-(43\,084 wobec 41\,607), co mogłoby sugerować realną różnicę --- jest to jednak
+(43\,084 wobec 41\,607), co mogłoby sugerować realną różnicę. Jest to jednak
 artefakt liczby wywołań (9~wobec 7), nie kosztu operacji: dodatkowe wywołania
 w~zestawie \code{PackedStorage} trafiają na ścieżki tanie, a~te przesuwają
 średnią, nie zmieniając kosztu samej operacji. Na poziomie scenariusza jest odwrotnie:
@@ -227,7 +227,7 @@ najlepsza ilustracja zastrzeżenia z~sekcji~\ref{sec:gaz-metodyka}.
 Za linię bazową dla etapu~2 przyjęto zatem \code{MinimalRecord}: tańszą we
 wdrożeniu, równoważną w~wykonaniu i~prostszą w~utrzymaniu.
 
-\section{Etap 2 --- architektura partii Merkle}
+\section{Etap 2: architektura partii Merkle}
 \label{sec:gaz-etap2}
 
 Model per-dyplom zakłada, że \emph{każdy dyplom trafia na łańcuch jako osobna
@@ -235,7 +235,7 @@ transakcja}. Architektura partii Merkle znosi to założenie: zamiast zapisywać
 dyplomów w~$N$ transakcjach, wystawca:
 \begin{enumerate}
   \item buduje drzewo Merkle z~$N$ liści (poza łańcuchem, bez gazu),
-  \item zapisuje na łańcuch wyłącznie \emph{korzeń drzewa} --- jedną transakcją
+  \item zapisuje na łańcuch wyłącznie \emph{korzeń drzewa}, jedną transakcją
         \code{issueBatchRoot(batchId, merkleRoot)},
   \item weryfikacja dyplomu przez \code{statusWithProof(\allowbreak docHash,\allowbreak{}
         issuer,\allowbreak{} batchId,\allowbreak{} proof)} sprawdza przynależność
@@ -243,7 +243,7 @@ dyplomów w~$N$ transakcjach, wystawca:
 \end{enumerate}
 
 \noindent Zmiana dotyczy wszystkich czterech operacji rejestru: wystawienia,
-weryfikacji, unieważnienia oraz zarządzania wystawcami --- to ostatnie zastępuje
+weryfikacji, unieważnienia oraz zarządzania wystawcami; to ostatnie zastępuje
 para \code{addIssuer}/\code{removeIssuer} bogatszym
 \code{onboardIssuerAndUniversity}, wiążącym wystawcę z~metadanymi uczelni.
 
@@ -252,7 +252,7 @@ para \code{addIssuer}/\code{removeIssuer} bogatszym
 \begin{table}[H]
 \centering
 \caption[Model per-dyplom wobec modelu Merkle]{\code{MinimalRecord} wobec
-\code{MerkleBaseline} --- maksymalny koszt wywołania i~koszt wdrożenia.}
+\code{MerkleBaseline}: maksymalny koszt wywołania i~koszt wdrożenia.}
 \label{tab:packed-vs-merkle}
 \begin{tabular}{llr}
 \toprule
@@ -293,7 +293,7 @@ ponieważ jedna transakcja \code{issueBatchRoot} obejmuje $N$ dyplomów:
 \toprule
 $N$ & Merkle (gaz/dyplom) & Per-dyplom (gaz/dyplom) & \makecell{Krotność oszczędności\\(per-dyplom~/~Merkle)} \\
 \midrule
-1    & 51\,012 & 48\,194 & $0{,}94\times$ --- per-dyplom tańszy \\
+1    & 51\,012 & 48\,194 & $0{,}94\times$: per-dyplom tańszy \\
 100  &    510  & 48\,194 & $94{,}5\times$ \\
 1000 &     51  & 48\,194 & $945\times$ \\
 \bottomrule
@@ -301,14 +301,14 @@ $N$ & Merkle (gaz/dyplom) & Per-dyplom (gaz/dyplom) & \makecell{Krotność oszcz
 \end{table}
 
 \noindent Przejście na model Merkle nie jest kolejną mikrooptymalizacją, lecz
-inną odpowiedzią na pytanie o~model danych --- i~jako jedyna zmiana w~całym
+inną odpowiedzią na pytanie o~model danych, i~jako jedyna zmiana w~całym
 rozdziale przesuwa koszt o~rzędy wielkości. Przy $N=100$ koszt na dyplom spada
 z~48\,194 do 510~gazu, czyli o~98{,}9\%. Ceną jest trzykrotnie droższe wdrożenie
 ($1{,}14$~mln wobec $0{,}37$~mln gazu) oraz bardziej złożona weryfikacja
 wymagająca dowodu Merkle. Próg opłacalności leży przy $N=2$: dla partii
 jednoelementowej model per-dyplom pozostaje o~5{,}8\% tańszy.
 
-\section{Etap 3 --- optymalizacje ścieżki gorącej}
+\section{Etap 3: optymalizacje ścieżki gorącej}
 \label{sec:gaz-etap3}
 
 Po wyborze architektury Merkle pozostaje pytanie, czy ścieżkę weryfikacji dowodu
@@ -352,7 +352,7 @@ porównuje on wynik \code{merkleLeaf()} każdego z~kontraktów z~referencyjnym
 
 \begin{table}[H]
 \centering
-\caption{\code{MerkleBaseline} wobec \code{MerkleG} --- min.\ i~maks.\ wg Foundry.}
+\caption{\code{MerkleBaseline} wobec \code{MerkleG}: min.\ i~maks.\ wg Foundry.}
 \label{tab:baseline-vs-g}
 \begin{tabular}{lrrrrr}
 \toprule
@@ -390,7 +390,7 @@ przez to poprawne.
 \code{issueBatchRoot} nie wywołuje \code{\_processProof} ani
 \code{\_merkleLeaf} w~ścieżce zapisu, więc oszczędność tam jest pomijalna.
 Pozostałe dwie operacje zyskują dokładnie tyle samo w~wartościach bezwzględnych
---- 2\,536~gazu w~maksimum i~144~gazu w~minimum --- co jest pierwszą przesłanką,
+(2\,536~gazu w~maksimum i~144~gazu w~minimum), co jest pierwszą przesłanką,
 że oszczędność zależy wyłącznie od długości dowodu, a~nie od rodzaju operacji.
 Relatywnie więcej zyskuje \code{statusWithProof} ($-16{,}4\%$), ponieważ stanowi
 mniejszą bazę kosztową: nie wykonuje zapisu do pamięci trwałej.
@@ -446,12 +446,12 @@ Porównanie obu par ujawnia przy okazji, skąd bierze się reszta kosztu kroku:
 \code{statusWithProof} ($920 - 411$). Jest to koszt przesłania dodatkowych
 32~bajtów \code{calldata} w~transakcji zapisu: przy cenniku 16~gazu za bajt
 niezerowy górna granica wynosi 512~gazu, a~zmierzone 509 leży tuż poniżej.
-Współczynnik jest bowiem wartością uśrednioną po dowodach o~różnych
+Współczynnik jest wartością uśrednioną po dowodach o~różnych
 głębokościach, a~w~pseudolosowych skrótach sporadycznie trafiają się bajty
 zerowe, wyceniane na 4~zamiast 16~gazu; każdy taki bajt obniża koszt elementu
 dowodu o~12~gazu.
 Weryfikacja odczytem tego kosztu w~ogóle nie ponosi, ponieważ nie jest
-transakcją --- \code{eth\_call} wykonuje się lokalnie na węźle i~nie płaci ani
+transakcją: \code{eth\_call} wykonuje się lokalnie na węźle i~nie płaci ani
 za \code{calldata}, ani za koszt bazowy. Różnica ta nie wynika więc z~modelu
 wykonania EVM, lecz z~modelu rozliczania transakcji.
 
@@ -479,12 +479,12 @@ Etap & Typ zmiany & Zmiana kosztu & Metryka \\
 \end{table}
 
 Pierwszy wniosek jest negatywny i~mocniejszy, niż zakładano na wstępie etapu~1.
-Mikrooptymalizacje kodu \emph{nie obniżają kosztu wykonania} --- sześć kolejnych
+Mikrooptymalizacje kodu \emph{nie obniżają kosztu wykonania}: sześć kolejnych
 zmian daje łącznie 0{,}5\% na \code{issue} i~zero na \code{revoke}. Obniżają
 natomiast koszt wdrożenia o~19{,}5\%, a~więc opłacają się jednorazowo, nie
 w~każdej transakcji. Jedyną zmianą, która wpłynęła na koszt wykonania w~sposób
 mierzalny, było przekroczenie granicy 32-bajtowego slotu w~wersji
-\code{TimestampRevoke} --- i~wpłynęła o~61\% w~złą stronę.
+\code{TimestampRevoke}, i~wpłynęła o~61\% w~złą stronę.
 
 Drugi wniosek dotyczy warstwy abstrakcji. To, co w~pamięci trwałej jest istotne,
 rozstrzyga się na poziomie \emph{układu danych}, nie sztuczek składniowych.
@@ -512,9 +512,9 @@ powiedzieć wprost. Wyceniona w~warunkach rozdziału~\ref{ch:l2} oszczędność
 2\,536~gazu na wywołanie to ułamki mikrocenta, a~sekcja~\ref{sec:gov-wniosek}
 wykazuje, że koszt transakcyjny nie rozstrzyga o~wyborze technologii w~żadnym
 realistycznym scenariuszu wdrożenia. Etap ten wnosi więc model wyjaśniający,
-skąd bierze się koszt weryfikacji dowodu --- nie argument za jej optymalizowaniem.
+skąd bierze się koszt weryfikacji dowodu, nie argument za jej optymalizowaniem.
 
 Pomiary mają dwa ograniczenia. Są lokalne, więc nie obejmują rzeczywistej
-zmienności opłaty bazowej --- uzupełnia je rozdział~\ref{ch:l2}. Nie mierzono
+zmienności opłaty bazowej. Uzupełnia je rozdział~\ref{ch:l2}. Nie mierzono
 też kosztu budowania drzewa Merkle po stronie klienta; rząd wielkości tej
 operacji podaje sekcja~\ref{sec:priv-pomiary} (222~ms dla $N=1000$).

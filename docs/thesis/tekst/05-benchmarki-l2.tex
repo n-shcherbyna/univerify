@@ -16,7 +16,7 @@ gazu, jak i w~dolarach amerykańskich.
 
 Porównanie obejmuje koszt uruchomienia kontraktu \code{DiplomaRegistry} na czterech
 sieciach Ethereum: warstwie pierwszej (Sepolia, jako punkt odniesienia) oraz trzech
-rozwiązaniach warstwy drugiej reprezentujących odmienne rodziny technologiczne ---
+rozwiązaniach warstwy drugiej reprezentujących odmienne rodziny technologiczne:
 Arbitrum Nitro, Base jako przedstawiciel stosu OP oraz zkSync~Era jako rollup
 oparty na dowodach \emph{validity proof}. Dobór ten pozwala
 porównać nie pojedyncze wdrożenia, lecz reprezentatywne klasy rollupów.
@@ -28,7 +28,7 @@ L1} są wielkościami rzeczywistymi, odczytanymi z~potwierdzeń transakcji
 (\emph{receipt}).
 
 Koszty w~USD są natomiast projekcją na warunki sieci głównych. Zasada jest
-następująca: zużycie gazu pochodzi z~sieci testowych, a~ceny --- z~sieci głównych,
+następująca: zużycie gazu pochodzi z~sieci testowych, a~ceny pochodzą z~sieci głównych,
 ponieważ gaz na testnetach nie ma wartości ekonomicznej.
 
 Opłatę bazową mechanizmu EIP-1559~\cite{eip1559} odczytano z~głównej sieci
@@ -37,7 +37,7 @@ Ethereum przez \code{eth\_feeHistory}. Ponieważ okno 90~dni obejmuje około
 \emph{próbkę systematyczną}: 90~wywołań z~parametrem \code{blockCount} równym~1,
 po jednym na dobę, w~odstępie 7200~bloków (dobowa liczba bloków przy czasie
 bloku 12~s). Ponieważ krok próbkowania jest równy okresowi dobowemu, wszystkie
-próbki przypadają na zbliżoną porę dnia --- ograniczenie omówione
+próbki przypadają na zbliżoną porę dnia, ograniczenie omówione
 w~sekcji~\ref{sec:l2-dyskusja}. Z~każdej próbki pobrano \code{baseFeePerGas} oraz
 \code{baseFeePerBlobGas}, a~zbiór 90~wartości sprowadzono do percentyli p10, p50
 i~p90. Ceny gazu sekwenserów pobrano z~głównych sieci badanych rollupów.
@@ -60,7 +60,7 @@ sieć.
 by uchwycić zmienność warunków sieciowych, więc jej wynik należy podać. Mediany
 zużycia gazu dla \code{revokeFromBatch} są w~trzech sieciach praktycznie
 identyczne (rozrzut poniżej 0{,}02\% dla warstwy pierwszej, Base i~zkSync),
-natomiast dla Arbitrum wynoszą kolejno 59\,806, 60\,218 i~74\,347 --- rozrzut
+natomiast dla Arbitrum wynoszą kolejno 59\,806, 60\,218 i~74\,347: rozrzut
 24\%. Przyczyną jest konstrukcja jednostki: \code{gasUsed} raportowany przez
 Arbitrum zawiera składnik odpowiadający zapisowi danych na~L1 i~dryfuje wraz
 z~opłatą bazową warstwy pierwszej. Arbitrum dzieli więc z~zkSync~Era własność
@@ -82,7 +82,7 @@ rozliczania danych, nie ich rozmiar.
 
 Jeden wynik odbiega od tej reguły i~wymaga komentarza. W~zkSync~Era publikacja
 dla $N=1$ kosztuje 151\,171 jednostek gazu wobec 131--132~tys.\ dla wszystkich
-pozostałych rozmiarów --- o~15\% więcej. Nie jest to zależność od~$N$: partie
+pozostałych rozmiarów, o~15\% więcej. Nie jest to zależność od~$N$: partie
 mierzono w~kolejności rosnącej, więc $N=1$ było \emph{pierwszą} transakcją
 wysłaną do świeżo wdrożonego kontraktu, a~kolejne cztery pomiary, mimo
 tysiąckrotnej różnicy rozmiaru partii, mieszczą się w~przedziale 0{,}4\%.
@@ -146,7 +146,7 @@ odwróceniu, przez co zkSync staje się tu operacją najdroższą.
   \caption[Koszt operacji \code{revokeFromBatch}]{Koszt operacji \code{revokeFromBatch} (pojedyncza transakcja,
   mediana). Gaz zkSync~Era w~jednostce natywnej, nieporównywalnej z~EVM.
   Zerowa opłata za dane L1 oznacza w~warstwie pierwszej brak takiej pozycji,
-  a~w~zkSync~Era --- jej wliczenie do \code{gasUsed}
+  a~w~zkSync~Era jej wliczenie do \code{gasUsed}
   (sekcja~\ref{sec:l2-dyskusja}), nie zaś darmową dostępność danych.}
   \label{tab:revoke}
   \begin{tabular}{lrcr}
@@ -171,7 +171,7 @@ charakteryzuje punkt dostępu RPC, nie rollup; jedyny wniosek to że weryfikacja
 nigdzie nie jest wąskim gardłem.
 
 Wielkością istotniejszą jest czas od wysłania transakcji zapisu do odebrania
-potwierdzenia (tab.~\ref{tab:inclusion-latency}) --- ten zależy już od czasu
+potwierdzenia (tab.~\ref{tab:inclusion-latency}). Ten zależy już od czasu
 bloku i~szybkości sekwensera.
 
 \begin{table}[H]
@@ -204,8 +204,8 @@ czasu bloku ($\approx 12$~s).
 \section{Analiza wrażliwości}
 \label{sec:l2-wrazliwosc}
 
-Ponieważ koszty w~USD zależą od trzech zmiennych rynkowych --- opłaty bazowej L1,
-kursu ETH/USD oraz ceny gazu sekwensera L2 --- poniżej badana jest odporność
+Ponieważ koszty w~USD zależą od trzech zmiennych rynkowych: opłaty bazowej L1,
+kursu ETH/USD oraz ceny gazu sekwensera L2, poniżej badana jest odporność
 wyników na ich wahania.
 
 Pierwszym czynnikiem jest opłata bazowa L1: rysunek~\ref{fig:basefee} pokazuje koszt
@@ -269,7 +269,7 @@ gdzie $C_{\text{exec}} = \code{gasUsed}\cdot p_{\text{L2}}$ skaluje się liniowo
 z~ceną sekwensera $p_{\text{L2}}$, natomiast $C_{\text{L1 data}}$ pochodzi z~opłaty
 blob na L1 i~pozostaje stała. Tabela~\ref{tab:l2price-sens} pokazuje koszt
 \code{issueBatchRoot(1000)} przy trzech mnożnikach względem migawki cen (Arbitrum
-0{,}1~gwei, Base 0{,}005~gwei, zkSync 0{,}05~gwei). Warstwę pierwszą pominięto ---
+0{,}1~gwei, Base 0{,}005~gwei, zkSync 0{,}05~gwei). Warstwę pierwszą pominięto:
 nie ma ona ceny sekwensera.
 
 \begin{table}[H]
@@ -310,8 +310,8 @@ koszty produkcyjne mogą być proporcjonalnie niższe.
 \paragraph{Niewspółmierność jednostki gazu w~zkSync Era.} Wartość
 \code{gasUsed} raportowana przez zkSync~\cite{zksync-era} (131\,462--151\,171
 dla \code{issueBatchRoot}, tab.~\ref{tab:issue-tx}) łączy w~jednej jednostce koszt
-wykonania, dane publiczne oraz narzut bootloadera kontekstu Account Abstraction
---- nie jest to ta sama jednostka co \code{gasUsed} w~EVM. Porównywanie
+wykonania, dane publiczne oraz narzut bootloadera kontekstu Account Abstraction;
+nie jest to ta sama jednostka co \code{gasUsed} w~EVM. Porównywanie
 surowych liczb gazu między rodzinami rollupów jest \emph{metodologicznie
 niepoprawne}; sensowne porównanie kosztów możliwe jest wyłącznie w~USD lub ETH.
 
@@ -320,7 +320,7 @@ zaznaczono w~sekcji~\ref{sec:l2-latencja}, pomiar czasu od wysłania do
 potwierdzenia jest \emph{górnym ograniczeniem czasu włączenia do bloku}, nie zaś
 jego dokładną wartością, z~uwagi na~cykl odpytywania klienta viem
 (\textasciitilde 4~s). Porównanie międzysieciowe zniekształca dodatkowo interakcja
-czasu bloku z~tym interwałem, a~w~przypadku latencji odczytu --- lokalizacja
+czasu bloku z~tym interwałem, a~w~przypadku latencji odczytu: lokalizacja
 i~konfiguracja pojedynczego punktu dostępu RPC.
 
 \paragraph{Aliasing dobowy w~próbce opłaty bazowej.} Krok próbkowania równy
@@ -330,10 +330,10 @@ percentyle p10/p50/p90 opisują rozkład \emph{tej godziny}, a~nie rozkład
 dziewięćdziesięciodniowy; scenariusze z~rysunku~\ref{fig:basefee} należy czytać
 jako warunki typowe dla ustalonej pory doby. Usunięcie tego obciążenia wymaga
 losowego przesunięcia w~każdej dobie albo kroku niebędącego dzielnikiem okresu
-dobowego (np.\ co~4~h) --- zmiana jednego parametru w~potoku pomiarowym,
+dobowego (np.\ co~4~h), zmiana jednego parametru w~potoku pomiarowym,
 pozostawiona poza zakresem pracy, ponieważ wymaga powtórzenia całego,
-dziewięćdziesięciodniowego okna. Wniosek jakościowy --- że wahania opłaty
-bazowej uderzają w~warstwę pierwszą, a~nie w~rollupy --- pozostaje w~mocy,
+dziewięćdziesięciodniowego okna. Wniosek jakościowy (że wahania opłaty
+bazowej uderzają w~warstwę pierwszą, a~nie w~rollupy) pozostaje w~mocy,
 ponieważ wynika z~samej struktury kosztu, nie z~wartości percentyli.
 
 \paragraph{Migawka parametrów rynkowych.} Trzy wielkości wchodzące do wyceny są
@@ -347,7 +347,7 @@ udokumentowane w~\code{meta.json} każdego eksportu.
 
 Ceny sekwenserów zaokrąglono przy tym względem odczytu \code{eth\_gasPrice}
 z~sieci głównych: Arbitrum do 0{,}1 wobec 0{,}02~gwei i~zkSync do 0{,}05 wobec
-0{,}0453~gwei --- w~obu przypadkach w~górę, aby pochłonąć wahania kongestii ---
+0{,}0453~gwei (w~obu przypadkach w~górę, aby pochłonąć wahania kongestii),
 oraz Base do 0{,}005 wobec 0{,}006~gwei, a~więc \emph{w~dół}, co zaniża jej koszt
 o~17\%. Odstępstwo to nie narusza żadnego wniosku: przewaga Base nad kolejną
 siecią przekracza rząd wielkości, a~dwukrotny wzrost ceny sekwensera nie zmienia
@@ -376,7 +376,7 @@ korzyści zależy od rodziny rollupa. Przy realistycznym rozmiarze partii $N=100
 (rzędu rocznego wolumenu dyplomów dużego wydziału) koszt zarejestrowania jednego
 dyplomu wynosi w~scenariuszu p50 około $3{,}2\cdot10^{-5}$~USD w~warstwie pierwszej,
 $1{,}8\cdot10^{-5}$~USD na~Arbitrum, $2{,}3\cdot10^{-5}$~USD na~zkSync oraz zaledwie
-$9{,}0\cdot10^{-7}$~USD na~Base --- czyli około 35-krotnie taniej niż w~warstwie
+$9{,}0\cdot10^{-7}$~USD na~Base, czyli około 35-krotnie taniej niż w~warstwie
 pierwszej (por. tab.~\ref{tab:per-diploma}).
 
 Koszt na dyplom maleje proporcjonalnie do $1/N$, ponieważ publikowany jest jeden
@@ -387,7 +387,7 @@ dowolnego rozmiaru partii.
 Przewaga Base nie wynika z~lepszej kompresji publikowanych danych: w~sieciach EVM
 zapisywany jest ten sam 32-bajtowy korzeń o~koszcie około 51~tys.\ gazu (zkSync~Era
 rozlicza gaz w~niewspółmiernej jednostce). Wynika ona z~tego, że pojedyncza
-transakcja L2 jest tania --- rollup amortyzuje koszt zapisu danych na~L1 pomiędzy
+transakcja L2 jest tania: rollup amortyzuje koszt zapisu danych na~L1 pomiędzy
 wszystkich swoich użytkowników poprzez transakcje blob (EIP-4844). Dla rozważanej
 transakcji składnik danych L1 stanowi znikomą część kosztu, w~którym dominuje
 wykonanie po stronie sekwensera.
@@ -397,5 +397,5 @@ Wynik jest odporny na typową zmienność rynkową
 i~zachowuje uporządkowanie sieci, a~zmiana ceny sekwensera L2 nie narusza
 kolejności rollupów. Wahania opłaty bazowej L1 uderzają natomiast bezpośrednio
 w~warstwę pierwszą, powiększając dystans rollupów do niej. We wszystkich
-scenariuszach Base pozostaje najtańsza --- z~perspektywy kosztowej jest zatem
+scenariuszach Base pozostaje najtańsza, z~perspektywy kosztowej jest zatem
 najkorzystniejszym celem wdrożenia rejestru spośród badanych sieci.
